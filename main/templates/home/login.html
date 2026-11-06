@@ -1,19 +1,23 @@
-{% load static %}<!DOCTYPE html>
-<html lang="en"><head>
+{% load static qr_i18n %}<!DOCTYPE html>
+<html lang="{% lang_code %}"><head>
 	<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>MDI-HRMS - Login</title>
+	<title>MDI-HRMS</title>
+	<link rel="icon" type="image/jpeg" href="{% static 'main/images/favicon.jpg' %}">
 	<link rel="stylesheet" href="{% static 'main/css/bootstrap.min.css' %}">
+	<link rel="stylesheet" href="{% qr_static 'attendance/qr/qr.css' %}">
 	<link rel="stylesheet" href="{% static 'main/css/main.css' %}">
-	<style>body{padding-top:0;display:flex;min-height:100vh;align-items:center;justify-content:center}.box{width:100%;max-width:380px;padding:16px}.btn-mdi{background:#e3171e;border-color:#e3171e;color:#fff}.btn-mdi:hover{background:#b8100f;color:#fff}</style>
-</head><body>
-<div class="box"><div class="card shadow-lg" style="border-top:4px solid #e3171e"><div class="card-body">
-	<h4 class="text-center mb-3"><b>MDI-HRMS</b></h4>
-	{% if form.errors %}<div class="alert alert-danger p-2">Username atau password salah.</div>{% endif %}
+	<style>body{padding-top:0;display:flex;min-height:100vh;align-items:center;justify-content:center;flex-direction:column}.box{width:100%;max-width:380px;padding:16px}
+	.login-flags{position:fixed;top:0;right:0;left:0;background:var(--navy-dk);padding:6px 12px;display:flex;justify-content:flex-end}</style>
+</head><body class="app">
+<div class="login-flags topbar" style="position:fixed"><div class="container" style="justify-content:flex-end"><div class="tb-right">{% flags 'link' %}</div></div></div>
+<div class="box"><div class="card shadow-lg" style="border-top:4px solid var(--navy)"><div class="card-body">
+	<div class="text-center mb-3"><img src="{% static 'main/images/favicon.jpg' %}" alt="" width="64" height="64" style="border-radius:50%"><h4 class="mt-2"><b>MDI-HRMS</b></h4></div>
+	{% if form.errors %}<div class="alert alert-danger p-2" role="alert">{% t 'login.bad' %}</div>{% endif %}
 	<form method="post" autocomplete="off">{% csrf_token %}
-		<div class="form-group"><label for="id_username">Username</label><input type="text" name="username" id="id_username" class="form-control" autofocus required autocapitalize="none"></div>
-		<div class="form-group"><label for="id_password">Password</label><input type="password" name="password" id="id_password" class="form-control" required></div>
+		<div class="form-group"><label for="id_username">{% t 'login.user' %}</label><input type="text" name="username" id="id_username" class="form-control" autofocus required autocapitalize="none"></div>
+		<div class="form-group"><label for="id_password">{% t 'login.pass' %}</label><input type="password" name="password" id="id_password" class="form-control" required></div>
 		<input type="hidden" name="next" value="{{ next }}">
-		<button type="submit" class="btn btn-mdi btn-block py-2">Login</button>
+		<button type="submit" class="btn btn-mdi btn-block py-2">{% t 'btn.login' %}</button>
 	</form>
 </div></div></div>
 </body></html>

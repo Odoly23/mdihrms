@@ -7,6 +7,8 @@ from django.core.validators import validate_email
 from custom.models import (AdministrativePost, Country, DG, Department, Division, Municipality, Position, Section,
 	Status, Village)
 
+from main import ui
+
 from .models import Employee, IDFNumber
 
 MAX_PHOTO_BYTES = 2 * 1024 * 1024
@@ -32,6 +34,13 @@ def _style(form):
 			w.attrs.setdefault('class', 'form-control')
 
 
+_EMP_LABELS = {'first_name': 'f.first_name', 'last_name': 'f.last_name', 'place_of_birth': 'f.pob',
+	'date_of_birth': 'f.dob', 'sex': 'f.sex', 'marital': 'f.marital', 'ran': 'f.ran', 'country': 'f.country',
+	'father': 'f.father', 'mother': 'f.mother', 'status': 'f.status', 'nrf': 'f.nrf', 'position': 'f.position',
+	'dg': 'f.dg', 'division': 'f.division', 'department': 'f.department', 'section': 'f.section',
+	'phone': 'f.phone', 'email': 'f.email', 'image': 'f.image', 'create_account': 'f.account'}
+
+
 class EmployeeForm(forms.ModelForm):
 	"""Data pokok funsionariu + NRF, posisi/diresaun, kontak, foto. Disimpan oleh `EmployeeForm.save_all`."""
 	date_of_birth = forms.DateField(label="Data Moris", widget=DateInput())
@@ -51,8 +60,14 @@ class EmployeeForm(forms.ModelForm):
 		fields = ['first_name', 'last_name', 'place_of_birth', 'date_of_birth', 'sex', 'marital', 'ran', 'country',
 			'father', 'mother', 'status']
 
-	def __init__(self, *args, **kwargs):
+	def __init__(self, *args, lang='tet', **kwargs):
 		super().__init__(*args, **kwargs)
+		self.lang = lang
+		ui.set_labels(self, lang, _EMP_LABELS)
+		ui.choice_labels(self.fields['sex'], lang, ['Mane', 'Feto'])
+		ui.choice_labels(self.fields['marital'], lang, ['Solteiro/a', 'Casado/a', 'Divorciado/a', 'Viuvo/a'])
+		for n in ('position', 'dg', 'division', 'department', 'section'):
+			self.fields[n].empty_label = ui.tr(lang, 'form.blank')
 		self.fields['first_name'].required = True
 		self.fields['country'].queryset = Country.objects.order_by('name')
 		self.fields['country'].required = False
@@ -64,6 +79,9 @@ class EmployeeForm(forms.ModelForm):
 			self.fields.pop('create_account')
 			self._load_related()
 		_style(self)
+
+	def _err(self, key, **kw):
+		return forms.ValidationError(ui.tr(self.lang, key, **kw))
 
 	def _load_related(self):
 		e = self.instance
@@ -83,7 +101,7 @@ class EmployeeForm(forms.ModelForm):
 		d = self.cleaned_data['date_of_birth']
 		today = datetime.date.today()
 		if d >= today or (today.year - d.year) > 100:
-			raise forms.ValidationError("Data moris la loos.")
+			raise self._err('emp.err.dob')
 		return d
 
 	def clean_nrf(self):
@@ -93,13 +111,13 @@ class EmployeeForm(forms.ModelForm):
 			if self.instance.pk:
 				qs = qs.exclude(employee=self.instance)
 			if qs.exists():
-				raise forms.ValidationError("NRF ne'e uza ona.")
+				raise self._err('emp.err.nrf')
 		return nrf
 
 	def clean_phone(self):
 		v = (self.cleaned_data.get('phone') or '').strip()
 		if v and not _PHONE_RE.match(v):
-			raise forms.ValidationError("Nu. telemovel la loos.")
+			raise self._err('emp.err.phone')
 		return v
 
 	def clean_email(self):
@@ -111,20 +129,20 @@ class EmployeeForm(forms.ModelForm):
 	def clean_image(self):
 		f = self.cleaned_data.get('image')
 		if f and hasattr(f, 'size') and f.size > MAX_PHOTO_BYTES:
-			raise forms.ValidationError("Foto boot liu 2 MB.")
+			raise self._err('emp.err.photo')
 		return f
 
 	def clean(self):
 		d = super().clean()
 		dg, div, dep, sec = d.get('dg'), d.get('division'), d.get('department'), d.get('section')
 		if div and dg and div.dg_id != dg.pk:
-			raise forms.ValidationError("Diresaun la tama iha Diresaun Geral ne'ebé hili.")
+			raise self._err('place.err.div_dg')
 		if dep and div and dep.division_id != div.pk:
-			raise forms.ValidationError("Departamento la tama iha Diresaun ne'ebé hili.")
+			raise self._err('place.err.dep_div')
 		if sec and dep and sec.department_id != dep.pk:
-			raise forms.ValidationError("Seksaun la tama iha Departamento ne'ebé hili.")
+			raise self._err('place.err.sec_dep')
 		if (dep or sec) and not div:
-			raise forms.ValidationError("Hili Diresaun molok Departamento/Seksaun.")
+			raise self._err('place.err.need_div')
 		if div and not dg:
 			d['dg'] = div.dg
 		return d
@@ -137,8 +155,13 @@ class AddressForm(forms.Form):
 	village = forms.ModelChoiceField(Village.objects.none(), label="Suco", required=False, empty_label="--")
 	aldeia = forms.CharField(label="Aldeia", max_length=50, required=False)
 
-	def __init__(self, *args, **kwargs):
+	def __init__(self, *args, lang='tet', **kwargs):
 		super().__init__(*args, **kwargs)
+		self.lang = lang
+		ui.set_labels(self, lang, {'municipality': 'f.municipality', 'administrativepost': 'f.post',
+			'village': 'f.village', 'aldeia': 'f.aldeia'})
+		for n in ('municipality', 'administrativepost', 'village'):
+			self.fields[n].empty_label = ui.tr(lang, 'form.blank')
 		src = self.data if self.is_bound else self.initial
 
 		def num(key):
@@ -157,7 +180,7 @@ class AddressForm(forms.Form):
 		d = super().clean()
 		m, p, v = d.get('municipality'), d.get('administrativepost'), d.get('village')
 		if p and (not m or p.municipality_id != m.pk):
-			raise forms.ValidationError("Posto la tama iha Municipiu ne'ebé hili.")
+			raise forms.ValidationError(ui.tr(self.lang, 'emp.err.post'))
 		if v and (not p or v.administrativepost_id != p.pk):
-			raise forms.ValidationError("Suco la tama iha Posto ne'ebé hili.")
+			raise forms.ValidationError(ui.tr(self.lang, 'emp.err.village'))
 		return d

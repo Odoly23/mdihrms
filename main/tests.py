@@ -26,7 +26,7 @@ class ProjectTests(TestCase):
 			self.client.force_login(u)
 			r = self.client.get(reverse('home'))
 			self.assertEqual(r.status_code, 200, name)
-			self.assertContains(r, '#e3171e')
+			self.assertContains(r, 'main-navbar')
 
 	def test_logout_is_post_and_redirects_to_login(self):
 		u = User.objects.create_user('x', password='x')
@@ -541,3 +541,121 @@ class TopbarTests(HrBase):
 		self.assertEqual(h.count('qr-flags'), 1)
 		for code in ('tet', 'en', 'id', 'pt'):
 			self.assertIn('/attendance/qr/lang/%s/?next=' % code, h)
+
+
+class FullTranslationTests(HrBase):
+	"""Satu klik bendera mengganti SELURUH tampilan: tidak ada teks Tetun yang tersisa di bahasa lain."""
+	LANGS = ('en', 'id', 'pt')
+	TETUN_ONLY = ('Husu lisensa', 'Lisensa hotu', 'Ha\'u nia lisensa', 'Hela fatin', 'Kolokasaun foun', 'Laiha dadus',
+		'Haree hotu', 'ANIVERSÁRIU OHIN', 'Funsionáriu', 'Rezumu', 'VARANDA', 'FUNSIONÁRIU')
+
+	def pages(self, emp):
+		return [reverse('home'), reverse('leave-mine'), reverse('leave-new'), reverse('leave-all'), reverse('placement-list'),
+			reverse('placement-history', args=[emp.pk]), reverse('placement-new', args=[emp.pk]), reverse('staff-list'),
+			reverse('staff-detail', args=[emp.pk]), reverse('employee-add'), reverse('employee-edit', args=[emp.pk]),
+			reverse('employee-address', args=[emp.pk]), reverse('notif-birthdays')]
+
+	def test_no_tetun_left_over_in_other_languages(self):
+		e = self.emp('Maria')
+		self.login('admin', self.emp('Admin'))
+		for lang in self.LANGS:
+			self.client.cookies['mdi_lang'] = lang
+			for url in self.pages(e):
+				r = self.client.get(url)
+				self.assertEqual(r.status_code, 200, (lang, url))
+				html = r.content.decode()
+				self.assertIn('<html lang="%s">' % lang, html)
+				body = html[html.index('class="topbar"'):]
+				for word in self.TETUN_ONLY:
+					self.assertNotIn('>' + word, body.replace('> ', '>'), (lang, url, word))
+
+	def test_each_language_shows_its_own_texts(self):
+		self.login('admin', self.emp('Admin'))
+		want = {'tet': 'Husu lisensa', 'en': 'Request leave', 'id': 'Ajukan cuti', 'pt': 'Pedir licença'}
+		for lang, text in want.items():
+			self.client.cookies['mdi_lang'] = lang
+			self.assertContains(self.client.get(reverse('leave-new')), text)
+
+	def test_form_labels_choices_and_errors_follow_the_language(self):
+		self.login('admin')
+		self.client.cookies['mdi_lang'] = 'en'
+		h = self.client.get(reverse('employee-add')).content.decode()
+		for text in ('First name', 'Date of birth', 'Male', 'Married', 'Create login account'):
+			self.assertIn(text, h)
+		r = self.client.post(reverse('employee-add'), {'first_name': 'X', 'date_of_birth': '2999-01-01', 'status': 1})
+		self.assertContains(r, 'The date of birth is not valid.')
+		self.client.cookies['mdi_lang'] = 'pt'
+		self.assertContains(self.client.post(reverse('employee-add'), {'first_name': 'X', 'date_of_birth': '2999-01-01', 'status': 1}),
+			'A data de nascimento não é válida.')
+
+	def test_flash_messages_follow_the_language(self):
+		e = self.emp('Maria')
+		self.login('staff', e)
+		self.client.cookies['mdi_lang'] = 'id'
+		r = self.client.post(reverse('leave-new'), {'leave_type': self.lt.pk,
+			'start_date': timezone.localdate() + datetime.timedelta(days=1), 'end_date': timezone.localdate() + datetime.timedelta(days=2)}, follow=True)
+		self.assertContains(r, 'Pengajuan cuti terkirim')
+		self.assertContains(r, 'Menunggu')
+
+	def test_birthday_page_uses_translated_month_names(self):
+		self.login('staff')
+		self.client.cookies['mdi_lang'] = 'pt'
+		self.assertContains(self.client.get(reverse('notif-birthdays'), {'month': 3}), 'Março')
+
+	def test_login_and_error_pages_translate_and_have_flags(self):
+		self.client.logout()
+		self.client.cookies['mdi_lang'] = 'en'
+		r = self.client.get(reverse('login'))
+		self.assertContains(r, 'Log in')
+		self.assertContains(r, '/attendance/qr/lang/pt/')
+		r = self.client.get('/tidak-ada/')
+		self.assertEqual(r.status_code, 404)
+		self.assertContains(r, 'Page not found.', status_code=404)
+
+	def test_language_switch_works_without_login_and_returns_to_page(self):
+		self.client.logout()
+		r = self.client.get(reverse('qr-lang', args=['pt']) + '?next=/login/')
+		self.assertRedirects(r, '/login/', fetch_redirect_response=False)
+		self.assertEqual(r.cookies['mdi_lang'].value, 'pt')
+
+
+class ShellLayoutTests(HrBase):
+	def html(self, group='staff'):
+		self.login(group, self.emp('E' + group))
+		return self.client.get(reverse('home')).content.decode()
+
+	def test_structure_topbar_navbar_offcanvas(self):
+		h = self.html('admin')
+		order = [h.index(x) for x in ('class="topbar"', 'class="main-navbar"', 'id="sidebar"', 'id="overlay"', 'class="page-wrapper"', 'class="site-footer"')]
+		self.assertEqual(order, sorted(order))
+		self.assertIn('id="btnHam"', h)
+		self.assertIn('aria-controls="sidebar"', h)
+		self.assertIn('offcanvas.js', h)
+		self.assertIn('class="brand"', h)
+
+	def test_sidebar_items_follow_the_role(self):
+		def side(group):
+			h = self.html(group)
+			return h[h.index('id="sidebar"'):h.index('id="overlay"')]
+		adm, stf, fun = side('admin'), side('staff'), side('funsionario')
+		self.assertIn(reverse('qr-devices'), adm)
+		self.assertIn(reverse('qr-cards'), adm)
+		self.assertNotIn(reverse('qr-devices'), stf)
+		self.assertNotIn(reverse('qr-cards'), stf)
+		self.assertIn(reverse('qr-today'), stf)
+		self.assertNotIn(reverse('qr-today'), fun)
+		self.assertNotIn(reverse('staff-list'), fun)
+		for s in (adm, stf, fun):
+			self.assertIn('action="%s"' % reverse('logout'), s)              # keluar lewat POST
+
+	def test_colour_comes_from_one_variable_and_sample_values(self):
+		import os
+		from django.conf import settings
+		css = open(os.path.join(settings.BASE_DIR, 'main/static/main/css/main.css')).read()
+		for needle in ('--navy: #00B050', '--topbar-h: 34px', '--navbar-h: 62px', '--header-h: 96px', '--sb-w: 72px',
+				'.topbar', '.main-navbar', '.nav-links', '.btn-ham', '#sidebar', '#overlay', '.sb-body', '.sb-sec', 'body.sb-open footer'):
+			self.assertIn(needle, css, needle)
+
+	def test_no_hardcoded_old_red_in_pages(self):
+		h = self.html('admin')
+		self.assertNotIn('#e3171e', h)

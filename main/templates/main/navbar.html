@@ -1,50 +1,107 @@
-{% load qr_i18n %}<header class="site-header">
-	<nav class="navbar navbar-expand-xl navbar-dark fixed-top" style="background-color:#e3171e">
-		<a class="navbar-brand" href="{% if user.is_authenticated %}{% url 'home' %}{% else %}#{% endif %}"><i class="fa fa-id-card-o"></i> <b>MDI-HRMS</b></a>
+{% load static qr_i18n %}<header class="site-header">
+<nav class="main-navbar" aria-label="MDI-HRMS">
+	<div class="container">
+		<a class="brand" href="{% if user.is_authenticated %}{% url 'home' %}{% else %}#{% endif %}">
+			<img src="{% static 'main/images/favicon.jpg' %}" alt=""><span>MDI-HRMS</span>
+		</a>
 		{% if user.is_authenticated %}
-		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-		</button>
-		<div class="collapse navbar-collapse" id="navbarToggle">
-			<ul class="navbar-nav ml-auto">
-				<li class="nav-item active"><a class="nav-link" href="{% url 'home' %}"><i class="fa fa-home"></i> VARANDA</a></li>
-				{% if can.directory %}<li class="nav-item active"><a class="nav-link" href="{% url 'staff-list' %}"><i class="fa fa-users"></i> FUNSIONARIU</a></li>{% endif %}
-				{% if can.qr_view %}
-				<li class="nav-item dropdown active">
-					<a class="nav-link dropdown-toggle" href="#" id="ddAbs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-qrcode"></i> ABSENSI QR</a>
-					<div class="dropdown-menu" aria-labelledby="ddAbs">
-						<a class="dropdown-item" href="{% url 'qr-today' %}"><i class="fa fa-list"></i> {% t 'nav.today' %}</a>
-						<a class="dropdown-item" href="{% url 'qr-report' %}"><i class="fa fa-table"></i> {% t 'nav.report' %}</a>
-						{% if can.qr_manage %}<a class="dropdown-item" href="{% url 'qr-cards' %}"><i class="fa fa-id-card"></i> {% t 'nav.cards' %}</a>{% endif %}
-						{% if can.qr_device %}<a class="dropdown-item" href="{% url 'qr-devices' %}"><i class="fa fa-desktop"></i> {% t 'nav.devices' %}</a>{% endif %}
-					</div>
-				</li>
-				{% endif %}
-				{% if can.leave_request or can.leave_view_all %}
-				<li class="nav-item dropdown active">
-					<a class="nav-link dropdown-toggle" href="#" id="ddLeave" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-calendar-check-o"></i> LISENSA</a>
-					<div class="dropdown-menu" aria-labelledby="ddLeave">
-						{% if can.leave_request %}<a class="dropdown-item" href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o"></i> Husu Lisensa</a>
-						<a class="dropdown-item" href="{% url 'leave-mine' %}"><i class="fa fa-list"></i> Ha'u-nia Lisensa</a>{% endif %}
-						{% if can.leave_view_all %}<a class="dropdown-item" href="{% url 'leave-all' %}"><i class="fa fa-users"></i> Lisensa hotu</a>{% endif %}
-					</div>
-				</li>
-				{% endif %}
-				{% if can.placement_view %}<li class="nav-item active"><a class="nav-link" href="{% url 'placement-list' %}"><i class="fa fa-exchange"></i> KOLOKASAUN</a></li>{% endif %}
-				{% include 'attendance/qr/_navbar_report.html' %}
-				<li class="nav-item active"><a class="nav-link" href="{% url 'notif-birthdays' %}"><i class="fa fa-birthday-cake"></i><span class="d-lg-none"> ANIVERSARIU</span></a></li>
-				{% include 'main/_notif.html' %}
-				{% if can.admin_site %}<li class="nav-item active"><a class="nav-link" href="{% url 'admin:index' %}"><i class="fa fa-cogs"></i> ADMIN</a></li>{% endif %}
-				<li class="nav-item dropdown active">
-					<a class="nav-link dropdown-toggle" href="#" id="profile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user-o"></i> {{ request.user.username|upper }}</a>
-					<div class="dropdown-menu dropdown-menu-right" aria-labelledby="profile">
-						<form method="post" action="{% url 'logout' %}">{% csrf_token %}
-							<button type="submit" class="dropdown-item"><i class="fa fa-sign-out"></i> Sair</button>
-						</form>
-					</div>
-				</li>
-			</ul>
+		<ul class="nav-links">
+			<li class="{% if request.resolver_match.url_name == 'home' %}on{% endif %}"><a class="nl" href="{% url 'home' %}"><i class="fa fa-home" aria-hidden="true"></i> {% t 'ui.nav.home' %}</a></li>
+			{% if can.directory %}<li class="{% if 'staff' in request.resolver_match.url_name %}on{% endif %}"><a class="nl" href="{% url 'staff-list' %}"><i class="fa fa-users" aria-hidden="true"></i> {% t 'ui.nav.staff' %}</a></li>{% endif %}
+			{% if can.qr_view %}
+			<li class="dropdown">
+				<a class="nl dropdown-toggle" href="#" id="ddAbs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-qrcode" aria-hidden="true"></i> {% t 'ui.nav.abs' %}</a>
+				<div class="dropdown-menu" aria-labelledby="ddAbs">
+					<a class="dropdown-item" href="{% url 'qr-today' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'nav.today' %}</a>
+					<a class="dropdown-item" href="{% url 'qr-report' %}"><i class="fa fa-table" aria-hidden="true"></i> {% t 'nav.report' %}</a>
+					{% if can.qr_manage %}<a class="dropdown-item" href="{% url 'qr-cards' %}"><i class="fa fa-id-card" aria-hidden="true"></i> {% t 'nav.cards' %}</a>{% endif %}
+					{% if can.qr_device %}<a class="dropdown-item" href="{% url 'qr-devices' %}"><i class="fa fa-desktop" aria-hidden="true"></i> {% t 'nav.devices' %}</a>{% endif %}
+				</div>
+			</li>
+			{% endif %}
+			{% if can.leave_request or can.leave_view_all %}
+			<li class="dropdown">
+				<a class="nl dropdown-toggle" href="#" id="ddLeave" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-calendar-check-o" aria-hidden="true"></i> {% t 'ui.nav.leave' %}</a>
+				<div class="dropdown-menu" aria-labelledby="ddLeave">
+					{% if can.leave_request %}<a class="dropdown-item" href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o" aria-hidden="true"></i> {% t 'ui.leave.new' %}</a>
+					<a class="dropdown-item" href="{% url 'leave-mine' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'ui.leave.mine' %}</a>{% endif %}
+					{% if can.leave_view_all %}<a class="dropdown-item" href="{% url 'leave-all' %}"><i class="fa fa-users" aria-hidden="true"></i> {% t 'ui.leave.all' %}</a>{% endif %}
+				</div>
+			</li>
+			{% endif %}
+			{% if can.placement_view %}<li class="{% if 'placement' in request.resolver_match.url_name %}on{% endif %}"><a class="nl" href="{% url 'placement-list' %}"><i class="fa fa-exchange" aria-hidden="true"></i> {% t 'ui.nav.place' %}</a></li>{% endif %}
+			<li class="dropdown">
+				<a class="nl dropdown-toggle" href="#" id="ddRep" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-bar-chart" aria-hidden="true"></i> {% t 'menu.report' %}</a>
+				<div class="dropdown-menu" aria-labelledby="ddRep">
+					<a class="dropdown-item" href="{% qr_tab_url %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'nav.tab' %}</a>
+					<a class="dropdown-item" href="{% qr_chart_url %}"><i class="fa fa-bar-chart" aria-hidden="true"></i> {% t 'nav.chart' %}</a>
+				</div>
+			</li>
+			<li class="{% if 'notif-birthdays' == request.resolver_match.url_name %}on{% endif %}"><a class="nl" href="{% url 'notif-birthdays' %}" title="{% t 'ui.nav.bday' %}"><i class="fa fa-birthday-cake" aria-hidden="true"></i> <span class="sr-only">{% t 'ui.nav.bday' %}</span></a></li>
+			{% if can.admin_site %}<li><a class="nl" href="{% url 'admin:index' %}" title="Admin"><i class="fa fa-cogs" aria-hidden="true"></i> {% t 'ui.nav.admin' %}</a></li>{% endif %}
+		</ul>
+		<div class="nb-right">
+			<div class="dropdown">
+				<a href="#" id="notifDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{% t 'ui.nav.notif' %}" aria-label="{% t 'ui.nav.notif' %}">
+					<i class="fa fa-bell" aria-hidden="true"></i> <span id="notifbadge" class="badge badge-light notif-total" data-url="{% url 'notif-badge' %}"></span>
+				</a>
+				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="notifDropdown" style="min-width:250px">
+					<a class="dropdown-item" href="{% url 'notif-birthdays' %}"><i class="fa fa-birthday-cake" aria-hidden="true"></i> <span>{% t 'notif.bday' %} (<strong id="notif-bday">0</strong>)<br/><small class="text-muted" id="notif-names"></small></span></a>
+					{% if can.leave_approver %}<a class="dropdown-item" href="{% url 'leave-all' %}"><i class="fa fa-calendar-check-o" aria-hidden="true"></i> <span>{% t 'notif.leave' %} (<strong id="notif-leave">0</strong>)</span></a>{% endif %}
+				</div>
+			</div>
+			<div class="dropdown">
+				<a href="#" id="profile" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="{{ request.user.username }}">
+					<span class="av">{{ request.user.username|slice:":2"|upper }}</span><span class="nb-user">{{ request.user.username|upper }}</span>
+				</a>
+				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="profile">
+					<form method="post" action="{% url 'logout' %}">{% csrf_token %}
+						<button type="submit" class="dropdown-item"><i class="fa fa-sign-out" aria-hidden="true"></i> {% t 'ui.nav.logout' %}</button>
+					</form>
+				</div>
+			</div>
+			<button type="button" class="btn-ham" id="btnHam" aria-controls="sidebar" aria-expanded="false" aria-label="{% t 'ui.nav.menu' %}"><i class="fa fa-bars" aria-hidden="true"></i></button>
 		</div>
 		{% endif %}
-	</nav>
+	</div>
+</nav>
+{% if user.is_authenticated %}
+<aside id="sidebar" aria-label="MDI-HRMS" aria-hidden="true">
+	<div class="sb-body">
+		<ul>
+			<li class="{% if request.resolver_match.url_name == 'home' %}sb-on{% endif %}"><a href="{% url 'home' %}"><i class="fa fa-home" aria-hidden="true"></i>{% t 'sb.home' %}</a></li>
+			{% if can.directory %}<li><a href="{% url 'staff-list' %}"><i class="fa fa-users" aria-hidden="true"></i>{% t 'sb.staff' %}</a></li>{% endif %}
+		</ul>
+		<div class="sb-sec">{% t 'sb.sec.abs' %}</div>
+		<ul>
+			{% if can.qr_view %}
+			<li><a href="{% url 'qr-today' %}"><i class="fa fa-list" aria-hidden="true"></i>{% t 'nav.today' %}</a></li>
+			<li><a href="{% url 'qr-report' %}"><i class="fa fa-table" aria-hidden="true"></i>{% t 'sb.recap' %}</a></li>
+			{% endif %}
+			{% if can.qr_manage %}<li><a href="{% url 'qr-cards' %}"><i class="fa fa-id-card" aria-hidden="true"></i>{% t 'sb.cards' %}</a></li>{% endif %}
+			{% if can.qr_device %}<li><a href="{% url 'qr-devices' %}"><i class="fa fa-desktop" aria-hidden="true"></i>{% t 'sb.kiosk' %}</a></li>{% endif %}
+			<li><a href="{% qr_tab_url %}"><i class="fa fa-bar-chart" aria-hidden="true"></i>{% t 'nav.tab' %}</a></li>
+			<li><a href="{% qr_chart_url %}"><i class="fa fa-area-chart" aria-hidden="true"></i>{% t 'nav.chart' %}</a></li>
+		</ul>
+		{% if can.leave_request or can.leave_view_all or can.placement_view %}
+		<div class="sb-sec">{% t 'sb.sec.hr' %}</div>
+		<ul>
+			{% if can.leave_request %}
+			<li><a href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o" aria-hidden="true"></i>{% t 'sb.leave' %}</a></li>
+			<li><a href="{% url 'leave-mine' %}"><i class="fa fa-list-alt" aria-hidden="true"></i>{% t 'sb.myleave' %}</a></li>
+			{% endif %}
+			{% if can.leave_view_all %}<li><a href="{% url 'leave-all' %}"><i class="fa fa-calendar-check-o" aria-hidden="true"></i>{% t 'sb.allleave' %}</a></li>{% endif %}
+			{% if can.placement_view %}<li><a href="{% url 'placement-list' %}"><i class="fa fa-exchange" aria-hidden="true"></i>{% t 'sb.place' %}</a></li>{% endif %}
+			<li><a href="{% url 'notif-birthdays' %}"><i class="fa fa-birthday-cake" aria-hidden="true"></i>{% t 'sb.bday' %}</a></li>
+		</ul>
+		{% endif %}
+		<hr/>
+		<ul>
+			{% if can.admin_site %}<li><a href="{% url 'admin:index' %}"><i class="fa fa-cogs" aria-hidden="true"></i>{% t 'sb.admin' %}</a></li>{% endif %}
+			<li><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"><i class="fa fa-sign-out" aria-hidden="true"></i>{% t 'sb.out' %}</button></form></li>
+		</ul>
+	</div>
+</aside>
+<div id="overlay"></div>
+{% endif %}
 </header>

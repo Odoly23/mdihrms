@@ -683,7 +683,6 @@ class I18nTests(QRBase):
 		self.assertIn(reverse('qr-today'), html)
 		self.assertIn('btn btn-sm btn-mdi', html)
 		self.assertIn('Absensia QR', html)
-		self.assertIn('#e3171e', html)                   # tetap merah walau qr.css belum dimuat halaman itu
 
 	def test_every_key_used_in_templates_and_code_exists(self):
 		import pathlib, re
@@ -756,7 +755,7 @@ class I18nTests(QRBase):
 		html = r.content.decode()
 		for code in ('tet', 'en', 'id', 'pt'):
 			self.assertIn('/attendance/qr/lang/%s/?next=' % code, html)
-		html = html[html.index('<main'):]                       # bendera di dalam halaman (topbar proyek dihitung terpisah)
+		html = html[html.index('class="page-wrapper"'):]        # bendera di dalam halaman (topbar proyek dihitung terpisah)
 		self.assertEqual(html.count('qr-flag on'), 1)
 		self.assertIn('qr-flag on" href="/attendance/qr/lang/pt/', html)
 
@@ -2095,7 +2094,8 @@ class ProjectCompatibilityTests(QRBase):
 		self.login('funsionario')
 		r = self.client.get(reverse('qr-cards'))                                # harness memiliki home/403.html
 		self.assertContains(r, '403</h1>', status_code=403)
-		self.assertNotContains(r, 'Anda tidak berhak', status_code=403)
+		self.assertContains(r, 'site-footer', status_code=403)                # memakai kerangka proyek, bukan halaman cadangan mandiri
+		self.assertNotContains(r, 'qr-fallback-403', status_code=403)
 
 	def test_items_snippet_fits_inside_an_existing_relatoriu_dropdown(self):
 		from django.template.loader import render_to_string

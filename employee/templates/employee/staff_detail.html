@@ -2,8 +2,8 @@
 {% load qr_i18n %}
 {% block content %}
 <div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
-	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
-	<li class="breadcrumb-item"><a href="{% url 'staff-list' %}">FUNSIONARIU</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'staff-list' %}">{% t 'ui.nav.staff' %}</a></li>
 	<li class="breadcrumb-item active">{{ emp|upper }}</li></ul></div></div>
 <div class="container-fluid"><br/>
 <div class="row">
@@ -11,31 +11,31 @@
 	<div class="card-header"><i class="fa fa-id-badge"></i> {{ emp|upper }}</div>
 	<div class="card-body">
 		<table class="table table-sm table-borderless mb-0">
-			<tr><th>NRF</th><td>{{ emp.idfnumber.nrf|default:"-" }}</td></tr>
-			<tr><th>Pojisaun</th><td>{{ emp.employeeposition.position|default:"-" }}</td></tr>
-			<tr><th>Diresaun Geral</th><td>{{ emp.employeedivision.dg|default:"-" }}</td></tr>
-			<tr><th>Diresaun</th><td>{{ emp.employeedivision.division|default:"-" }}</td></tr>
-			<tr><th>Departamento</th><td>{{ emp.employeedivision.department|default:"-" }}</td></tr>
-			<tr><th>Seksaun</th><td>{{ emp.employeedivision.section|default:"-" }}</td></tr>
-			<tr><th>Telemovel</th><td>{{ emp.contactinfo.phone|default:"-" }}</td></tr>
-			<tr><th>Email</th><td>{{ emp.contactinfo.email|default:"-" }}</td></tr>
-			<tr><th>Data Moris</th><td>{{ emp.date_of_birth|date:"d/m/Y"|default:"-" }}</td></tr>
+			<tr><th>{% t 'th.nrf' %}</th><td>{{ emp.idfnumber.nrf|default:"-" }}</td></tr>
+			<tr><th>{% t 'th.position' %}</th><td>{{ emp.employeeposition.position|default:"-" }}</td></tr>
+			<tr><th>{% t 'f.dg' %}</th><td>{{ emp.employeedivision.dg|default:"-" }}</td></tr>
+			<tr><th>{% t 'f.division' %}</th><td>{{ emp.employeedivision.division|default:"-" }}</td></tr>
+			<tr><th>{% t 'f.department' %}</th><td>{{ emp.employeedivision.department|default:"-" }}</td></tr>
+			<tr><th>{% t 'f.section' %}</th><td>{{ emp.employeedivision.section|default:"-" }}</td></tr>
+			<tr><th>{% t 'f.phone' %}</th><td>{{ emp.contactinfo.phone|default:"-" }}</td></tr>
+			<tr><th>{% t 'f.email' %}</th><td>{{ emp.contactinfo.email|default:"-" }}</td></tr>
+			<tr><th>{% t 'f.dob' %}</th><td>{{ emp.date_of_birth|date:"d/m/Y"|default:"-" }}</td></tr>
 		</table>
 		{% if can_edit_place or can.employee_edit %}<hr/>{% endif %}
-		{% if can_edit_place %}<a class="btn btn-sm btn-mdi mb-1" href="{% url 'placement-new' emp.pk %}"><i class="fa fa-exchange"></i> Muda kolokasaun</a>{% endif %}
-		{% if can.employee_edit %}<a class="btn btn-sm btn-mdi mb-1" href="{% url 'employee-edit' emp.pk %}"><i class="fa fa-pencil"></i> Hadia</a>
-		<a class="btn btn-sm btn-mdi mb-1" href="{% url 'employee-address' emp.pk %}"><i class="fa fa-map-marker"></i> Hela fatin</a>{% endif %}
+		{% if can_edit_place %}<a class="btn btn-sm btn-mdi mb-1" href="{% url 'placement-new' emp.pk %}"><i class="fa fa-exchange"></i> {% t 'btn.change_place' %}</a>{% endif %}
+		{% if can.employee_edit %}<a class="btn btn-sm btn-mdi mb-1" href="{% url 'employee-edit' emp.pk %}"><i class="fa fa-pencil"></i> {% t 'btn.edit' %}</a>
+		<a class="btn btn-sm btn-mdi mb-1" href="{% url 'employee-address' emp.pk %}"><i class="fa fa-map-marker"></i> {% t 'btn.address' %}</a>{% endif %}
 	</div>
 </div></div>
 <div class="col-12 col-lg-7 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">
-	<div class="card-header"><i class="fa fa-calendar"></i> ABSENSIA FULAN {{ month }}/{{ year }}</div>
+	<div class="card-header"><i class="fa fa-calendar"></i> {% t 'staff.att' m=month y=year %}</div>
 	<div class="card-body">
 		{% if row %}
 		<div class="qr-tiles">
-			<span class="qr-tile ok"><b>{{ row.totals.present }}</b><span>Prezensa</span></span>
-			<span class="qr-tile warn"><b>{{ row.totals.late }}</b><span>Tardi</span></span>
-			<span class="qr-tile leave"><b>{{ row.totals.leave }}</b><span>Lisensa</span></span>
-			<span class="qr-tile bad"><b>{{ row.totals.absent }}</b><span>Falta</span></span>
+			<span class="qr-tile ok"><b>{{ row.totals.present }}</b><span>{% t 'tile.present' %}</span></span>
+			<span class="qr-tile warn"><b>{{ row.totals.late }}</b><span>{% t 'tile.late' %}</span></span>
+			<span class="qr-tile leave"><b>{{ row.totals.leave }}</b><span>{% t 'tile.leave' %}</span></span>
+			<span class="qr-tile bad"><b>{{ row.totals.absent }}</b><span>{% t 'tile.absent' %}</span></span>
 		</div>
 		{% endif %}
 	</div>
@@ -43,19 +43,19 @@
 </div>
 <div class="row">
 <div class="col-12 col-lg-6 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">
-	<div class="card-header"><i class="fa fa-calendar-check-o"></i> LISENSA</div>
+	<div class="card-header"><i class="fa fa-calendar-check-o"></i> {% t 'staff.leave' %}</div>
 	<div class="card-body"><div class="table-responsive"><table class="table table-sm table-striped">
 		{% for lv in leaves %}<tr><td>{{ lv.leave_type.name|default:"-" }}</td><td>{{ lv.start_date|date:"d/m/Y" }} – {{ lv.end_date|date:"d/m/Y" }}</td>
 		<td><span class="badge badge-{{ lv.state_class }}">{{ lv.state_text }}</span></td></tr>
-		{% empty %}<tr><td class="text-muted">Laiha lisensa.</td></tr>{% endfor %}
+		{% empty %}<tr><td class="text-muted">{% t 'staff.no_leave' %}</td></tr>{% endfor %}
 	</table></div></div>
 </div></div>
 <div class="col-12 col-lg-6 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">
-	<div class="card-header"><i class="fa fa-exchange"></i> KOLOKASAUN</div>
+	<div class="card-header"><i class="fa fa-exchange"></i> {% t 'staff.place' %}</div>
 	<div class="card-body"><div class="table-responsive"><table class="table table-sm table-striped">
 		{% for k in places %}<tr><td>{{ k.position|default:"-" }}</td><td>{{ k.division|default:"-" }}</td>
-		<td>{{ k.start_date|date:"d/m/Y" }}</td><td>{% if k.is_active %}<span class="badge badge-success">Ativu</span>{% endif %}</td></tr>
-		{% empty %}<tr><td class="text-muted">Laiha kolokasaun.</td></tr>{% endfor %}
+		<td>{{ k.start_date|date:"d/m/Y" }}</td><td>{% if k.is_active %}<span class="badge badge-success">{% t 'place.active' %}</span>{% endif %}</td></tr>
+		{% empty %}<tr><td class="text-muted">{% t 'staff.no_place' %}</td></tr>{% endfor %}
 	</table></div></div>
 </div></div>
 </div>

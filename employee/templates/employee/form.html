@@ -1,17 +1,17 @@
 {% extends "main/layout.html" %}
-{% load static %}
+{% load static qr_i18n %}
 {% block content %}
 <div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
-	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
-	<li class="breadcrumb-item"><a href="{% url 'staff-list' %}">FUNSIONARIU</a></li>
-	<li class="breadcrumb-item active">{% if emp %}{{ emp|upper }}{% else %}FOUN{% endif %}</li></ul></div></div>
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'staff-list' %}">{% t 'ui.nav.staff' %}</a></li>
+	<li class="breadcrumb-item active">{% if emp %}{{ emp|upper }}{% else %}{% t 'emp.new_crumb' %}{% endif %}</li></ul></div></div>
 <div class="container-fluid"><br/>
 <div class="row"><div class="col-12 col-lg-9">
 <div class="card shadow-lg pt-1 qr-border rounded">
 	<div class="card-header"><i class="fa fa-user-plus"></i> {{ title|upper }}</div>
 	<div class="card-body">
 		<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
-			{% if form.non_field_errors %}<div class="alert alert-danger p-2">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+			{% if form.non_field_errors %}<div class="alert alert-danger p-2" role="alert">{{ form.non_field_errors|join:" " }}</div>{% endif %}
 			<div class="form-row">
 			{% for f in form %}
 				<div class="form-group col-12 col-md-6 col-lg-4">
@@ -24,8 +24,8 @@
 				</div>
 			{% endfor %}
 			</div>
-			<button class="btn btn-mdi" type="submit"><i class="fa fa-save"></i> Rai</button>
-			<a class="btn btn-outline-secondary" href="{% if emp %}{% url 'staff-detail' emp.pk %}{% else %}{% url 'staff-list' %}{% endif %}">Kansela</a>
+			<button class="btn btn-mdi" type="submit"><i class="fa fa-save"></i> {% t 'btn.save' %}</button>
+			<a class="btn btn-outline-secondary" href="{% if emp %}{% url 'staff-detail' emp.pk %}{% else %}{% url 'staff-list' %}{% endif %}">{% t 'btn.cancel' %}</a>
 		</form>
 	</div>
 </div>

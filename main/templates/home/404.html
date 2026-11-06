@@ -1,4 +1,5 @@
 {% extends "main/layout.html" %}
+{% load qr_i18n %}
 {% block content %}
-<div class="container text-center" style="padding-top:60px"><h1 style="color:#e3171e">404</h1><p class="lead">Halaman tidak ditemukan</p><a class="btn btn-sm" style="background:#e3171e;color:#fff" href="{% url 'home' %}">Varanda</a></div>
+<div class="container text-center" style="padding-top:60px"><h1 style="color:var(--navy)">404</h1><p class="lead">{% t 'err.404' %}</p><a class="btn btn-sm btn-mdi" href="{% url 'home' %}">{% t 'err.home' %}</a></div>
 {% endblock %}

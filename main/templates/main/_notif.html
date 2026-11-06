@@ -1,9 +1,0 @@
-<li class="nav-item dropdown active">
-	<a class="nav-link" id="notifDropdown" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Notifikasaun">
-		<i class="fa fa-bell"></i> <span id="notifbadge" class="badge badge-light" data-url="{% url 'notif-badge' %}" style="color:#e3171e"></span>
-	</a>
-	<div class="dropdown-menu dropdown-menu-right" aria-labelledby="notifDropdown" style="font-size:13px;min-width:240px">
-		<a class="dropdown-item" href="{% url 'notif-birthdays' %}"><i class="fa fa-birthday-cake"></i> Aniversariu ohin (<strong id="notif-bday">0</strong>)<br/><small class="text-muted" id="notif-names"></small></a>
-		{% if can.leave_approver %}<a class="dropdown-item" href="{% url 'leave-all' %}"><i class="fa fa-calendar-check-o"></i> Pedidu lisensa (<strong id="notif-leave">0</strong>)</a>{% endif %}
-	</div>
-</li>

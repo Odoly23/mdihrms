@@ -10,7 +10,7 @@ from contract.models import Kolokasaun
 from custom.models import DG, Division
 from leave.models import Leaves
 from leave.views import _rows as leave_rows
-from main import roles
+from main import roles, ui
 
 from .models import Employee
 
@@ -33,7 +33,7 @@ def staff_list(request):
 		qs = qs.filter(employeedivision__division_id=int(div))
 	page = Paginator(qs, 50).get_page(request.GET.get('page'))
 	return render(request, 'employee/staff_list.html', {
-		'title': 'Funsionariu', 'page': page, 'q': q, 'dg': dg, 'div': div,
+		'title': ui.tr(request, 'staff.title'), 'page': page, 'q': q, 'dg': dg, 'div': div,
 		'dgs': DG.objects.order_by('name'), 'divisions': Division.objects.order_by('name')})
 
 
@@ -46,7 +46,7 @@ def staff_detail(request, emp_id):
 	today = svc.to_local(timezone.now()).date()
 	rep = svc.month_report(today.year, today.month, employee=emp)
 	row = rep['rows'][0] if rep['rows'] else None
-	leaves = leave_rows(Leaves.objects.filter(employee=emp).select_related('leave_type').order_by('-start_date')[:10])
+	leaves = leave_rows(Leaves.objects.filter(employee=emp).select_related('leave_type').order_by('-start_date')[:10], ui.lang(request))
 	places = Kolokasaun.objects.filter(employee=emp).select_related('position', 'division').order_by('-start_date')[:10]
 	return render(request, 'employee/staff_detail.html', {
 		'title': str(emp), 'emp': emp, 'row': row, 'month': today.month, 'year': today.year, 'leaves': leaves, 'places': places,
@@ -72,25 +72,25 @@ def _hier():
 
 @roles.role_required('EMPLOYEE_EDIT_GROUPS')
 def employee_add(request):
-	form = EmployeeForm(request.POST or None, request.FILES or None)
+	form = EmployeeForm(request.POST or None, request.FILES or None, lang=ui.lang(request))
 	if request.method == 'POST' and form.is_valid():
 		emp, account = save_employee(form, request.user, form.cleaned_data.get('create_account'))
-		messages.success(request, "Funsionariu foun aumenta ona. Kartaun QR prontu atu imprime.")
+		messages.success(request, ui.tr(request, 'emp.msg.added'))
 		if account:
-			messages.warning(request, "Konta login: %s · Password: %s (hatudu dala ida deit, fo ba funsionariu)." % account)
+			messages.warning(request, ui.tr(request, 'emp.msg.account', user=account[0], pwd=account[1]))
 		return redirect('staff-detail', emp_id=emp.pk)
-	return render(request, 'employee/form.html', dict(_hier(), title='Aumenta Funsionariu', form=form, mode='employee'))
+	return render(request, 'employee/form.html', dict(_hier(), title=ui.tr(request, 'emp.add'), form=form, mode='employee'))
 
 
 @roles.role_required('EMPLOYEE_EDIT_GROUPS')
 def employee_edit(request, emp_id):
 	emp = get_object_or_404(Employee, pk=emp_id)
-	form = EmployeeForm(request.POST or None, request.FILES or None, instance=emp)
+	form = EmployeeForm(request.POST or None, request.FILES or None, instance=emp, lang=ui.lang(request))
 	if request.method == 'POST' and form.is_valid():
 		save_employee(form, request.user)
-		messages.success(request, "Dadus funsionariu hadia ona.")
+		messages.success(request, ui.tr(request, 'emp.msg.updated'))
 		return redirect('staff-detail', emp_id=emp.pk)
-	return render(request, 'employee/form.html', dict(_hier(), title='Hadia Funsionariu', form=form, mode='employee', emp=emp))
+	return render(request, 'employee/form.html', dict(_hier(), title=ui.tr(request, 'emp.edit'), form=form, mode='employee', emp=emp))
 
 
 @roles.role_required('EMPLOYEE_EDIT_GROUPS')
@@ -99,9 +99,9 @@ def employee_address(request, emp_id):
 	loc = LocationTL.objects.filter(employee=emp).first()
 	initial = {'municipality': loc.municipality_id, 'administrativepost': loc.administrativepost_id,
 		'village': loc.village_id, 'aldeia': loc.aldeia} if loc else {}
-	form = AddressForm(request.POST or None, initial=initial)
+	form = AddressForm(request.POST or None, initial=initial, lang=ui.lang(request))
 	if request.method == 'POST' and form.is_valid():
 		save_address(emp, form, request.user)
-		messages.success(request, "Hela fatin hadia ona.")
+		messages.success(request, ui.tr(request, 'emp.msg.addr'))
 		return redirect('staff-detail', emp_id=emp.pk)
-	return render(request, 'employee/form.html', {'title': 'Hela Fatin Funsionariu', 'form': form, 'mode': 'address', 'emp': emp})
+	return render(request, 'employee/form.html', {'title': ui.tr(request, 'emp.address'), 'form': form, 'mode': 'address', 'emp': emp})

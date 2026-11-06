@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from custom.models import DG, Department, Division, Section
 from employee.models import Employee, EmployeeDivision, EmployeePosition
-from main import roles
+from main import roles, ui
 
 from .forms import PlacementForm
 from .models import Kolokasaun
@@ -36,7 +36,7 @@ def placement_list(request):
 	qs, q, div = _employees(request)
 	page = Paginator(qs, 50).get_page(request.GET.get('page'))
 	return render(request, 'contract/placement_list.html', {
-		'title': 'Kolokasaun', 'page': page, 'q': q, 'div': div, 'divisions': Division.objects.order_by('name'),
+		'title': ui.tr(request, 'place.title'), 'page': page, 'q': q, 'div': div, 'divisions': Division.objects.order_by('name'),
 		'can_edit': roles.has_role(request.user, 'PLACEMENT_EDIT_GROUPS')})
 
 
@@ -46,7 +46,7 @@ def placement_history(request, emp_id):
 	rows = (Kolokasaun.objects.filter(employee=emp)
 		.select_related('position', 'dg', 'division', 'department', 'section').order_by('-start_date', '-id'))
 	return render(request, 'contract/placement_history.html', {
-		'title': 'Istoria Kolokasaun', 'emp': emp, 'rows': rows,
+		'title': ui.tr(request, 'place.hist.title'), 'emp': emp, 'rows': rows,
 		'can_edit': roles.has_role(request.user, 'PLACEMENT_EDIT_GROUPS')})
 
 
@@ -62,7 +62,8 @@ def placement_new(request, emp_id):
 	if cur_div:
 		initial.update(dg=cur_div.dg_id, division=cur_div.division_id, department=cur_div.department_id,
 			section=cur_div.section_id)
-	form = PlacementForm(request.POST or None, initial=initial, last_start=last.start_date if last else None)
+	form = PlacementForm(request.POST or None, initial=initial, last_start=last.start_date if last else None,
+		lang=ui.lang(request))
 	if request.method == 'POST' and form.is_valid():
 		d = form.cleaned_data
 		with transaction.atomic():
@@ -78,9 +79,9 @@ def placement_new(request, emp_id):
 			EmployeePosition.objects.update_or_create(employee=emp, defaults={'position': d['position']})
 			EmployeeDivision.objects.update_or_create(employee=emp, defaults={
 				'dg': d['dg'], 'division': d['division'], 'department': d['department'], 'section': d['section']})
-		messages.success(request, "Kolokasaun foun rai ona.")
+		messages.success(request, ui.tr(request, 'place.msg.saved'))
 		return redirect('placement-history', emp_id=emp.pk)
 	return render(request, 'contract/placement_form.html', {
-		'title': 'Kolokasaun Foun', 'emp': emp, 'form': form,
+		'title': ui.tr(request, 'place.new.title'), 'emp': emp, 'form': form,
 		'divisions': list(Division.objects.values('id', 'dg_id')), 'departments': list(Department.objects.values('id', 'division_id')),
 		'sections': list(Section.objects.values('id', 'department_id'))})

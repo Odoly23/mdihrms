@@ -3,12 +3,11 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
-from main import roles
+from attendance import qr_i18n as i18n
+from main import roles, ui
 
 from . import services
 
-MONTHS = ['Janeiru', 'Fevereiru', 'Marsu', 'Abril', 'Maiu', 'Junhu', 'Julhu', 'Agostu', 'Setembru', 'Outubru',
-	'Novembru', 'Dezembru']
 
 
 @require_GET
@@ -37,7 +36,8 @@ def birthdays(request):
 	except ValueError:
 		month = day.month
 	data = services.birthdays_of_month(day.year, month)
+	lang = ui.lang(request)
 	rows = [{'day': d, 'names': [n for _, n in people], 'is_today': d == day} for d, people in sorted(data.items())]
 	return render(request, 'notif/birthdays.html', {
-		'title': 'Aniversariu', 'rows': rows, 'month': month, 'monthname': MONTHS[month - 1],
-		'months': list(enumerate(MONTHS, 1)), 'today': day})
+		'title': ui.tr(lang, 'bday.title'), 'rows': rows, 'month': month, 'monthname': i18n.month_name(month, lang),
+		'months': [(n, i18n.month_name(n, lang)) for n in range(1, 13)], 'today': day})

@@ -1,31 +1,32 @@
 {% extends "main/layout.html" %}
+{% load qr_i18n %}
 {% block content %}
 <div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
-	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
 	<li class="breadcrumb-item active" aria-current="page">{{ title|upper }}</li></ul></div></div>
 <div class="container-fluid"><br/>
 <div class="card shadow-lg pt-1 qr-border rounded">
 	<div class="card-header"><i class="fa fa-calendar-check-o"></i> {{ title|upper }}</div>
 	<div class="card-body">
 	{% if mode == 'mine' %}
-		{% if can.leave_request %}<a class="btn btn-sm btn-mdi" href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o"></i> Husu Lisensa</a>{% endif %}
-		{% if not emp %}<div class="alert alert-warning p-2 mt-2">Akun ne'e seidauk liga ba funsionariu.</div>{% endif %}
+		{% if can.leave_request %}<a class="btn btn-sm btn-mdi" href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o"></i> {% t 'ui.leave.new' %}</a>{% endif %}
+		{% if not emp %}<div class="alert alert-warning p-2 mt-2">{% t 'leave.unlinked' %}</div>{% endif %}
 	{% else %}
 		<form class="form-inline mb-2" method="get">
-			<select name="status" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
-				<option value="pending" {% if status == 'pending' %}selected{% endif %}>Hein</option>
-				<option value="approved" {% if status == 'approved' %}selected{% endif %}>Aprova</option>
-				<option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejeita/Kansela</option>
-				<option value="all" {% if status == 'all' %}selected{% endif %}>Hotu</option>
+			<select name="status" class="form-control form-control-sm mr-2 mb-1" onchange="this.form.submit()" aria-label="Status">
+				<option value="pending" {% if status == 'pending' %}selected{% endif %}>{% t 'leave.st.pending' %}</option>
+				<option value="approved" {% if status == 'approved' %}selected{% endif %}>{% t 'leave.st.approved' %}</option>
+				<option value="rejected" {% if status == 'rejected' %}selected{% endif %}>{% t 'leave.st.rejected' %}</option>
+				<option value="all" {% if status == 'all' %}selected{% endif %}>{% t 'leave.f.all' %}</option>
 			</select>
-			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2" placeholder="Naran" maxlength="50">
-			<button class="btn btn-sm btn-mdi"><i class="fa fa-search"></i> Buka</button>
+			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="{% t 'leave.f.name' %}" maxlength="50">
+			<button class="btn btn-sm btn-mdi mb-1"><i class="fa fa-search"></i> {% t 'btn.search' %}</button>
 		</form>
 	{% endif %}
 	<hr/>
 	<div class="table-responsive">
 	<table class="table table-sm table-striped">
-		<thead><tr>{% if mode == 'all' %}<th>Funsionariu</th>{% endif %}<th>Tipu</th><th>Hahu</th><th>Remata</th><th>Loron</th><th>Status</th><th></th></tr></thead>
+		<thead><tr>{% if mode == 'all' %}<th>{% t 'th.emp' %}</th>{% endif %}<th>{% t 'th.type' %}</th><th>{% t 'th.start' %}</th><th>{% t 'th.end' %}</th><th>{% t 'th.days' %}</th><th>{% t 'th.status' %}</th><th></th></tr></thead>
 		<tbody>
 		{% for lv in rows %}
 			<tr>
@@ -36,15 +37,15 @@
 					{% if lv.file %}<a href="{{ lv.file.url }}" target="_blank" rel="noopener" title="PDF"><i class="fa fa-file-pdf-o"></i></a>{% endif %}</td>
 				<td class="text-nowrap">
 					{% if mode == 'mine' and lv.state == 'pending' %}
-						<form method="post" action="{% url 'leave-cancel' lv.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-times"></i> Kansela</button></form>
+						<form method="post" action="{% url 'leave-cancel' lv.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-times"></i> {% t 'btn.cancel' %}</button></form>
 					{% elif mode == 'all' and can_decide and lv.state == 'pending' and lv.employee_id != mine_id %}
-						<form method="post" action="{% url 'leave-decide' lv.pk 'approve' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-success" type="submit"><i class="fa fa-check"></i> Aprova</button></form>
-						<form method="post" action="{% url 'leave-decide' lv.pk 'reject' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-ban"></i> Rejeita</button></form>
+						<form method="post" action="{% url 'leave-decide' lv.pk 'approve' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-success" type="submit"><i class="fa fa-check"></i> {% t 'btn.approve' %}</button></form>
+						<form method="post" action="{% url 'leave-decide' lv.pk 'reject' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-danger" type="submit"><i class="fa fa-ban"></i> {% t 'btn.reject' %}</button></form>
 					{% endif %}
 				</td>
 			</tr>
 		{% empty %}
-			<tr><td colspan="7" class="text-center text-muted">Laiha dadus.</td></tr>
+			<tr><td colspan="7" class="text-center text-muted">{% t 'none.data' %}</td></tr>
 		{% endfor %}
 		</tbody>
 	</table>

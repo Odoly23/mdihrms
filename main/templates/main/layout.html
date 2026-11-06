@@ -1,31 +1,30 @@
 {% load static qr_i18n %}<!DOCTYPE html>
-<html lang="en">
+<html lang="{% lang_code %}">
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<title>MDI-HRMS{% if title %} - {{ title }}{% endif %}</title>
+	<link rel="icon" type="image/jpeg" href="{% static 'main/images/favicon.jpg' %}">
 	<link rel="stylesheet" href="{% static 'main/css/bootstrap.min.css' %}">
 	<link rel="stylesheet" href="{% static 'main/font-awesome/css/font-awesome.min.css' %}">
-	<link rel="icon" type="image/jpeg" href="{% static 'main/images/favicon.jpg' %}">
-	<link rel="stylesheet" href="{% static 'main/css/main.css' %}">
 	<link rel="stylesheet" href="{% qr_static 'attendance/qr/qr.css' %}">
+	<link rel="stylesheet" href="{% static 'main/css/main.css' %}">
 </head>
-<body>
+<body class="app">
 	{% include 'main/topbar.html' %}
 	{% include 'main/navbar.html' %}
-	<main role="main" class="container-fluid px-0">
+	<div class="page-wrapper">
 		{% if messages %}
-			<div class="container-fluid pt-2">
+			<div class="container-fluid messages-bar">
 				{% for message in messages %}<div class="alert alert-{{ message.tags }} p-2">{{ message }}</div>{% endfor %}
 			</div>
 		{% endif %}
 		{% block content %}{% endblock %}
-	</main>
-	<footer class="page-footer font-small mt-5 text-center text-white py-3" style="background:#404446">
-		&copy; {% now "Y" %} Mata Dalan Institute (MDI-HRMS)
-	</footer>
+	</div>
+	<footer class="site-footer"><div class="container">{% t 'ui.footer' year=now_year %}</div></footer>
 	<script src="{% static 'main/js/jquery.min.js' %}"></script>
 	<script src="{% static 'main/js/bootstrap.min.js' %}"></script>
+	<script src="{% static 'main/js/offcanvas.js' %}" defer></script>
 	{% if user.is_authenticated %}<script src="{% static 'main/js/notif.js' %}" defer></script>{% endif %}
 	{% block scripts %}{% endblock %}
 </body>

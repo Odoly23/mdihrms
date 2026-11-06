@@ -1,23 +1,24 @@
 {% extends "main/layout.html" %}
+{% load qr_i18n %}
 {% block content %}
 <div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
-	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
-	<li class="breadcrumb-item active">KOLOKASAUN</li></ul></div></div>
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item active">{% t 'ui.nav.place' %}</li></ul></div></div>
 <div class="container-fluid"><br/>
 <div class="card shadow-lg pt-1 qr-border rounded">
-	<div class="card-header"><i class="fa fa-exchange"></i> KOLOKASAUN FUNSIONARIU</div>
+	<div class="card-header"><i class="fa fa-exchange"></i> {{ title|upper }}</div>
 	<div class="card-body">
 		<form class="form-inline mb-2" method="get">
-			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="Naran" maxlength="50">
-			<select name="div" class="form-control form-control-sm mr-2 mb-1">
-				<option value="">Diresaun hotu</option>
+			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="{% t 'leave.f.name' %}" maxlength="50">
+			<select name="div" class="form-control form-control-sm mr-2 mb-1" aria-label="{% t 'f.division' %}">
+				<option value="">{% t 'place.all_div' %}</option>
 				{% for d in divisions %}<option value="{{ d.pk }}" {% if div == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
 			</select>
-			<button class="btn btn-sm btn-mdi mb-1"><i class="fa fa-search"></i> Buka</button>
+			<button class="btn btn-sm btn-mdi mb-1"><i class="fa fa-search"></i> {% t 'btn.search' %}</button>
 		</form>
 		<div class="table-responsive">
 		<table class="table table-sm table-striped">
-			<thead><tr><th>Funsionariu</th><th>Pojisaun</th><th>Diresaun</th><th></th></tr></thead>
+			<thead><tr><th>{% t 'th.emp' %}</th><th>{% t 'th.position' %}</th><th>{% t 'th.division' %}</th><th></th></tr></thead>
 			<tbody>
 			{% for e in page %}
 				<tr>
@@ -25,11 +26,11 @@
 					<td>{{ e.employeeposition.position|default:"-" }}</td>
 					<td>{{ e.employeedivision.division|default:"-" }}</td>
 					<td class="text-nowrap">
-						<a class="btn btn-sm btn-mdi" href="{% url 'placement-history' e.pk %}"><i class="fa fa-history"></i> Istoria</a>
-						{% if can_edit %}<a class="btn btn-sm btn-mdi" href="{% url 'placement-new' e.pk %}"><i class="fa fa-exchange"></i> Muda</a>{% endif %}
+						<a class="btn btn-sm btn-mdi" href="{% url 'placement-history' e.pk %}"><i class="fa fa-history"></i> {% t 'btn.history' %}</a>
+						{% if can_edit %}<a class="btn btn-sm btn-mdi" href="{% url 'placement-new' e.pk %}"><i class="fa fa-exchange"></i> {% t 'btn.change' %}</a>{% endif %}
 					</td>
 				</tr>
-			{% empty %}<tr><td colspan="4" class="text-center text-muted">Laiha dadus.</td></tr>{% endfor %}
+			{% empty %}<tr><td colspan="4" class="text-center text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
 			</tbody>
 		</table>
 		</div>

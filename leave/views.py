@@ -7,12 +7,13 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from main import roles
+from main import roles, ui
 
 from .forms import LeaveRequestForm
 from .models import Leaves
 
-STATUS = {'pending': ('Hein', 'warning'), 'approved': ('Aprova', 'success'), 'rejected': ('Rejeita/Kansela', 'danger')}
+STATUS = {'pending': ('leave.st.pending', 'warning'), 'approved': ('leave.st.approved', 'success'),
+	'rejected': ('leave.st.rejected', 'danger')}
 
 
 def leave_state(lv):
@@ -23,11 +24,12 @@ def leave_state(lv):
 	return 'rejected'
 
 
-def _rows(qs):
+def _rows(qs, lang='tet'):
 	out = []
 	for lv in qs:
 		code = leave_state(lv)
-		lv.state, (lv.state_text, lv.state_class) = code, STATUS[code]
+		key, lv.state_class = STATUS[code]
+		lv.state, lv.state_text = code, ui.tr(lang, key)
 		lv.days = (lv.end_date - lv.start_date).days + 1
 		out.append(lv)
 	return out
@@ -37,16 +39,17 @@ def _rows(qs):
 def my_list(request):
 	emp = roles.linked_employee(request.user)
 	qs = Leaves.objects.filter(employee=emp).select_related('leave_type').order_by('-start_date', '-id')[:100] if emp else []
-	return render(request, 'leave/list.html', {'title': 'Lisensa', 'rows': _rows(qs), 'emp': emp, 'mode': 'mine'})
+	return render(request, 'leave/list.html', {'title': ui.tr(request, 'leave.title.mine'), 'rows': _rows(qs, ui.lang(request)),
+		'emp': emp, 'mode': 'mine'})
 
 
 @roles.role_required('LEAVE_REQUEST_GROUPS')
 def new(request):
 	emp = roles.linked_employee(request.user)
 	if not emp:
-		messages.error(request, "Akun ne'e seidauk liga ba funsionariu. Husu admin atu liga.")
+		messages.error(request, ui.tr(request, 'leave.msg.unlinked'))
 		return redirect('leave-mine')
-	form = LeaveRequestForm(request.POST or None, request.FILES or None, employee=emp)
+	form = LeaveRequestForm(request.POST or None, request.FILES or None, employee=emp, lang=ui.lang(request))
 	if request.method == 'POST' and form.is_valid():
 		d = form.cleaned_data
 		with transaction.atomic():
@@ -57,9 +60,9 @@ def new(request):
 			if d.get('file'):
 				lv.file = d['file']
 			lv.save()
-		messages.success(request, "Pedidu lisensa haruka ona. Hein aprovasaun.")
+		messages.success(request, ui.tr(request, 'leave.msg.sent'))
 		return redirect('leave-mine')
-	return render(request, 'leave/form.html', {'title': 'Husu Lisensa', 'form': form})
+	return render(request, 'leave/form.html', {'title': ui.tr(request, 'leave.title.new'), 'form': form})
 
 
 @require_POST
@@ -72,7 +75,7 @@ def cancel(request, pk):
 	if leave_state(lv) == 'pending':
 		lv.is_active = False
 		lv.save(update_fields=['is_active'])
-		messages.success(request, "Pedidu kansela ona.")
+		messages.success(request, ui.tr(request, 'leave.msg.canceled'))
 	return redirect('leave-mine')
 
 
@@ -91,7 +94,7 @@ def all_list(request):
 		qs = qs.filter(Q(employee__first_name__icontains=q) | Q(employee__last_name__icontains=q))
 	mine = roles.linked_employee(request.user)
 	return render(request, 'leave/list.html', {
-		'title': 'Lisensa hotu', 'rows': _rows(qs[:200]), 'mode': 'all', 'status': status, 'q': q,
+		'title': ui.tr(request, 'leave.title.all'), 'rows': _rows(qs[:200], ui.lang(request)), 'mode': 'all', 'status': status, 'q': q,
 		'can_decide': roles.has_role(request.user, 'LEAVE_APPROVER_GROUPS'), 'mine_id': mine.pk if mine else None})
 
 
@@ -104,15 +107,15 @@ def decide(request, pk, action):
 		lv = get_object_or_404(Leaves.objects.select_for_update(), pk=pk)
 		mine = roles.linked_employee(request.user)
 		if mine and lv.employee_id == mine.pk:
-			messages.error(request, "Labele aprova ka rejeita lisensa rasik.")
+			messages.error(request, ui.tr(request, 'leave.msg.self'))
 		elif leave_state(lv) != 'pending':
-			messages.warning(request, "Pedidu ne'e prosesu ona.")
+			messages.warning(request, ui.tr(request, 'leave.msg.done'))
 		elif action == 'approve':
 			lv.is_confirm = True
 			lv.save(update_fields=['is_confirm'])
-			messages.success(request, "Lisensa aprova ona.")
+			messages.success(request, ui.tr(request, 'leave.msg.approved'))
 		else:
 			lv.is_active = False
 			lv.save(update_fields=['is_active'])
-			messages.success(request, "Lisensa rejeita ona.")
+			messages.success(request, ui.tr(request, 'leave.msg.rejected'))
 	return redirect('leave-all')

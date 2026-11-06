@@ -1,3 +1,4 @@
+import datetime
 import re
 
 from django.conf import settings
@@ -25,7 +26,7 @@ def nav(request):
 			'qr_device': svc.in_groups(user, svc.conf('DEVICE_GROUPS')),
 			'admin_site': user.is_staff,
 		})
-	return {'nav_group': group, 'can': perms, 'site': site_info(),
+	return {'nav_group': group, 'can': perms, 'site': site_info(), 'now_year': datetime.date.today().year,
 		'lang_in_navbar': bool(getattr(settings, 'ATTENDANCE_LANG_IN_NAVBAR', False))}
 
 

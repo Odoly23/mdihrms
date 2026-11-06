@@ -4,6 +4,7 @@
 	if (!badge) return;
 	var url = badge.getAttribute('data-url'), timer = null, failures = 0;
 	function set(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+	function setAll(cls, v) { Array.prototype.forEach.call(document.querySelectorAll('.' + cls), function (el) { el.textContent = v; }); }
 	function tick() {
 		timer = null;
 		if (document.hidden) return;
@@ -11,7 +12,7 @@
 			.then(function (r) { if (!r.ok) throw r.status; return r.json(); })
 			.then(function (d) {
 				failures = 0;
-				badge.textContent = d.value > 0 ? d.value : '';
+				setAll('notif-total', d.value > 0 ? d.value : '');
 				set('notif-bday', d.birthdays); set('notif-leave', d.leaves);
 				var n = document.getElementById('notif-names');
 				if (n) n.textContent = d.names.length ? d.names.join(', ') : '';

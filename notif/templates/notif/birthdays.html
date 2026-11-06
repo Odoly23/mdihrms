@@ -1,15 +1,16 @@
 {% extends "main/layout.html" %}
+{% load qr_i18n %}
 {% block content %}
 <div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
-	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
-	<li class="breadcrumb-item active">ANIVERSARIU</li></ul></div></div>
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item active">{% t 'ui.nav.bday' %}</li></ul></div></div>
 <div class="container-fluid"><br/>
 <div class="row"><div class="col-12 col-lg-8">
 <div class="card shadow-lg pt-1 qr-border rounded">
-	<div class="card-header"><i class="fa fa-birthday-cake"></i> ANIVERSARIU · {{ monthname|upper }}</div>
+	<div class="card-header"><i class="fa fa-birthday-cake"></i> {{ title|upper }} · {{ monthname|upper }}</div>
 	<div class="card-body">
 		<form method="get" class="form-inline mb-2">
-			<select name="month" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+			<select name="month" class="form-control form-control-sm mr-2" onchange="this.form.submit()" aria-label="{{ title }}">
 				{% for n, name in months %}<option value="{{ n }}" {% if n == month %}selected{% endif %}>{{ name }}</option>{% endfor %}
 			</select>
 		</form>
@@ -19,7 +20,7 @@
 				<span class="mr-3 text-nowrap"><b>{{ r.day|date:"d/m" }}</b></span>
 				<span>{% if r.is_today %}<i class="fa fa-birthday-cake"></i> {% endif %}{{ r.names|join:", " }}</span>
 			</li>
-		{% empty %}<li class="list-group-item text-muted">Laiha aniversariu fulan ne'e.</li>{% endfor %}
+		{% empty %}<li class="list-group-item text-muted">{% t 'bday.none' %}</li>{% endfor %}
 		</ul>
 	</div>
 </div></div></div>

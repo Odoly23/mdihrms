@@ -1,10 +1,10 @@
-<div class="topbar" role="complementary" aria-label="Kontaktu">
-	<div class="container-fluid">
+{% load qr_i18n %}<div class="topbar" role="complementary" aria-label="{% t 'ui.top.contact' %}">
+	<div class="container">
 		<div class="tb-left">
-			{% load qr_i18n %}{% if site.address %}<span class="tb-item tb-addr" title="{{ site.address }}"><i class="fa fa-map-marker"></i> {{ site.address }}</span>{% endif %}
-			{% if site.phone %}<a class="tb-item" href="{% if site.tel %}tel:{{ site.tel }}{% else %}#{% endif %}"><i class="fa fa-phone"></i> {{ site.phone }}</a>{% endif %}
-			{% if site.email %}<a class="tb-item tb-mail" href="mailto:{{ site.email }}"><i class="fa fa-envelope"></i> {{ site.email }}</a>{% endif %}
+			{% if site.address %}<span class="tb-item tb-addr" title="{{ site.address }}"><i class="fa fa-map-marker" aria-hidden="true"></i> {{ site.address }}</span>{% endif %}
+			{% if site.phone %}<a class="tb-item" href="{% if site.tel %}tel:{{ site.tel }}{% else %}#{% endif %}"><i class="fa fa-phone" aria-hidden="true"></i> {{ site.phone }}</a>{% endif %}
+			{% if site.email %}<a class="tb-item tb-mail" href="mailto:{{ site.email }}"><i class="fa fa-envelope" aria-hidden="true"></i> {{ site.email }}</a>{% endif %}
 		</div>
-		<div class="tb-right">{% flags 'link' %}</div>
+		<div class="tb-right" aria-label="{% t 'ui.top.lang' %}">{% flags 'link' %}</div>
 	</div>
 </div>

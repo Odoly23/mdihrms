@@ -433,6 +433,10 @@ MESSAGES = {
 KIOSK_PREFIXES = ('k.', 'res.net', 'res.device')
 
 
+from attendance.qr_i18n_ui import UI as _UI  # noqa: E402  (halaman di luar absensi QR)
+MESSAGES.update(_UI)
+
+
 def tr(lang, key, **params):
 	row = MESSAGES.get(key)
 	if row is None:

@@ -1,34 +1,35 @@
 {% extends "main/layout.html" %}
+{% load qr_i18n %}
 {% block content %}
 <div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
-	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
-	<li class="breadcrumb-item active">FUNSIONARIU</li></ul></div></div>
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item active">{% t 'ui.nav.staff' %}</li></ul></div></div>
 <div class="container-fluid"><br/>
 <div class="card shadow-lg pt-1 qr-border rounded">
-	<div class="card-header"><i class="fa fa-users"></i> LISTA FUNSIONARIU ({{ page.paginator.count }})
-		{% if can.employee_edit %}<a class="btn btn-sm btn-mdi float-right" href="{% url 'employee-add' %}"><i class="fa fa-user-plus"></i> Foun</a>{% endif %}</div>
+	<div class="card-header"><i class="fa fa-users"></i> {{ title|upper }} ({{ page.paginator.count }})
+		{% if can.employee_edit %}<a class="btn btn-sm btn-mdi float-right" href="{% url 'employee-add' %}"><i class="fa fa-user-plus"></i> {% t 'btn.new' %}</a>{% endif %}</div>
 	<div class="card-body">
 		<form class="form-inline mb-2" method="get">
-			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="Naran / NRF" maxlength="50">
-			<select name="dg" class="form-control form-control-sm mr-2 mb-1">
-				<option value="">Diresaun Geral hotu</option>
+			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="{% t 'staff.search_ph' %}" maxlength="50">
+			<select name="dg" class="form-control form-control-sm mr-2 mb-1" aria-label="{% t 'f.dg' %}">
+				<option value="">{% t 'staff.all_dg' %}</option>
 				{% for d in dgs %}<option value="{{ d.pk }}" {% if dg == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
 			</select>
-			<select name="div" class="form-control form-control-sm mr-2 mb-1">
-				<option value="">Diresaun hotu</option>
+			<select name="div" class="form-control form-control-sm mr-2 mb-1" aria-label="{% t 'f.division' %}">
+				<option value="">{% t 'staff.all_div' %}</option>
 				{% for d in divisions %}<option value="{{ d.pk }}" {% if div == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
 			</select>
-			<button class="btn btn-sm btn-mdi mb-1"><i class="fa fa-search"></i> Buka</button>
+			<button class="btn btn-sm btn-mdi mb-1"><i class="fa fa-search"></i> {% t 'btn.search' %}</button>
 		</form>
 		<div class="table-responsive">
 		<table class="table table-sm table-striped">
-			<thead><tr><th>Naran</th><th>NRF</th><th>Pojisaun</th><th>Diresaun</th><th></th></tr></thead>
+			<thead><tr><th>{% t 'th.name' %}</th><th>{% t 'th.nrf' %}</th><th>{% t 'th.position' %}</th><th>{% t 'th.division' %}</th><th></th></tr></thead>
 			<tbody>
 			{% for e in page %}
 				<tr><td>{{ e }}</td><td>{{ e.idfnumber.nrf|default:"-" }}</td>
 				<td>{{ e.employeeposition.position|default:"-" }}</td><td>{{ e.employeedivision.division|default:"-" }}</td>
-				<td><a class="btn btn-sm btn-mdi" href="{% url 'staff-detail' e.pk %}"><i class="fa fa-id-badge"></i> Detallu</a></td></tr>
-			{% empty %}<tr><td colspan="5" class="text-center text-muted">Laiha dadus.</td></tr>{% endfor %}
+				<td><a class="btn btn-sm btn-mdi" href="{% url 'staff-detail' e.pk %}"><i class="fa fa-id-badge"></i> {% t 'btn.detail' %}</a></td></tr>
+			{% empty %}<tr><td colspan="5" class="text-center text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
 			</tbody>
 		</table>
 		</div>

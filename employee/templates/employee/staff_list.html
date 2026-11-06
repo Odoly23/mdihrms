@@ -5,7 +5,8 @@
 	<li class="breadcrumb-item active">FUNSIONARIU</li></ul></div></div>
 <div class="container-fluid"><br/>
 <div class="card shadow-lg pt-1 qr-border rounded">
-	<div class="card-header"><i class="fa fa-users"></i> LISTA FUNSIONARIU ({{ page.paginator.count }})</div>
+	<div class="card-header"><i class="fa fa-users"></i> LISTA FUNSIONARIU ({{ page.paginator.count }})
+		{% if can.employee_edit %}<a class="btn btn-sm btn-mdi float-right" href="{% url 'employee-add' %}"><i class="fa fa-user-plus"></i> Foun</a>{% endif %}</div>
 	<div class="card-body">
 		<form class="form-inline mb-2" method="get">
 			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="Naran / NRF" maxlength="50">

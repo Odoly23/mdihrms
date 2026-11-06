@@ -21,7 +21,10 @@
 			<tr><th>Email</th><td>{{ emp.contactinfo.email|default:"-" }}</td></tr>
 			<tr><th>Data Moris</th><td>{{ emp.date_of_birth|date:"d/m/Y"|default:"-" }}</td></tr>
 		</table>
-		{% if can_edit_place %}<hr/><a class="btn btn-sm btn-mdi" href="{% url 'placement-new' emp.pk %}"><i class="fa fa-exchange"></i> Muda kolokasaun</a>{% endif %}
+		{% if can_edit_place or can.employee_edit %}<hr/>{% endif %}
+		{% if can_edit_place %}<a class="btn btn-sm btn-mdi mb-1" href="{% url 'placement-new' emp.pk %}"><i class="fa fa-exchange"></i> Muda kolokasaun</a>{% endif %}
+		{% if can.employee_edit %}<a class="btn btn-sm btn-mdi mb-1" href="{% url 'employee-edit' emp.pk %}"><i class="fa fa-pencil"></i> Hadia</a>
+		<a class="btn btn-sm btn-mdi mb-1" href="{% url 'employee-address' emp.pk %}"><i class="fa fa-map-marker"></i> Hela fatin</a>{% endif %}
 	</div>
 </div></div>
 <div class="col-12 col-lg-7 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">

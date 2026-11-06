@@ -1,4 +1,5 @@
 {% extends "main/layout.html" %}
+{% load static %}
 {% block content %}
 <div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
 	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
@@ -25,24 +26,5 @@
 {% endblock %}
 {% block scripts %}
 {{ divisions|json_script:"j-div" }}{{ departments|json_script:"j-dep" }}{{ sections|json_script:"j-sec" }}
-<script>
-// Pilihan diresaun/departamento/seksaun hanya yang termasuk induknya.
-(function () {
-	var J = function (id) { return JSON.parse(document.getElementById(id).textContent); };
-	var map = {
-		id_division: {parent: 'id_dg', key: 'dg_id', rows: J('j-div')},
-		id_department: {parent: 'id_division', key: 'division_id', rows: J('j-dep')},
-		id_section: {parent: 'id_department', key: 'department_id', rows: J('j-sec')}
-	};
-	function apply(id) {
-		var m = map[id], sel = document.getElementById(id), par = document.getElementById(m.parent).value;
-		var ok = {}; m.rows.forEach(function (r) { if (!par || String(r[m.key]) === par) ok[r.id] = 1; });
-		Array.prototype.forEach.call(sel.options, function (o) { o.hidden = !!o.value && !ok[o.value]; });
-		if (sel.value && !ok[sel.value]) sel.value = '';
-	}
-	function all() { ['id_division', 'id_department', 'id_section'].forEach(apply); }
-	['id_dg', 'id_division', 'id_department'].forEach(function (id) { document.getElementById(id).addEventListener('change', all); });
-	all();
-})();
-</script>
+<script src="{% static 'main/js/hierarchy.js' %}"></script>
 {% endblock %}

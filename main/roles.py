@@ -2,7 +2,7 @@
 Setiap daftar bisa diganti di settings.py dengan MDI_<NAMA>, mis. MDI_LEAVE_APPROVER_GROUPS = ['admin'].
 
 Ringkasan peran:
-  admin      semua hak; satu-satunya yang membuka PC kiosk dan mengelola kartu QR
+  admin      semua hak; satu-satunya yang membuka PC kiosk, mengelola kartu QR, menambah/mengubah funsionariu
   president  (direktur) melihat rekap bulanan, menyetujui lisensa, mengalokasikan staf ke posisi
   hr         melihat semua data dan daftar staf (hanya baca)
   staff      melihat data absensi (hanya baca), mengajukan lisensa sendiri
@@ -21,6 +21,7 @@ _DEFAULTS = {
 	'PLACEMENT_EDIT_GROUPS': ['admin', 'president'],
 	'PLACEMENT_VIEW_GROUPS': ['admin', 'president', 'hr', 'staff'],
 	'DIRECTORY_GROUPS': ['admin', 'president', 'hr'],
+	'EMPLOYEE_EDIT_GROUPS': ['admin'],            # tambah/ubah data funsionariu dan membuat akun login-nya
 }
 
 

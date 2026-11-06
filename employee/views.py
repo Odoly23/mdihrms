@@ -51,3 +51,57 @@ def staff_detail(request, emp_id):
 	return render(request, 'employee/staff_detail.html', {
 		'title': str(emp), 'emp': emp, 'row': row, 'month': today.month, 'year': today.year, 'leaves': leaves, 'places': places,
 		'can_edit_place': roles.has_role(request.user, 'PLACEMENT_EDIT_GROUPS')})
+
+
+# ----------------------------------------------------------------- tambah / ubah funsionariu (hanya admin)
+from django.contrib import messages  # noqa: E402
+from django.shortcuts import redirect  # noqa: E402
+
+from custom.models import Department, Section  # noqa: E402
+
+from .forms import AddressForm, EmployeeForm  # noqa: E402
+from .models import LocationTL  # noqa: E402
+from .services import save_address, save_employee  # noqa: E402
+
+
+def _hier():
+	return {'divisions': list(Division.objects.values('id', 'dg_id')),
+		'departments': list(Department.objects.values('id', 'division_id')),
+		'sections': list(Section.objects.values('id', 'department_id'))}
+
+
+@roles.role_required('EMPLOYEE_EDIT_GROUPS')
+def employee_add(request):
+	form = EmployeeForm(request.POST or None, request.FILES or None)
+	if request.method == 'POST' and form.is_valid():
+		emp, account = save_employee(form, request.user, form.cleaned_data.get('create_account'))
+		messages.success(request, "Funsionariu foun aumenta ona. Kartaun QR prontu atu imprime.")
+		if account:
+			messages.warning(request, "Konta login: %s · Password: %s (hatudu dala ida deit, fo ba funsionariu)." % account)
+		return redirect('staff-detail', emp_id=emp.pk)
+	return render(request, 'employee/form.html', dict(_hier(), title='Aumenta Funsionariu', form=form, mode='employee'))
+
+
+@roles.role_required('EMPLOYEE_EDIT_GROUPS')
+def employee_edit(request, emp_id):
+	emp = get_object_or_404(Employee, pk=emp_id)
+	form = EmployeeForm(request.POST or None, request.FILES or None, instance=emp)
+	if request.method == 'POST' and form.is_valid():
+		save_employee(form, request.user)
+		messages.success(request, "Dadus funsionariu hadia ona.")
+		return redirect('staff-detail', emp_id=emp.pk)
+	return render(request, 'employee/form.html', dict(_hier(), title='Hadia Funsionariu', form=form, mode='employee', emp=emp))
+
+
+@roles.role_required('EMPLOYEE_EDIT_GROUPS')
+def employee_address(request, emp_id):
+	emp = get_object_or_404(Employee, pk=emp_id)
+	loc = LocationTL.objects.filter(employee=emp).first()
+	initial = {'municipality': loc.municipality_id, 'administrativepost': loc.administrativepost_id,
+		'village': loc.village_id, 'aldeia': loc.aldeia} if loc else {}
+	form = AddressForm(request.POST or None, initial=initial)
+	if request.method == 'POST' and form.is_valid():
+		save_address(emp, form, request.user)
+		messages.success(request, "Hela fatin hadia ona.")
+		return redirect('staff-detail', emp_id=emp.pk)
+	return render(request, 'employee/form.html', {'title': 'Hela Fatin Funsionariu', 'form': form, 'mode': 'address', 'emp': emp})

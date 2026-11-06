@@ -26,13 +26,13 @@ cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
 ## Tes
 ```bash
-DEBUG=True python manage.py test        # 245 tes: absensi QR + proyek
+DEBUG=True python manage.py test        # 253 tes: absensi QR + proyek
 ```
 
 ## Peran (grup)
 | Grup | Bisa |
 |---|---|
-| `admin` | Semuanya. **Satu-satunya** yang membuka PC kiosk dan mengelola kartu QR. Admin juga wajib scan kartunya sendiri. |
+| `admin` | Semuanya. **Satu-satunya** yang membuka PC kiosk, mengelola kartu QR, dan menambah/mengubah funsionariu (akun login dibuat otomatis dengan kata sandi acak yang tampil sekali). Admin juga wajib scan kartunya sendiri. |
 | `president` (direktur) | Melihat rekap bulanan dan dashboard, **menyetujui/menolak lisensa**, **mengalokasikan staf ke posisi** (Kolokasaun). |
 | `hr` | **Melihat semua** (absensi, lisensa, kolokasaun) dan daftar staf beserta detail masing-masing. Hanya baca. |
 | `staff` | Melihat data absensi (hanya baca), melihat kolokasaun, **mengajukan lisensa** sendiri. |

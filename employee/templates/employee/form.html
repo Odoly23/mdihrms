@@ -1,0 +1,57 @@
+{% extends "main/layout.html" %}
+{% load static %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'staff-list' %}">FUNSIONARIU</a></li>
+	<li class="breadcrumb-item active">{% if emp %}{{ emp|upper }}{% else %}FOUN{% endif %}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="row"><div class="col-12 col-lg-9">
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-user-plus"></i> {{ title|upper }}</div>
+	<div class="card-body">
+		<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+			{% if form.non_field_errors %}<div class="alert alert-danger p-2">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+			<div class="form-row">
+			{% for f in form %}
+				<div class="form-group col-12 col-md-6 col-lg-4">
+					{% if f.field.widget.input_type == 'checkbox' %}
+						<div class="form-check mt-4">{{ f }} <label class="form-check-label" for="{{ f.id_for_label }}">{{ f.label }}</label></div>
+					{% else %}
+						<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+					{% endif %}
+					{% for e in f.errors %}<small class="text-danger d-block">{{ e }}</small>{% endfor %}
+				</div>
+			{% endfor %}
+			</div>
+			<button class="btn btn-mdi" type="submit"><i class="fa fa-save"></i> Rai</button>
+			<a class="btn btn-outline-secondary" href="{% if emp %}{% url 'staff-detail' emp.pk %}{% else %}{% url 'staff-list' %}{% endif %}">Kansela</a>
+		</form>
+	</div>
+</div>
+</div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+{% if mode == 'employee' %}
+{{ divisions|json_script:"j-div" }}{{ departments|json_script:"j-dep" }}{{ sections|json_script:"j-sec" }}
+<script src="{% static 'main/js/hierarchy.js' %}"></script>
+{% else %}
+<script>
+// Dropdown berantai Municipiu -> Posto -> Suco (lihat custom/views.py)
+(function () {
+	var m = document.getElementById('id_municipality'), p = document.getElementById('id_administrativepost'), v = document.getElementById('id_village');
+	function load(url, param, val, target, done) {
+		target.innerHTML = '<option value="">--</option>';
+		if (!val) { if (done) done(); return; }
+		fetch(url + '?' + param + '=' + encodeURIComponent(val), {credentials: 'same-origin'})
+			.then(function (r) { return r.text(); }).then(function (h) { target.innerHTML = h; if (done) done(); });
+	}
+	m.addEventListener('change', function () {
+		load("{% url 'ajax_load_post' %}", 'municipality', m.value, p, function () { v.innerHTML = '<option value="">--</option>'; });
+	});
+	p.addEventListener('change', function () { load("{% url 'ajax_load_village' %}", 'administrativepost', p.value, v); });
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -376,3 +376,115 @@ class NavbarRoleTests(HrBase):
 			self.assertIn('notifbadge', h)
 			self.assertIn('fa-bell', h)
 			self.assertIn('rel="icon"', h)
+
+
+class EmployeeCrudTests(HrBase):
+	def data(self, **kw):
+		d = {'first_name': 'Maria', 'last_name': 'Silva', 'date_of_birth': '1990-05-17', 'sex': 'Feto', 'status': 1,
+			'nrf': 'NRF-001', 'position': self.pos1.pk, 'dg': self.dg.pk, 'division': self.div.pk,
+			'phone': '+670 7712 3456', 'email': 'maria@contoh.org', 'create_account': 'on'}
+		d.update(kw)
+		return d
+
+	def test_only_admin_can_add_or_edit(self):
+		e = self.emp('Maria')
+		for g in ('staff', 'president', 'hr', 'funsionario', 'employee'):
+			self.login(g)
+			self.assertEqual(self.client.get(reverse('employee-add')).status_code, 403, g)
+			self.assertEqual(self.client.post(reverse('employee-add'), self.data()).status_code, 403, g)
+			self.assertEqual(self.client.get(reverse('employee-edit', args=[e.pk])).status_code, 403, g)
+			self.assertEqual(self.client.get(reverse('employee-address', args=[e.pk])).status_code, 403, g)
+		self.assertEqual(Employee.objects.count(), 1)
+
+	def test_add_creates_everything_card_and_account_with_random_password(self):
+		from attendance.models_qr import QRCard
+		from employee.models import ContactInfo, IDFNumber
+		self.login('admin')
+		r = self.client.post(reverse('employee-add'), self.data(), follow=True)
+		e = Employee.objects.get(first_name='Maria')
+		self.assertRedirects(r, reverse('staff-detail', args=[e.pk]))
+		self.assertEqual(IDFNumber.objects.get(employee=e).nrf, 'NRF-001')
+		self.assertEqual(EmployeePosition.objects.get(employee=e).position, self.pos1)
+		self.assertEqual(EmployeeDivision.objects.get(employee=e).division, self.div)
+		self.assertEqual(ContactInfo.objects.get(employee=e).email, 'maria@contoh.org')
+		self.assertTrue(QRCard.objects.filter(employee=e).exists())
+		link = EmployeeUser.objects.get(employee=e)
+		self.assertEqual(link.user.username, 'NRF-001')
+		self.assertTrue(link.user.groups.filter(name='funsionario').exists())
+		msgs = [m.message for m in r.context['messages']]
+		pwd = [m for m in msgs if 'Password:' in m][0].split('Password: ')[1].split(' ')[0]
+		self.assertNotEqual(pwd.lower(), 'password')
+		self.assertEqual(len(pwd), 10)
+		self.assertTrue(link.user.check_password(pwd))
+
+	def test_validation_blocks_bad_input(self):
+		self.login('admin')
+		self.client.post(reverse('employee-add'), self.data(nrf='N1'))
+		bad = [self.data(nrf='n1'),                                                # NRF ganda (tak peduli huruf besar)
+			self.data(nrf='N2', date_of_birth='2999-01-01'),
+			self.data(nrf='N3', phone='abc'),
+			self.data(nrf='N4', email='bukan-email'),
+			self.data(nrf='N5', first_name=''),
+			self.data(nrf='N6', division=self.div2.pk, dg=DG.objects.create(code='X', name='Lain').pk)]
+		for b in bad:
+			self.assertEqual(self.client.post(reverse('employee-add'), b).status_code, 200, b)
+		self.assertEqual(Employee.objects.count(), 1)
+
+	def test_username_collision_gets_a_suffix(self):
+		User.objects.create_user('NRF-001', password='x')
+		self.login('admin')
+		self.client.post(reverse('employee-add'), self.data())
+		self.assertTrue(User.objects.filter(username='NRF-0012').exists())
+
+	def test_edit_updates_and_does_not_make_a_second_account_or_card(self):
+		from attendance.models_qr import QRCard
+		self.login('admin')
+		self.client.post(reverse('employee-add'), self.data())
+		e = Employee.objects.get(first_name='Maria')
+		r = self.client.post(reverse('employee-edit', args=[e.pk]), self.data(first_name='Mariana', position=self.pos2.pk))
+		self.assertRedirects(r, reverse('staff-detail', args=[e.pk]))
+		e.refresh_from_db()
+		self.assertEqual(e.first_name, 'Mariana')
+		self.assertEqual(EmployeePosition.objects.get(employee=e).position, self.pos2)
+		self.assertEqual(EmployeeUser.objects.filter(employee=e).count(), 1)
+		self.assertEqual(QRCard.objects.filter(employee=e).count(), 1)
+		self.assertEqual(self.client.get(reverse('employee-edit', args=[e.pk])).status_code, 200)
+
+	def test_photo_accepts_only_real_images(self):
+		import io
+		from django.core.files.uploadedfile import SimpleUploadedFile
+		from PIL import Image
+		self.login('admin')
+		buf = io.BytesIO()
+		Image.new('RGB', (20, 20), 'red').save(buf, 'PNG')
+		bad = self.client.post(reverse('employee-add'), self.data(nrf='A', image=SimpleUploadedFile('x.png', b'bukan gambar')))
+		self.assertEqual(bad.status_code, 200)
+		self.assertEqual(Employee.objects.count(), 0)
+		import tempfile
+		from django.test import override_settings
+		with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=tmp):
+			ok = self.client.post(reverse('employee-add'), self.data(nrf='B', image=SimpleUploadedFile('x.png', buf.getvalue(), 'image/png')))
+			self.assertEqual(ok.status_code, 302)
+			from employee.models import Photo
+			self.assertTrue(Photo.objects.get().image.name.startswith('employee_files/'))
+
+	def test_address_chain_is_validated(self):
+		from custom.models import AdministrativePost, Municipality, Village
+		from employee.models import LocationTL
+		m1, m2 = Municipality.objects.create(code='1', name='Dili'), Municipality.objects.create(code='2', name='Baucau')
+		p1 = AdministrativePost.objects.create(municipality=m1, name='Nain Feto')
+		v1 = Village.objects.create(administrativepost=p1, name='Pite')
+		e = self.emp('Maria')
+		self.login('admin')
+		url = reverse('employee-address', args=[e.pk])
+		self.client.post(url, {'municipality': m2.pk, 'administrativepost': p1.pk})          # posto bukan milik municipiu
+		self.assertFalse(LocationTL.objects.filter(employee=e).exists())
+		self.client.post(url, {'municipality': m1.pk, 'administrativepost': p1.pk, 'village': v1.pk, 'aldeia': 'A1'})
+		self.assertEqual(LocationTL.objects.get(employee=e).village, v1)
+		self.assertContains(self.client.get(url), 'Pite')                                  # terpilih lagi saat dibuka
+
+	def test_add_button_only_for_admin_in_list(self):
+		self.login('admin')
+		self.assertContains(self.client.get(reverse('staff-list')), reverse('employee-add'))
+		self.login('hr')
+		self.assertNotContains(self.client.get(reverse('staff-list')), reverse('employee-add'))

@@ -19,6 +19,7 @@ urlpatterns = [
 	path('kolokasaun/', include('contract.urls')),
 	path('funsionariu/', include('employee.urls')),
 	path('notif/', include('notif.urls')),
+	path('custom/', include('custom.urls')),
 ]
 
 if settings.DEBUG:

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 	'custom',
 	'main',
 	'employee',
+	'contract',
 	'leave',
 	'attendance',
 ]

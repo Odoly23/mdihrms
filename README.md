@@ -35,6 +35,7 @@ DEBUG=True python manage.py test        # 212 tes: absensi QR + proyek
 | `custom` | DG, Division, Department, Position, wilayah, dll. |
 | `employee` | Employee dan data pendukung |
 | `attendance` | Attendance, hari libur, **absensi QR** (`*_qr.py`, `templates/attendance/qr`) |
+| `contract` | InitialContract, Contract, gaji, Kolokasaun |
 | `leave` | Leaves, LeaveType, AnnualLeaves |
 | `main` | Layout, navbar per grup, login, halaman galat, `mdi_setup` |
 | `settings_app` | `upload_utils`, `utils`, `decorators` |

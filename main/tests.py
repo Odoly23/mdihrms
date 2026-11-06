@@ -626,7 +626,7 @@ class ShellLayoutTests(HrBase):
 
 	def test_structure_topbar_navbar_offcanvas(self):
 		h = self.html('admin')
-		order = [h.index(x) for x in ('class="topbar"', 'class="main-navbar"', 'id="sidebar"', 'id="overlay"', 'class="page-wrapper"', 'class="site-footer"')]
+		order = [h.index(x) for x in ('class="topbar"', 'class="main-navbar"', 'id="sidebar"', 'id="overlay"', 'role="main"', 'class="page-footer font-small site-footer"')]
 		self.assertEqual(order, sorted(order))
 		self.assertIn('id="btnHam"', h)
 		self.assertIn('aria-controls="sidebar"', h)
@@ -652,10 +652,30 @@ class ShellLayoutTests(HrBase):
 		import os
 		from django.conf import settings
 		css = open(os.path.join(settings.BASE_DIR, 'main/static/main/css/main.css')).read()
-		for needle in ('--navy: #00B050', '--topbar-h: 34px', '--navbar-h: 62px', '--header-h: 96px', '--sb-w: 72px',
+		for needle in ('--navy: #e3171e', '--topbar-h: 34px', '--navbar-h: 62px', '--header-h: 96px', '--sb-w: 72px',
 				'.topbar', '.main-navbar', '.nav-links', '.btn-ham', '#sidebar', '#overlay', '.sb-body', '.sb-sec', 'body.sb-open footer'):
 			self.assertIn(needle, css, needle)
 
-	def test_no_hardcoded_old_red_in_pages(self):
+	def test_full_meta_tags_container_and_favicon(self):
 		h = self.html('admin')
-		self.assertNotIn('#e3171e', h)
+		for needle in ('<meta charset="utf-8">', 'name="viewport"', 'name="description"', 'name="theme-color" content="#e3171e"',
+				'name="robots"', 'rel="apple-touch-icon"', 'favicon.ico', '<title>MDI-HRMS - ', '<html lang="tet">'):
+			self.assertIn(needle, h, needle)
+		self.assertIn('<main role="main" class="container page-wrapper">', h)
+		self.assertIn('<div class="row">', h[h.index('role="main"'):])
+		self.assertIn('col-md-12', h)
+		self.assertNotIn('#00B050', h)
+
+	def test_logo_colours_in_css_and_icons_exist(self):
+		import os
+		from django.conf import settings
+		base = os.path.join(settings.BASE_DIR, 'main/static/main')
+		for f in ('images/favicon.ico', 'images/favicon.jpg', 'images/apple-touch-icon.png'):
+			self.assertTrue(os.path.getsize(os.path.join(base, f)) > 500, f)
+		css = open(os.path.join(base, 'css/main.css')).read()
+		self.assertIn('--navy-dk: #a80f14', css)
+		self.assertNotIn('00B050', css)
+
+	def test_logo_red_only_in_theme_meta_not_inline_styles(self):
+		h = self.html('admin')
+		self.assertEqual(h.count('#e3171e'), 1)                                  # hanya <meta name="theme-color">

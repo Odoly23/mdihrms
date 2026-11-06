@@ -755,7 +755,7 @@ class I18nTests(QRBase):
 		html = r.content.decode()
 		for code in ('tet', 'en', 'id', 'pt'):
 			self.assertIn('/attendance/qr/lang/%s/?next=' % code, html)
-		html = html[html.index('class="page-wrapper"'):]        # bendera di dalam halaman (topbar proyek dihitung terpisah)
+		html = html[html.index('role="main"'):]        # bendera di dalam halaman (topbar proyek dihitung terpisah)
 		self.assertEqual(html.count('qr-flag on'), 1)
 		self.assertIn('qr-flag on" href="/attendance/qr/lang/pt/', html)
 

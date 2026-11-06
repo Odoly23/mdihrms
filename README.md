@@ -26,7 +26,7 @@ cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
 ## Tes
 ```bash
-DEBUG=True python manage.py test        # 269 tes: absensi QR + proyek
+DEBUG=True python manage.py test        # 272 tes: absensi QR + proyek
 ```
 
 ## Peran (grup)
@@ -45,7 +45,7 @@ terlihat). Daftar grup per hak bisa diganti di `settings.py` (`MDI_*`, lihat `ma
 ## Tampilan dan bahasa
 - Kerangka halaman: **topbar** (alamat/HP/email + bendera 4 bahasa), **navbar** menu, dan **sidebar offcanvas** di layar < 1200 px
   (tombol hamburger; menutup dengan overlay, Esc, atau memilih menu). CSS: `main/static/main/css/main.css`.
-- Warna utama cukup diganti di satu variabel `--navy` pada `main.css` (sekarang `#00B050`; merah MDI = `#e3171e`).
+- Warna utama cukup diganti di satu variabel `--navy` pada `main.css` (sekarang merah logo MDI `#e3171e`).
 - Seluruh halaman tersedia dalam Tetun, Inggris, Indonesia, Portugis; satu klik bendera mengganti semuanya. Teks ada di
   `attendance/qr_i18n.py` (absensi) dan `attendance/qr_i18n_ui.py` (halaman lain). Terjemahan Tetun/Portugis sebaiknya
   dibaca ulang penutur asli. Isi dari database (nama, jabatan, diresaun) tidak diterjemahkan.

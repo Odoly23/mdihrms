@@ -4,6 +4,10 @@ Teks Tetun dan Portugis sebaiknya dibaca ulang oleh penutur asli sebelum dipakai
 
 UI = {
 	# ---- kerangka (topbar, navbar, sidebar, footer)
+	'ui.meta.desc': ('Sistema HRMS Mata Dalan Institute: absensia QR, lisensa, kolokasaun no lista funsionáriu.',
+					 'Mata Dalan Institute HRMS: QR attendance, leave, postings and staff list.',
+					 'HRMS Mata Dalan Institute: absensi QR, cuti, penempatan, dan daftar pegawai.',
+					 'HRMS do Mata Dalan Institute: assiduidade QR, licenças, colocações e lista de funcionários.'),
 	'ui.nav.home': ('VARANDA', 'HOME', 'BERANDA', 'INÍCIO'),
 	'ui.nav.staff': ('FUNSIONÁRIU', 'STAFF', 'PEGAWAI', 'FUNCIONÁRIOS'),
 	'ui.nav.abs': ('ABSENSIA QR', 'QR ATTENDANCE', 'ABSENSI QR', 'ASSIDUIDADE QR'),

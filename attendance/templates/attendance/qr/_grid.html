@@ -1,0 +1,20 @@
+{% load qr_i18n %}
+{% include 'attendance/qr/_legend.html' %}
+<div class="table-responsive"><table class="rp-table">
+	<thead><tr><th class="rp-name">{% t 'th.emp' %}</th>
+		{% for d in rep.days %}<th>{{ d }}</th>{% endfor %}
+		<th>{% t 'th.workdays' %}</th><th>{% t 'th.present' %}</th><th>{% t 'th.late' %}</th><th>{% t 'th.leave' %}</th><th>{% t 'th.absent' %}</th></tr></thead>
+	<tbody>
+	{% for r in rows %}
+		<tr><td class="rp-name">{{ r.employee.name }}<small>{{ r.employee.position }}{% if r.employee.division %} · {{ r.employee.division }}{% endif %}</small></td>
+		{% for c in r.cells %}
+			<td{% if c.in %} title="{% t 'grid.in' %} {{ c.in }}{% if c.out %} · {% t 'grid.out' %} {{ c.out }}{% endif %}"{% endif %}>
+				{% if c.code %}<div class="rp-c rp-{{ c.code }}{% if c.late %} late{% endif %}">{{ c.code }}</div>{% endif %}
+				{% if c.flag %}<span class="rp-flag">⚑</span>{% elif c.no_out %}<span class="rp-flag">↓</span>{% elif c.early %}<span class="rp-flag">↑</span>{% endif %}
+			</td>
+		{% endfor %}
+		<td>{{ r.totals.workdays }}</td><td><b>{{ r.totals.present }}</b></td><td>{{ r.totals.late }}</td><td>{{ r.totals.leave }}</td><td>{{ r.totals.absent }}</td></tr>
+	{% empty %}<tr><td colspan="40" class="text-muted text-left p-3">{% t 'grid.empty' %}</td></tr>
+	{% endfor %}
+	</tbody>
+</table></div>

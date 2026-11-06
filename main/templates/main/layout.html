@@ -1,0 +1,28 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<title>MDI-HRMS{% if title %} - {{ title }}{% endif %}</title>
+	<link rel="stylesheet" href="{% static 'main/css/bootstrap.min.css' %}">
+	<link rel="stylesheet" href="{% static 'main/font-awesome/css/font-awesome.min.css' %}">
+	<link rel="stylesheet" href="{% static 'main/css/main.css' %}">
+</head>
+<body>
+	{% include 'main/navbar.html' %}
+	<main role="main" class="container-fluid px-0">
+		{% if messages %}
+			<div class="container-fluid pt-2">
+				{% for message in messages %}<div class="alert alert-{{ message.tags }} p-2">{{ message }}</div>{% endfor %}
+			</div>
+		{% endif %}
+		{% block content %}{% endblock %}
+	</main>
+	<footer class="page-footer font-small mt-5 text-center text-white py-3" style="background:#404446">
+		&copy; {% now "Y" %} Mata Dalan Institute (MDI-HRMS)
+	</footer>
+	<script src="{% static 'main/js/jquery.min.js' %}"></script>
+	<script src="{% static 'main/js/bootstrap.min.js' %}"></script>
+	{% block scripts %}{% endblock %}
+</body>
+</html>

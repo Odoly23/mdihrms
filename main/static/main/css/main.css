@@ -1,0 +1,8 @@
+body { padding-top: 56px; background: #f4f5f9; }
+.breadcrumb-holder { background: #e9ecef; padding: 10px 0; font-size: .8rem; text-transform: uppercase; }
+.breadcrumb-holder .breadcrumb { background: transparent; margin: 0; padding: 0 0 0 4px; }
+.breadcrumb-item a { color: #00c853; }
+.card-header { background: #fff; }
+.btn-info { background: #00a3b8; border-color: #00a3b8; }
+.breadcrumb-item a { color: #e3171e; }
+.navbar-brand { letter-spacing: .04em; }

@@ -1,0 +1,53 @@
+{% load static qr_i18n %}<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<meta name="robots" content="noindex, nofollow">
+	<title>MDI</title>
+	<link rel="stylesheet" href="{% qr_static 'attendance/qr/qr.css' %}">
+</head>
+<body class="kiosk" data-scan-url="{% url 'qr-kiosk-scan' %}" data-check-url="{% url 'qr-kiosk-check' %}" data-tz="{{ tz }}" data-late="{{ late_after }}" data-end="{{ work_end }}" data-camera="{% if allow_camera %}1{% endif %}">
+	<header class="k-top">
+		<div class="k-brand">
+			<img src="{% static 'attendance/qr/mdi-logo.jpg' %}" alt="MDI" width="64" height="64">
+			<div><h1 data-i18n="k.title">{% t 'k.title' %}</h1><small>Mata Dalan Institute</small></div>
+		</div>
+		<div class="k-top-right">
+			{% flags 'js' %}
+			<small data-i18n="k.hours">{% t 'k.hours' late=late_after end=work_end %}</small>
+		</div>
+	</header>
+	<main class="k-main">
+		<section class="k-clock">
+			<div class="k-time" id="clock">--:--:--</div>
+			<div class="k-date" id="today"></div>
+			<div class="k-hint" data-i18n="k.hint">{% t 'k.hint' %}</div>
+			<div class="k-rules" data-i18n="k.rule">{% t 'k.rule' %}</div>
+		</section>
+		<div class="k-side">
+			<section class="k-result" id="result" aria-live="polite"></section>
+			<div class="k-recent-box" id="recent-box" hidden>
+				<div class="k-recent-title" data-i18n="k.recent">{% t 'k.recent' %}</div>
+				<ul class="k-recent" id="recent"></ul>
+			</div>
+		</div>
+	</main>
+	<footer class="k-foot">
+		<span>
+			<span id="st-srv" class="k-chip"></span><span id="st-scn" class="k-chip"></span>
+			<span data-i18n="k.foot">{% t 'k.foot' %}</span>
+		</span>
+		<span><button id="btn-cam" data-i18n="k.cam_on" style="display:none">{% t 'k.cam_on' %}</button></span>
+	</footer>
+	<video id="cam" class="k-cam" muted playsinline></video>
+	<div class="k-setup" id="setup" role="alertdialog" aria-labelledby="pair-title">
+		<div class="k-pair">
+			<h2 id="pair-title" data-i18n="k.pair_title">{% t 'k.pair_title' %}</h2>
+			<p data-i18n="k.pair_desc">{% t 'k.pair_desc' %}</p>
+		</div>
+	</div>
+	{{ bundle|json_script:"i18n" }}
+	<script defer src="{% qr_static 'attendance/qr/kiosk.js' %}"></script>
+</body>
+</html>

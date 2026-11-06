@@ -1,0 +1,1 @@
+mysqlclient>=2.2   # butuh libmysqlclient-dev; hanya bila DB_ENGINE=mysql

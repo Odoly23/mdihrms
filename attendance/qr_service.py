@@ -1,0 +1,738 @@
+"""Logika absensi QR: tanda tangan QR, pemeriksaan scan, dan rekap bulanan.
+
+Semua aturan jam dan grup bisa diubah di settings.py lewat nama ATTENDANCE_* (lihat QR_INSTALL.md).
+"""
+import datetime
+import hashlib
+import hmac
+import ipaddress
+import logging
+import re
+import secrets
+import time
+try:
+	from zoneinfo import ZoneInfo
+except ImportError:      # Python 3.8 (beberapa paket cPanel): pasang backports.zoneinfo
+	from backports.zoneinfo import ZoneInfo
+
+from django.conf import settings
+from django.core.cache import cache
+from django.db import IntegrityError, transaction
+from django.db.models import Q
+from django.utils import timezone
+
+from employee.models import Employee
+from leave.models import Leaves
+from settings_app.utils import getnewid
+from attendance import qr_i18n
+from attendance.models import Attendance, AttendanceDiv, AttendanceStatus, NacionalHoliday, Tolerance
+from attendance.models_qr import AttendanceTime, OfficeNetwork, QRCard, ScanDevice, ScanLog
+
+QR_PREFIX = 'MDI'
+log = logging.getLogger('attendance.qr')
+
+# Jaringan privat/lokal: bawaan untuk kiosk (alamat 127.x, 10.x, 172.16-31.x, 192.168.x dan IPv6 lokal).
+PRIVATE_NETS = ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '::1/128', 'fc00::/7', 'fe80::/10']
+
+_DEFAULTS = {
+	'TIME_ZONE': 'Asia/Dili',
+	'LATE_AFTER': '08:15',     # masuk setelah jam ini = terlambat
+	'NOON': '12:00',           # scan sebelum jam ini = masuk (AM), sesudahnya = pulang (PM)
+	'WORK_END': '16:00',       # pulang sebelum jam ini = pulang awal
+	'DUPLICATE_SECONDS': 60,   # scan ganda dalam rentang ini diabaikan
+	'ACTIVE_STATUS_ID': 1,     # Employee.status_id untuk pegawai aktif (sama seperti view lama)
+	'PRESENT_CODE': 'P',       # AttendanceStatus.code untuk hadir
+	'QR_SECRET': None,         # kunci tanda tangan QR; kosong = pakai SECRET_KEY
+	'KIOSK_ALLOWED_IPS': PRIVATE_NETS,   # bawaan: hanya jaringan privat kantor; contoh ['192.168.1.0/24']; [] = TERBUKA (tidak aman)
+	'REQUIRE_DEVICE_KEY': True,    # scan hanya dari PC kiosk yang sudah dipasangkan admin (penanda di browser PC itu)
+	'ALLOW_CAMERA': False,         # kamera cadangan di kiosk; nonaktif agar hanya alat pembaca QR yang dipakai
+	'TRUST_PROXY_HEADER': False,   # True bila server di belakang proxy tepercaya (pakai X-Forwarded-For)
+	'THROTTLE_PER_MINUTE': 60,     # batas permintaan scan per alamat IP per menit
+	'REPORT_CACHE_SECONDS': 60,    # cache dashboard/rekap seluruh pegawai; 0 = mati
+	'HOLIDAY_CACHE_SECONDS': 60,   # cache daftar libur untuk jalur scan; 0 = mati
+	'MAX_BODY_BYTES': 1024,        # batas ukuran permintaan scan
+	'BURST_COUNT': 3,              # >= sekian pegawai berbeda ...
+	'BURST_SECONDS': 6,            # ... dalam sekian detik di PC kiosk yang sama = scan beruntun (ditandai, tidak diblokir); 0 = mati
+	'KIOSK_COOKIE': 'mdi_kiosk',
+	'NETWORK_MODE': 'device',      # 'device' = penjaga utama PC kiosk terpasang (cocok untuk IP berganti, mis. Starlink); 'allowlist' = cek IP
+	'DEVICE_ROTATE_HOURS': 6,      # token PC kiosk diputar tiap sekian jam (lewat denyut kiosk)
+	'DEVICE_GRACE_HOURS': 24,      # token lama masih diterima sekian jam setelah diputar (bila Set-Cookie tidak sampai)
+	'CLIENT_IP_HEADER': None,      # mis. 'HTTP_CF_CONNECTING_IP' (Cloudflare) atau 'HTTP_X_REAL_IP'; hanya bila front-end tepercaya
+	'MANAGER_GROUPS': ['admin', 'staff'],
+	'VIEWER_GROUPS': ['admin', 'staff', 'president'],
+	'DEVICE_GROUPS': ['admin'],
+	'SELF_GROUPS': ['admin', 'staff', 'president', 'funsionario', 'employee'],
+}
+
+
+def conf(name):
+	return getattr(settings, 'ATTENDANCE_' + name, _DEFAULTS[name])
+
+
+def group_of(user):
+	"""Nama grup pertama pengguna, sama seperti allowed_users di proyek."""
+	if not getattr(user, 'is_authenticated', False) or not user.groups.exists():
+		return ''
+	return user.groups.all()[0].name
+
+
+def local_tz():
+	return ZoneInfo(conf('TIME_ZONE'))
+
+
+def conf_time(name):
+	h, m = str(conf(name)).split(':')
+	return datetime.time(int(h), int(m))
+
+
+def to_local(dt):
+	return dt.astimezone(local_tz())
+
+
+def hhmm(dt):
+	return to_local(dt).strftime('%H:%M') if dt else ''
+
+
+# ---------------------------------------------------------------- QR (tanda tangan)
+
+def _secret():
+	return (conf('QR_SECRET') or settings.SECRET_KEY).encode()
+
+
+def _sign(emp_id, version):
+	msg = '{}.{}'.format(emp_id, version).encode()
+	return hmac.new(_secret(), msg, hashlib.sha256).hexdigest()[:32]
+
+
+def make_payload(card):
+	return '{}.{}.{}.{}'.format(QR_PREFIX, card.employee_id, card.version, _sign(card.employee_id, card.version))
+
+
+# Bentuk isi QR. Alat pembaca USB di lapangan sering menambah awalan/akhiran (mis. "]Q1" pengenal simbologi, Tab, CR/LF,
+# karakter kontrol) dan Caps Lock bisa membalik huruf besar/kecil, jadi isi QR dicari di dalam teks yang diterima dan
+# dibandingkan tanpa membedakan huruf besar/kecil. Keamanan tetap dari tanda tangan HMAC (tidak berubah).
+_PAYLOAD_RE = re.compile(r'MDI\.(\d{1,18})\.(\d{1,9})\.([0-9a-f]{32})(?![0-9a-z])', re.IGNORECASE)
+
+
+def parse_payload(raw):
+	"""Mengembalikan (employee_id, version) kalau tanda tangan benar, selain itu None.
+	Masukan berasal dari pihak tak tepercaya: dibatasi panjang dan bentuknya sebelum dihitung."""
+	if not isinstance(raw, str) or len(raw) > 200:
+		return None
+	m = _PAYLOAD_RE.search(raw)
+	if not m or not (m.group(1) + m.group(2) + m.group(3)).isascii():
+		return None
+	emp_id, version, sig = int(m.group(1)), int(m.group(2)), m.group(3).lower()
+	if not hmac.compare_digest(sig.encode('ascii'), _sign(emp_id, version).encode('ascii')):
+		return None
+	return emp_id, version
+
+
+# ---------------------------------------------------------------- jaringan, PC kiosk, pembatasan
+
+_PROXY_HEADERS = ('HTTP_X_FORWARDED_FOR', 'HTTP_FORWARDED', 'HTTP_X_REAL_IP')
+
+
+def _parse_ip(text):
+	try:
+		return ipaddress.ip_address((text or '').strip())
+	except ValueError:
+		return None
+
+
+def _is_local(addr):
+	"""Alamat privat/loopback (daftar PRIVATE_NETS): koneksi datang dari mesin/jaringan lokal, mis. proxy di server yang sama."""
+	return addr is not None and _in_nets(addr, PRIVATE_NETS)
+
+
+def client_ip(request):
+	"""Alamat klien yang dipakai untuk keputusan keamanan.
+	- Header khusus (ATTENDANCE_CLIENT_IP_HEADER) atau X-Forwarded-For entri paling kanan hanya dipakai bila
+	  admin menyatakan front-end tepercaya (ATTENDANCE_TRUST_PROXY_HEADER / ATTENDANCE_CLIENT_IP_HEADER).
+	- Selain itu yang dipakai REMOTE_ADDR, alamat koneksi sebenarnya (header dari klien bisa dipalsukan)."""
+	header = conf('CLIENT_IP_HEADER')
+	if header:
+		value = request.META.get(header, '')
+		return value.strip() if _parse_ip(value) else ''           # header ada tetapi tidak valid = tidak dikenal
+	if conf('TRUST_PROXY_HEADER'):
+		xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
+		if xff:
+			return xff.split(',')[-1].strip()                       # entri paling kanan ditambahkan proxy tepercaya
+	return request.META.get('REMOTE_ADDR', '')
+
+
+def allowed_nets():
+	"""Jaringan dari settings yang boleh scan; None bila sengaja dibuka (setelan [])."""
+	nets = conf('KIOSK_ALLOWED_IPS')
+	return list(nets) if nets else None
+
+
+def office_networks():
+	"""Jaringan kantor yang didaftarkan admin di halaman Perangkat kiosk (cache pendek)."""
+	value = cache.get('attqr:offnets')
+	if value is None:
+		value = list(OfficeNetwork.objects.filter(is_active=True).values_list('cidr', flat=True))
+		cache.set('attqr:offnets', value, 60)
+	return value
+
+
+def forget_office_networks():
+	cache.delete('attqr:offnets')
+
+
+def broad_net_error(text):
+	"""Validasi jaringan yang dimasukkan admin: (cidr, None) bila baik, (None, alasan) bila salah atau terlalu luas."""
+	try:
+		net = ipaddress.ip_network((text or '').strip(), strict=False)
+	except ValueError:
+		return None, 'invalid'
+	if net.prefixlen < (16 if net.version == 4 else 48):
+		return None, 'broad'                                        # mencegah tidak sengaja membuka satu benua ("0.0.0.0/0")
+	return str(net), None
+
+
+def _in_nets(addr, nets):
+	for net in nets:
+		try:
+			if addr in ipaddress.ip_network(net, strict=False):
+				return True
+		except ValueError:
+			continue
+	return False
+
+
+def ip_allowed(ip):
+	nets = allowed_nets()
+	if nets is None:
+		return True
+	addr = _parse_ip(ip)
+	if addr is None:
+		return False
+	return _in_nets(addr, nets) or _in_nets(addr, office_networks())
+
+
+def network_enforced():
+	"""Cek IP dipakai hanya pada mode 'allowlist', atau sebagai pengaman bila pemasangan PC dimatikan
+	(mode 'device' tanpa pemasangan PC berarti tidak ada penjaga sama sekali)."""
+	return conf('NETWORK_MODE') == 'allowlist' or not conf('REQUIRE_DEVICE_KEY')
+
+
+def network_ok(request):
+	"""Jaringan kantor saja. Gagal-aman: bila koneksi datang dari proxy lokal (REMOTE_ADDR privat) yang membawa header
+	proxy tetapi proxy tidak dipercaya, alamat asli klien tidak diketahui, jadi ditolak dan admin diberi tahu lewat log.
+	Bila REMOTE_ADDR publik (tanpa proxy lokal, mis. Passenger/LiteSpeed langsung), header dari klien diabaikan saja."""
+	if not network_enforced() or allowed_nets() is None:
+		return True
+	trusted = conf('TRUST_PROXY_HEADER') or conf('CLIENT_IP_HEADER')
+	if not trusted and any(h in request.META for h in _PROXY_HEADERS) and _is_local(_parse_ip(request.META.get('REMOTE_ADDR'))):
+		if cache.add('attqr:proxywarn', 1, 600):
+			log.warning('Scan ditolak: koneksi datang dari proxy lokal tetapi ATTENDANCE_TRUST_PROXY_HEADER=False. '
+						'Set True (atau ATTENDANCE_CLIENT_IP_HEADER) bila proxy/front-end Anda tepercaya.')
+		return False
+	return ip_allowed(client_ip(request))
+
+
+def security_is_open():
+	"""True bila jaringan sengaja dibuka lebar pada mode yang memakai cek IP (perlu peringatan ke admin)."""
+	return network_enforced() and allowed_nets() is None
+
+
+def throttle(request, scope='scan'):
+	"""Pembatas per IP per menit (cache). True = boleh. Melindungi basis data dari banjir permintaan."""
+	limit = conf('THROTTLE_PER_MINUTE')
+	if not limit:
+		return True
+	key = 'attqr:thr:%s:%s:%d' % (scope, client_ip(request), int(time.time() // 60))
+	try:
+		n = cache.incr(key)
+	except ValueError:
+		cache.add(key, 1, 90)
+		n = 1
+	return n <= limit
+
+
+def hash_key(key):
+	return hashlib.sha256(key.encode()).hexdigest()
+
+
+def new_device_key():
+	return secrets.token_urlsafe(32)
+
+
+def get_device(key):
+	if not key or len(key) > 128:
+		return None
+	return ScanDevice.objects.filter(key_sha256=hash_key(key), is_active=True).first()
+
+
+def authenticate_device(key):
+	"""(perangkat, status) dengan status: current | prev | reuse | none.
+	- current: token terbaru.
+	- prev: token sebelum diputar, masih dalam masa tenggang, dan token baru belum pernah dipakai: PC sah yang belum
+	  menerima Set-Cookie. Diterima lalu token diputar ulang.
+	- reuse: token lama muncul padahal token baru sudah dipakai PC sah = ada salinan; PC dicabut oleh pemanggil.
+	- none: tidak dikenal, dinonaktifkan, atau token lama sudah lewat masa tenggang."""
+	if not key or len(key) > 128:
+		return None, 'none'
+	h = hash_key(key)
+	dev = ScanDevice.objects.filter(is_active=True).filter(Q(key_sha256=h) | Q(prev_sha256=h)).first()
+	if not dev:
+		return None, 'none'
+	now = timezone.now()
+	if dev.key_sha256 == h:
+		if not dev.current_used_at or (now - dev.current_used_at).total_seconds() > 60:
+			ScanDevice.objects.filter(pk=dev.pk).update(current_used_at=now)
+		return dev, 'current'
+	grace = datetime.timedelta(hours=conf('DEVICE_GRACE_HOURS'))
+	if not dev.rotated_at or now - dev.rotated_at > grace:
+		return None, 'none'
+	if dev.current_used_at and dev.current_used_at > dev.rotated_at:
+		return dev, 'reuse'
+	return dev, 'prev'
+
+
+def rotate_device(dev):
+	"""Putar token PC kiosk. Mengembalikan token baru (untuk Set-Cookie) atau None bila sudah diputar proses lain."""
+	key = new_device_key()
+	changed = ScanDevice.objects.filter(pk=dev.pk, key_sha256=dev.key_sha256).update(
+		prev_sha256=dev.key_sha256, key_sha256=hash_key(key), rotated_at=timezone.now(), current_used_at=None)
+	return key if changed else None
+
+
+def needs_rotation(dev):
+	if not dev.rotated_at:
+		return True
+	return (timezone.now() - dev.rotated_at) >= datetime.timedelta(hours=conf('DEVICE_ROTATE_HOURS'))
+
+
+def revoke_for_reuse(dev, ip=''):
+	"""Token lama dipakai setelah token baru: kemungkinan cookie disalin. Cabut PC dan catat untuk admin."""
+	ScanDevice.objects.filter(pk=dev.pk).update(is_active=False)
+	ScanLog.objects.create(device=dev, scanned_at=timezone.now(), code='device_reuse', ip=ip or None,
+						   message='PC "%s" dicabut: token lama dipakai setelah token baru' % dev.name[:100])
+	log.warning('PC kiosk "%s" dicabut otomatis: token lama dipakai dari %s setelah token baru dipakai.', dev.name, ip or '?')
+
+
+def resolve_device(request):
+	"""Mengenali PC kiosk dari cookie (atau header X-Kiosk-Key untuk klien API).
+	Mengembalikan (perangkat aktif atau None, status). Salinan yang terdeteksi langsung dicabut."""
+	key = request.COOKIES.get(conf('KIOSK_COOKIE')) or request.headers.get('X-Kiosk-Key', '')
+	dev, status = authenticate_device(key)
+	if status == 'reuse':
+		revoke_for_reuse(dev, client_ip(request))
+		return None, 'reuse'
+	return dev, status
+
+
+def device_from_request(request):
+	return resolve_device(request)[0]
+
+
+def in_groups(user, names):
+	"""Apakah pengguna masuk salah satu grup (bukan hanya grup pertama). Hasil disimpan per permintaan."""
+	if not getattr(user, 'is_authenticated', False):
+		return False
+	mine = getattr(user, '_qr_group_names', None)
+	if mine is None:
+		mine = user._qr_group_names = set(user.groups.values_list('name', flat=True))
+	return bool(mine & set(names))
+
+
+def cached(parts, fn):
+	"""Cache singkat untuk laporan seluruh pegawai (dipakai bersama semua pimpinan)."""
+	ttl = conf('REPORT_CACHE_SECONDS')
+	if not ttl:
+		return fn()
+	key = 'attqr:rep:' + hashlib.sha256(repr(parts).encode()).hexdigest()[:40]
+	value = cache.get(key)
+	if value is None:
+		value = fn()
+		cache.set(key, value, ttl)
+	return value
+
+
+# ---------------------------------------------------------------- data pegawai
+
+def division_q(div):
+	"""Filter pegawai per divisi: sama dengan yang dipakai view absensi yang sudah ada."""
+	return (Q(employeedivision__division=div) | Q(employeedivision__department__division=div) |
+			Q(employeedivision__section__department__division=div))
+
+
+def employee_division(emp):
+	ed = getattr(emp, 'employeedivision', None)
+	if not ed:
+		return None
+	if ed.division_id:
+		return ed.division
+	if ed.department_id:
+		return ed.department.division
+	if ed.section_id:
+		return ed.section.department.division
+	return None
+
+
+def employee_info(emp, photo=True):
+	pos = getattr(getattr(emp, 'employeeposition', None), 'position', None)
+	div = employee_division(emp)
+	nrf = getattr(getattr(emp, 'idfnumber', None), 'nrf', None)
+	return {
+		'id': emp.pk, 'name': str(emp).strip(), 'position': str(pos) if pos else '',
+		'division': div.name if div else '', 'division_id': div.pk if div else None,
+		'nrf': nrf or '', 'photo': photo_url(emp) if photo else '',
+	}
+
+
+def photo_url(emp):
+	try:
+		return emp.photo.image.url
+	except Exception:
+		return ''
+
+
+# ---------------------------------------------------------------- hari libur dan cuti
+
+def day_off_reason(d):
+	"""(jenis, nama) bila hari ini bukan hari kerja, selain itu None. Jenis: weekend, holiday, tolerance.
+	Libur dicocokkan lewat bulan dan tanggal, sama seperti view absensi yang sudah ada. Daftar libur disimpan
+	singkat di cache (jalur scan paling sering dipanggil, sedangkan libur jarang berubah)."""
+	if d.weekday() >= 5:
+		return 'weekend', ''
+	return _holidays_for_scan().get((d.month, d.day))
+
+
+def holiday_map():
+	"""{(bulan, tanggal): (jenis, nama)} dari NacionalHoliday dan Tolerance yang aktif, hanya 2 query.
+	Urutan prioritas sama dengan day_off_reason: libur nasional menang atas hari toleransi."""
+	out = {}
+	for t in Tolerance.objects.exclude(is_active=False):
+		out[(t.date.month, t.date.day)] = ('tolerance', t.name or '')
+	for h in NacionalHoliday.objects.exclude(is_active=False):
+		out[(h.date.month, h.date.day)] = ('holiday', h.name or '')
+	return out
+
+
+def _holidays_for_scan():
+	ttl = conf('HOLIDAY_CACHE_SECONDS')
+	if not ttl:
+		return holiday_map()
+	value = cache.get('attqr:hol')
+	if value is None:
+		value = holiday_map()
+		cache.set('attqr:hol', value, ttl)
+	return value
+
+
+def active_leave(emp, d):
+	return (Leaves.objects.filter(employee=emp, is_active=True, is_confirm=True,
+			start_date__lte=d, end_date__gte=d).select_related('leave_type').first())
+
+
+# ---------------------------------------------------------------- scan
+
+def _result(ok, result_code, level, emp, lang, hide=False, **params):
+	"""Hasil scan untuk layar kiosk. Judul dan pesan diambil dari qr_i18n (res.<result_code>.title / .msg)."""
+	res = {'ok': ok, 'code': result_code, 'level': level,
+		   'title': qr_i18n.tr(lang, 'res.%s.title' % result_code, **params),
+		   'message': qr_i18n.tr(lang, 'res.%s.msg' % result_code, **params),
+		   'employee': employee_info(emp) if emp and not hide else None, 'employee_id': emp.pk if emp else None}
+	if 'time' in params:
+		res['time'] = params['time']
+	return res
+
+
+def process_scan(raw, device=None, now=None, lang=None, ip=None):
+	"""Memproses satu scan dan mencatatnya di ScanLog. Mengembalikan dict untuk layar kiosk."""
+	now = now or timezone.now()
+	lang = qr_i18n.norm(lang)
+	res = _process(raw, device, now, lang)
+	flag = ''
+	if res['ok'] and res['code'] in SUCCESS_CODES:
+		burst_ids = _burst_ids(device, res['employee_id'], now)
+		if burst_ids:
+			flag = res['flag'] = 'burst'
+			AttendanceTime.objects.filter(attendance__employee_id__in=burst_ids,
+										  attendance__date=to_local(now).date()).update(flagged=True)
+			log.warning('Scan beruntun di PC kiosk "%s": %d pegawai dalam %d detik.',
+						device.name if device else '-', len(burst_ids), conf('BURST_SECONDS'))
+	ScanLog.objects.create(employee_id=res['employee_id'], device=device, scanned_at=now,
+						   code=res['code'], message=res['message'][:200], ip=ip or None, flag=flag)
+	return res
+
+
+SUCCESS_CODES = ('in', 'in_late', 'out', 'out_early')
+
+
+def _burst_ids(device, emp_id, now):
+	"""Scan beruntun: satu orang yang menscan beberapa kartu orang lain berturut-turut. Dideteksi dari catatan di cache
+	(tanpa query basis data): >= BURST_COUNT pegawai berbeda dalam BURST_SECONDS di PC kiosk yang sama. Mengembalikan
+	himpunan id pegawai yang terlibat bila terpenuhi. Hanya menandai, tidak pernah memblokir (antrean ramai tetap lancar)."""
+	count, window = conf('BURST_COUNT'), conf('BURST_SECONDS')
+	if not count or not window:
+		return set()
+	ts = now.timestamp()
+	key = 'attqr:recent:%s' % (device.pk if device else 'none')
+	recent = [(t, e) for t, e in (cache.get(key) or []) if 0 <= ts - t <= window][-20:]
+	recent.append((ts, emp_id))
+	cache.set(key, recent, window + 5)
+	ids = {e for _, e in recent}
+	return ids if len(ids) >= count else set()
+
+
+def _process(raw, device, now, lang):
+	parsed = parse_payload(raw)
+	if not parsed:
+		return _result(False, 'invalid', 'error', None, lang)
+	emp_id, version = parsed
+	emp = (Employee.objects.select_related('employeeposition__position', 'employeedivision__division',
+										  'qrcard', 'employeecard', 'idfnumber', 'photo').filter(pk=emp_id).first())
+	card = getattr(emp, 'qrcard', None) if emp else None
+	if not emp or not card or not card.is_active or card.version != version:
+		# kartu lama/hilang: jangan tampilkan siapa pemiliknya di layar kiosk (privasi); tetap tercatat di log
+		return _result(False, 'revoked', 'error', emp, lang, hide=True)
+	if emp.status_id != conf('ACTIVE_STATUS_ID'):
+		return _result(False, 'inactive', 'error', emp, lang)
+
+	local = to_local(now)
+	today = local.date()
+	member = getattr(emp, 'employeecard', None)
+	if member and (not member.is_active or (member.expiry_date and member.expiry_date < today)):
+		return _result(False, 'card_expired', 'error', emp, lang)
+
+	off = day_off_reason(today)
+	if off:
+		return _result(False, 'holiday', 'error', emp, lang, reason=qr_i18n.reason_text(off[0], off[1], lang))
+
+	leave = active_leave(emp, today)
+	if leave:
+		kind = leave.leave_type.name if leave.leave_type and leave.leave_type.name else qr_i18n.tr(lang, 'leave.default')
+		return _result(False, 'leave', 'leave', emp, lang, kind=kind, end=leave.end_date.strftime('%d/%m/%Y'))
+
+	div = employee_division(emp)
+	if div and AttendanceDiv.objects.filter(div=div, year=today.year, month=today.month, is_final=True).exists():
+		return _result(False, 'month_final', 'error', emp, lang)
+
+	present = AttendanceStatus.objects.filter(code=conf('PRESENT_CODE')).first()
+	if not present:
+		return _result(False, 'config', 'error', emp, lang, code=conf('PRESENT_CODE'))
+
+	with transaction.atomic():
+		Employee.objects.select_for_update().get(pk=emp.pk)  # satu scan per pegawai pada satu waktu
+		att = Attendance.objects.filter(employee=emp, date=today).order_by('id').first()
+		st = getattr(att, 'scantime', None) if att else None
+		if att and not st:
+			return _result(False, 'manual', 'error', emp, lang)
+		if not att:
+			return _first_scan(emp, div, present, device, now, local, today, lang)
+		return _next_scan(emp, att, st, present, now, local, lang)
+
+
+def _first_scan(emp, div, present, device, now, local, today, lang):
+	after_noon = local.time() >= conf_time('NOON')
+	late = after_noon or local.time() > conf_time('LATE_AFTER')
+	att = None
+	for _ in range(3):
+		newid, hashed = getnewid(Attendance)
+		try:
+			with transaction.atomic():
+				att = Attendance.objects.create(
+					id=newid, dg_id=div.dg_id if div else None, div=div, employee=emp,
+					status_am=None if after_noon else present, status_pm=present if after_noon else None,
+					date=today, desc='Scan QR', datetime=now, hashed=hashed)
+			break
+		except IntegrityError:
+			continue
+	if att is None:
+		return _result(False, 'busy', 'error', emp, lang)
+	_ensure_month_row(div, today)
+	AttendanceTime.objects.create(attendance=att, check_in=now, check_out=now if after_noon else None,
+								  is_late=late, device=device)
+	if late:
+		return _result(True, 'in_late', 'warn', emp, lang, time=hhmm(now), limit=conf('LATE_AFTER'))
+	return _result(True, 'in', 'success', emp, lang, time=hhmm(now))
+
+
+def _ensure_month_row(div, today):
+	"""Alur manual membuat AttendanceDiv (untuk unggah PDF, konfirmasi, final) saat hari pertama disimpan.
+	Scan melakukan hal yang sama supaya bulan itu muncul lengkap di daftar absensi lama."""
+	if not div or AttendanceDiv.objects.filter(div=div, year=today.year, month=today.month).exists():
+		return
+	for _ in range(3):
+		newid, _hash = getnewid(AttendanceDiv)
+		try:
+			with transaction.atomic():
+				AttendanceDiv.objects.create(id=newid, div=div, year=today.year, month=today.month)
+			return
+		except IntegrityError:
+			continue
+
+
+def _next_scan(emp, att, st, present, now, local, lang):
+	last = st.check_out or st.check_in
+	if (now - last).total_seconds() < conf('DUPLICATE_SECONDS'):
+		return _result(True, 'duplicate', 'info', emp, lang)
+	if local.time() < conf_time('NOON'):
+		return _result(True, 'already_in', 'info', emp, lang, time=hhmm(st.check_in))
+	st.check_out = now
+	st.save(update_fields=['check_out'])
+	if att.status_pm_id != present.pk:
+		att.status_pm = present
+		att.save(update_fields=['status_pm'])
+	if local.time() < conf_time('WORK_END'):
+		return _result(True, 'out_early', 'warn', emp, lang, time=hhmm(now), limit=conf('WORK_END'))
+	return _result(True, 'out', 'success', emp, lang, time=hhmm(now))
+
+
+# ---------------------------------------------------------------- rekap bulanan
+
+def _row_status(att):
+	codes = {att.status_am.code if att.status_am else None, att.status_pm.code if att.status_pm else None} - {None}
+	if conf('PRESENT_CODE') in codes:
+		return 'P'
+	if 'L' in codes:
+		return 'L'
+	if 'F' in codes:
+		return 'F'
+	return ''
+
+
+def month_report(year, month, division=None, employee=None, hol=None):
+	"""Rekap per pegawai per hari. Kode sel: P hadir, L cuti, F alpha, W akhir pekan, H libur, '' belum/tidak ada."""
+	last_day = datetime.date(year, month, 1).replace(day=28) + datetime.timedelta(days=4)
+	last_day = last_day.replace(day=1) - datetime.timedelta(days=1)
+	first_day = last_day.replace(day=1)
+	today = to_local(timezone.now()).date()
+	days = list(range(1, last_day.day + 1))
+
+	hol = holiday_map() if hol is None else hol
+	off = {}
+	for d in days:
+		date = first_day.replace(day=d)
+		reason = ('weekend', '') if date.weekday() >= 5 else hol.get((month, d))
+		if reason:
+			off[d] = ('W' if reason[0] == 'weekend' else 'H', reason)
+
+	emps = (Employee.objects.filter(status_id=conf('ACTIVE_STATUS_ID'))
+			.select_related('employeeposition__position', 'employeedivision__division',
+							'employeedivision__department__division', 'employeedivision__section__department__division',
+							'idfnumber'))
+	if employee is not None:
+		emps = emps.filter(pk=employee.pk)
+	elif division is not None:
+		emps = emps.filter(division_q(division))
+	emps = list(emps.distinct().order_by('first_name', 'last_name'))
+	ids = [e.pk for e in emps]
+
+	att_map = {}
+	for a in (Attendance.objects.filter(employee_id__in=ids, date__gte=first_day, date__lte=last_day)
+			  .select_related('status_am', 'status_pm', 'scantime').order_by('id')):
+		att_map.setdefault((a.employee_id, a.date.day), a)
+
+	leave_map = {}
+	for lv in Leaves.objects.filter(employee_id__in=ids, is_active=True, is_confirm=True,
+									start_date__lte=last_day, end_date__gte=first_day):
+		leave_map.setdefault(lv.employee_id, []).append((lv.start_date, lv.end_date))
+
+	rows = []
+	for e in emps:
+		cells = []
+		tot = {'workdays': 0, 'present': 0, 'late': 0, 'leave': 0, 'absent': 0, 'no_out': 0, 'early': 0, 'flagged': 0}
+		for d in days:
+			date = first_day.replace(day=d)
+			cell = {'day': d, 'date': date, 'wd': date.weekday(), 'code': '', 'late': False, 'early': False,
+					'no_out': False, 'flag': False, 'in': '', 'out': '', 'holiday': off[d][1][1] if d in off else ''}
+			if d in off:
+				cell['code'] = off[d][0]
+				cells.append(cell)
+				continue
+			tot['workdays'] += 1
+			on_leave = any(s <= date <= en for s, en in leave_map.get(e.pk, []))
+			a = att_map.get((e.pk, d))
+			if on_leave:
+				cell['code'] = 'L'
+			elif a:
+				cell['code'] = _row_status(a)
+				st = getattr(a, 'scantime', None)
+				if st:
+					cell['in'], cell['out'] = hhmm(st.check_in), hhmm(st.check_out)
+					cell['late'] = st.is_late
+					cell['flag'] = st.flagged
+					cell['no_out'] = st.check_out is None and date < today
+					cell['early'] = bool(st.check_out) and to_local(st.check_out).time() < conf_time('WORK_END')
+			elif date < today:
+				cell['code'] = 'F'
+			if cell['code'] == 'P':
+				tot['present'] += 1
+				tot['late'] += cell['late']
+				tot['no_out'] += cell['no_out']
+				tot['early'] += cell['early']
+				tot['flagged'] += cell['flag']
+			elif cell['code'] == 'L':
+				tot['leave'] += 1
+			elif cell['code'] == 'F':
+				tot['absent'] += 1
+			cells.append(cell)
+		info = employee_info(e, photo=False)   # foto tidak dipakai di laporan: hindari 1 query per pegawai
+		info['hashed'] = e.hashed
+		seen = tot['present'] + tot['absent']
+		tot['rate'] = round(100.0 * tot['present'] / seen) if seen else None
+		rows.append({'employee': info, 'cells': cells, 'totals': tot, 'weeks': calendar_weeks(year, month, cells)})
+	return {'year': year, 'month': month, 'days': days, 'off': off, 'rows': rows}
+
+
+def calendar_weeks(year, month, cells):
+	"""Kalender mini (Senin..Minggu): daftar minggu, tiap sel adalah dict hari atau None untuk kotak kosong."""
+	padded = [None] * datetime.date(year, month, 1).weekday() + list(cells)
+	padded += [None] * (-len(padded) % 7)
+	return [padded[i:i + 7] for i in range(0, len(padded), 7)]
+
+
+_ZERO = {'workdays': 0, 'present': 0, 'late': 0, 'leave': 0, 'absent': 0, 'no_out': 0, 'early': 0, 'flagged': 0, 'rate': None}
+
+
+def year_summary(employee, year):
+	"""Total per bulan (12 elemen) untuk satu pegawai. Libur dimuat sekali untuk seluruh tahun."""
+	hol = holiday_map()
+	out = []
+	for m in range(1, 13):
+		rep = month_report(year, m, employee=employee, hol=hol)
+		out.append(rep['rows'][0]['totals'] if rep['rows'] else dict(_ZERO))
+	return out
+
+
+def overview(rep):
+	"""Ringkasan seluruh pegawai dari satu month_report: total, per divisi, tren harian, paling sering terlambat."""
+	rows = rep['rows']
+	keys = ('present', 'late', 'leave', 'absent', 'no_out', 'early', 'flagged')
+	tot = {k: sum(r['totals'][k] for r in rows) for k in keys}
+	seen = tot['present'] + tot['absent']
+	tot['rate'] = round(100.0 * tot['present'] / seen) if seen else None
+	tot['employees'] = len(rows)
+
+	divs = {}
+	for r in rows:
+		e = r['employee']
+		d = divs.setdefault(e['division'] or '-', {'name': e['division'] or '-', 'id': e['division_id'],
+												 'employees': 0, 'present': 0, 'late': 0, 'leave': 0, 'absent': 0})
+		d['employees'] += 1
+		for k in ('present', 'late', 'leave', 'absent'):
+			d[k] += r['totals'][k]
+	division_rows = sorted(divs.values(), key=lambda d: d['name'])
+	for d in division_rows:
+		seen = d['present'] + d['absent']
+		d['rate'] = round(100.0 * d['present'] / seen) if seen else None
+
+	daily = {'label': rep['days'], 'present': [], 'late': [], 'leave': [], 'absent': []}
+	today = to_local(timezone.now()).date()
+	for i, day in enumerate(rep['days']):
+		if day in rep['off'] or datetime.date(rep['year'], rep['month'], day) > today:   # libur dan hari yang belum terjadi: kosong
+			for k in ('present', 'late', 'leave', 'absent'):
+				daily[k].append(None)
+			continue
+		cs = [r['cells'][i] for r in rows]
+		daily['present'].append(sum(1 for c in cs if c['code'] == 'P'))
+		daily['late'].append(sum(1 for c in cs if c['code'] == 'P' and c['late']))
+		daily['leave'].append(sum(1 for c in cs if c['code'] == 'L'))
+		daily['absent'].append(sum(1 for c in cs if c['code'] == 'F'))
+	late_top = sorted((r for r in rows if r['totals']['late']), key=lambda r: (-r['totals']['late'], r['employee']['name']))[:10]
+	return {'totals': tot, 'divisions': division_rows, 'daily': daily, 'late_top': late_top}

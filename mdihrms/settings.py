@@ -128,6 +128,10 @@ CACHES = {'default': {
 	'LOCATION': str(BASE_DIR / 'cache'),
 }}
 
+import sys  # noqa: E402
+if 'test' in sys.argv[:2]:      # tes tidak boleh menyentuh cache berkas milik aplikasi yang berjalan
+	CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+
 if not DEBUG:
 	SESSION_COOKIE_SECURE = env_bool('HTTPS', True)
 	CSRF_COOKIE_SECURE = env_bool('HTTPS', True)

@@ -1,4 +1,4 @@
-{% load static %}<!DOCTYPE html>
+{% load static qr_i18n %}<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="utf-8">
@@ -6,7 +6,9 @@
 	<title>MDI-HRMS{% if title %} - {{ title }}{% endif %}</title>
 	<link rel="stylesheet" href="{% static 'main/css/bootstrap.min.css' %}">
 	<link rel="stylesheet" href="{% static 'main/font-awesome/css/font-awesome.min.css' %}">
+	<link rel="icon" type="image/jpeg" href="{% static 'main/images/favicon.jpg' %}">
 	<link rel="stylesheet" href="{% static 'main/css/main.css' %}">
+	<link rel="stylesheet" href="{% qr_static 'attendance/qr/qr.css' %}">
 </head>
 <body>
 	{% include 'main/navbar.html' %}
@@ -23,6 +25,7 @@
 	</footer>
 	<script src="{% static 'main/js/jquery.min.js' %}"></script>
 	<script src="{% static 'main/js/bootstrap.min.js' %}"></script>
+	{% if user.is_authenticated %}<script src="{% static 'main/js/notif.js' %}" defer></script>{% endif %}
 	{% block scripts %}{% endblock %}
 </body>
 </html>

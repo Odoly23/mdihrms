@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 	'contract',
 	'leave',
 	'attendance',
+	'notif',
 ]
 
 MIDDLEWARE = [

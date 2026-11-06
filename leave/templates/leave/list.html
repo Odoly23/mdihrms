@@ -1,0 +1,55 @@
+{% extends "main/layout.html" %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
+	<li class="breadcrumb-item active" aria-current="page">{{ title|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-calendar-check-o"></i> {{ title|upper }}</div>
+	<div class="card-body">
+	{% if mode == 'mine' %}
+		{% if can.leave_request %}<a class="btn btn-sm btn-mdi" href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o"></i> Husu Lisensa</a>{% endif %}
+		{% if not emp %}<div class="alert alert-warning p-2 mt-2">Akun ne'e seidauk liga ba funsionariu.</div>{% endif %}
+	{% else %}
+		<form class="form-inline mb-2" method="get">
+			<select name="status" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+				<option value="pending" {% if status == 'pending' %}selected{% endif %}>Hein</option>
+				<option value="approved" {% if status == 'approved' %}selected{% endif %}>Aprova</option>
+				<option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejeita/Kansela</option>
+				<option value="all" {% if status == 'all' %}selected{% endif %}>Hotu</option>
+			</select>
+			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2" placeholder="Naran" maxlength="50">
+			<button class="btn btn-sm btn-mdi"><i class="fa fa-search"></i> Buka</button>
+		</form>
+	{% endif %}
+	<hr/>
+	<div class="table-responsive">
+	<table class="table table-sm table-striped">
+		<thead><tr>{% if mode == 'all' %}<th>Funsionariu</th>{% endif %}<th>Tipu</th><th>Hahu</th><th>Remata</th><th>Loron</th><th>Status</th><th></th></tr></thead>
+		<tbody>
+		{% for lv in rows %}
+			<tr>
+				{% if mode == 'all' %}<td>{{ lv.employee }}</td>{% endif %}
+				<td>{{ lv.leave_type.name|default:"-" }}</td>
+				<td>{{ lv.start_date|date:"d/m/Y" }}</td><td>{{ lv.end_date|date:"d/m/Y" }}</td><td>{{ lv.days }}</td>
+				<td><span class="badge badge-{{ lv.state_class }}">{{ lv.state_text }}</span>
+					{% if lv.file %}<a href="{{ lv.file.url }}" target="_blank" rel="noopener" title="PDF"><i class="fa fa-file-pdf-o"></i></a>{% endif %}</td>
+				<td class="text-nowrap">
+					{% if mode == 'mine' and lv.state == 'pending' %}
+						<form method="post" action="{% url 'leave-cancel' lv.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-times"></i> Kansela</button></form>
+					{% elif mode == 'all' and can_decide and lv.state == 'pending' and lv.employee_id != mine_id %}
+						<form method="post" action="{% url 'leave-decide' lv.pk 'approve' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-success" type="submit"><i class="fa fa-check"></i> Aprova</button></form>
+						<form method="post" action="{% url 'leave-decide' lv.pk 'reject' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-ban"></i> Rejeita</button></form>
+					{% endif %}
+				</td>
+			</tr>
+		{% empty %}
+			<tr><td colspan="7" class="text-center text-muted">Laiha dadus.</td></tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	</div>
+	</div>
+</div>
+</div>
+{% endblock %}

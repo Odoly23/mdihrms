@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from attendance import qr_service as svc
 
 ROLES = [
-	('MANAGER_GROUPS', 'Kartu QR, cuti-libur, tinjau scan beruntun'),
+	('MANAGER_GROUPS', 'Kartu QR, tinjau scan beruntun (bawaan: hanya admin)'),
 	('VIEWER_GROUPS', 'Hari ini, rekap, dashboard, grafik pimpinan'),
 	('DEVICE_GROUPS', 'Memasangkan PC kiosk dan IP kantor'),
 	('SELF_GROUPS', 'Laporan absensi pribadi'),

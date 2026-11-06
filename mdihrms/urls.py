@@ -15,6 +15,10 @@ urlpatterns = [
 	path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 	path('home/', main_views.home, name='home'),
 	path('attendance/', include('attendance.urls')),
+	path('leave/', include('leave.urls')),
+	path('kolokasaun/', include('contract.urls')),
+	path('funsionariu/', include('employee.urls')),
+	path('notif/', include('notif.urls')),
 ]
 
 if settings.DEBUG:

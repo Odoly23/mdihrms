@@ -1,0 +1,45 @@
+{% extends "main/layout.html" %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
+	<li class="breadcrumb-item active">KOLOKASAUN</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-exchange"></i> KOLOKASAUN FUNSIONARIU</div>
+	<div class="card-body">
+		<form class="form-inline mb-2" method="get">
+			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="Naran" maxlength="50">
+			<select name="div" class="form-control form-control-sm mr-2 mb-1">
+				<option value="">Diresaun hotu</option>
+				{% for d in divisions %}<option value="{{ d.pk }}" {% if div == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+			</select>
+			<button class="btn btn-sm btn-mdi mb-1"><i class="fa fa-search"></i> Buka</button>
+		</form>
+		<div class="table-responsive">
+		<table class="table table-sm table-striped">
+			<thead><tr><th>Funsionariu</th><th>Pojisaun</th><th>Diresaun</th><th></th></tr></thead>
+			<tbody>
+			{% for e in page %}
+				<tr>
+					<td>{{ e }}</td>
+					<td>{{ e.employeeposition.position|default:"-" }}</td>
+					<td>{{ e.employeedivision.division|default:"-" }}</td>
+					<td class="text-nowrap">
+						<a class="btn btn-sm btn-mdi" href="{% url 'placement-history' e.pk %}"><i class="fa fa-history"></i> Istoria</a>
+						{% if can_edit %}<a class="btn btn-sm btn-mdi" href="{% url 'placement-new' e.pk %}"><i class="fa fa-exchange"></i> Muda</a>{% endif %}
+					</td>
+				</tr>
+			{% empty %}<tr><td colspan="4" class="text-center text-muted">Laiha dadus.</td></tr>{% endfor %}
+			</tbody>
+		</table>
+		</div>
+		{% if page.has_other_pages %}
+		<nav><ul class="pagination pagination-sm">
+			{% if page.has_previous %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&div={{ div }}&page={{ page.previous_page_number }}">&laquo;</a></li>{% endif %}
+			<li class="page-item disabled"><span class="page-link">{{ page.number }} / {{ page.paginator.num_pages }}</span></li>
+			{% if page.has_next %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&div={{ div }}&page={{ page.next_page_number }}">&raquo;</a></li>{% endif %}
+		</ul></nav>
+		{% endif %}
+	</div>
+</div></div>
+{% endblock %}

@@ -216,7 +216,8 @@ def upload_leave(instance, filename):
 	field = 'licenca'
 	ext = filename.split('.')[-1]
 	if instance.pk:
-		filename = '{}_{}_{}_{}.{}'.format(field,instance.id,instance.leave_type.code.lower(),instance.start_date,ext)
+		code = (instance.leave_type.code if instance.leave_type_id and instance.leave_type.code else 'lisensa').lower()
+		filename = '{}_{}_{}_{}.{}'.format(field,instance.id,code,instance.start_date,ext)
 	else:
 		filename = '{}.{}'.format(uuid4().hex, ext)
 	return os.path.join(upload_to, filename)

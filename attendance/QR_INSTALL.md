@@ -16,7 +16,7 @@ attendance/urls_qr.py
 attendance/templatetags/       __init__.py + qr_i18n.py ({% t %}, {% t4 %}, {% flags %}, {% qr_tab_url %}, {% qr_chart_url %})
 attendance/qr_checks.py        pemeriksaan konfigurasi (python manage.py check)
 attendance/management/commands/prune_scanlogs.py   pembersih log scan
-attendance/tests_qr.py         207 tes otomatis
+attendance/tests_qr.py         tes otomatis
 attendance/templates/attendance/qr/*
 attendance/static/attendance/qr/*      (qr.css, kiosk.js, charts.js, mdi-logo.jpg)
 ```
@@ -75,10 +75,10 @@ ATTENDANCE_WORK_END = '16:00'           # pulang sebelum jam ini ditandai "pulan
 ATTENDANCE_DUPLICATE_SECONDS = 60
 ATTENDANCE_ACTIVE_STATUS_ID = 1         # Employee.status_id pegawai aktif
 ATTENDANCE_PRESENT_CODE = 'P'           # AttendanceStatus.code untuk hadir
-ATTENDANCE_MANAGER_GROUPS = ['admin', 'staff']              # kartu QR
-ATTENDANCE_VIEWER_GROUPS = ['admin', 'staff', 'president']  # hari ini + rekap
+ATTENDANCE_MANAGER_GROUPS = ['admin']                        # kartu QR, tinjau scan beruntun
+ATTENDANCE_VIEWER_GROUPS = ['admin', 'staff', 'president', 'hr']  # hari ini + rekap (hanya baca)
 ATTENDANCE_DEVICE_GROUPS = ['admin']                        # memasangkan PC kiosk
-ATTENDANCE_SELF_GROUPS = ['admin', 'staff', 'president', 'funsionario', 'employee']
+ATTENDANCE_SELF_GROUPS = ['admin', 'staff', 'president', 'hr', 'funsionario', 'employee']
 ATTENDANCE_CARD_BACK_NOTE = {'tet': '...', 'en': '...', 'id': '...', 'pt': '...'}  # atau satu string
 ATTENDANCE_CARD_CONTACT = 'Telp ...'    # baris kontak di belakang kartu (string atau dict per bahasa)
 ```

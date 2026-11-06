@@ -1,0 +1,25 @@
+{% extends "main/layout.html" %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'leave-mine' %}">LISENSA</a></li>
+	<li class="breadcrumb-item active">HUSU</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="row"><div class="col-12 col-md-8 col-lg-6">
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-calendar-plus-o"></i> {{ title|upper }}</div>
+	<div class="card-body">
+		<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+			{% if form.non_field_errors %}<div class="alert alert-danger p-2">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+			{% for f in form %}
+				<div class="form-group"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+				{% for e in f.errors %}<small class="text-danger d-block">{{ e }}</small>{% endfor %}</div>
+			{% endfor %}
+			<button class="btn btn-mdi" type="submit"><i class="fa fa-paper-plane"></i> Haruka</button>
+			<a class="btn btn-outline-secondary" href="{% url 'leave-mine' %}">Kansela</a>
+		</form>
+	</div>
+</div>
+</div></div>
+</div>
+{% endblock %}

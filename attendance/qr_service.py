@@ -58,10 +58,10 @@ _DEFAULTS = {
 	'DEVICE_ROTATE_HOURS': 6,      # token PC kiosk diputar tiap sekian jam (lewat denyut kiosk)
 	'DEVICE_GRACE_HOURS': 24,      # token lama masih diterima sekian jam setelah diputar (bila Set-Cookie tidak sampai)
 	'CLIENT_IP_HEADER': None,      # mis. 'HTTP_CF_CONNECTING_IP' (Cloudflare) atau 'HTTP_X_REAL_IP'; hanya bila front-end tepercaya
-	'MANAGER_GROUPS': ['admin', 'staff'],
-	'VIEWER_GROUPS': ['admin', 'staff', 'president'],
+	'MANAGER_GROUPS': ['admin'],
+	'VIEWER_GROUPS': ['admin', 'staff', 'president', 'hr'],
 	'DEVICE_GROUPS': ['admin'],
-	'SELF_GROUPS': ['admin', 'staff', 'president', 'funsionario', 'employee'],
+	'SELF_GROUPS': ['admin', 'staff', 'president', 'hr', 'funsionario', 'employee'],
 }
 
 

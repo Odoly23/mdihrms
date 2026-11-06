@@ -1,0 +1,27 @@
+{% extends "main/layout.html" %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
+	<li class="breadcrumb-item active">ANIVERSARIU</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="row"><div class="col-12 col-lg-8">
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-birthday-cake"></i> ANIVERSARIU · {{ monthname|upper }}</div>
+	<div class="card-body">
+		<form method="get" class="form-inline mb-2">
+			<select name="month" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+				{% for n, name in months %}<option value="{{ n }}" {% if n == month %}selected{% endif %}>{{ name }}</option>{% endfor %}
+			</select>
+		</form>
+		<ul class="list-group">
+		{% for r in rows %}
+			<li class="list-group-item d-flex align-items-start {% if r.is_today %}list-group-item-warning{% endif %}">
+				<span class="mr-3 text-nowrap"><b>{{ r.day|date:"d/m" }}</b></span>
+				<span>{% if r.is_today %}<i class="fa fa-birthday-cake"></i> {% endif %}{{ r.names|join:", " }}</span>
+			</li>
+		{% empty %}<li class="list-group-item text-muted">Laiha aniversariu fulan ne'e.</li>{% endfor %}
+		</ul>
+	</div>
+</div></div></div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 {% load qr_i18n %}<header class="site-header">
 	<nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color:#e3171e">
-		<a class="navbar-brand" href="{% if user.is_authenticated %}{% url 'home' %}{% else %}#{% endif %}"><b>MDI-HRMS</b></a>
+		<a class="navbar-brand" href="{% if user.is_authenticated %}{% url 'home' %}{% else %}#{% endif %}"><i class="fa fa-id-card-o"></i> <b>MDI-HRMS</b></a>
 		{% if user.is_authenticated %}
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
@@ -8,22 +8,36 @@
 		<div class="collapse navbar-collapse" id="navbarToggle">
 			<ul class="navbar-nav ml-auto">
 				<li class="nav-item active"><a class="nav-link" href="{% url 'home' %}"><i class="fa fa-home"></i> VARANDA</a></li>
-				{% if nav_group == 'admin' or nav_group == 'staff' %}
+				{% if can.directory %}<li class="nav-item active"><a class="nav-link" href="{% url 'staff-list' %}"><i class="fa fa-users"></i> FUNSIONARIU</a></li>{% endif %}
+				{% if can.qr_view %}
 				<li class="nav-item dropdown active">
 					<a class="nav-link dropdown-toggle" href="#" id="ddAbs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-qrcode"></i> ABSENSI QR</a>
 					<div class="dropdown-menu" aria-labelledby="ddAbs">
 						<a class="dropdown-item" href="{% url 'qr-today' %}"><i class="fa fa-list"></i> {% t 'nav.today' %}</a>
 						<a class="dropdown-item" href="{% url 'qr-report' %}"><i class="fa fa-table"></i> {% t 'nav.report' %}</a>
-						<a class="dropdown-item" href="{% url 'qr-cards' %}"><i class="fa fa-id-card"></i> {% t 'nav.cards' %}</a>
-						{% if nav_group == 'admin' %}<a class="dropdown-item" href="{% url 'qr-devices' %}"><i class="fa fa-desktop"></i> {% t 'nav.devices' %}</a>{% endif %}
+						{% if can.qr_manage %}<a class="dropdown-item" href="{% url 'qr-cards' %}"><i class="fa fa-id-card"></i> {% t 'nav.cards' %}</a>{% endif %}
+						{% if can.qr_device %}<a class="dropdown-item" href="{% url 'qr-devices' %}"><i class="fa fa-desktop"></i> {% t 'nav.devices' %}</a>{% endif %}
 					</div>
 				</li>
 				{% endif %}
+				{% if can.leave_request or can.leave_view_all %}
+				<li class="nav-item dropdown active">
+					<a class="nav-link dropdown-toggle" href="#" id="ddLeave" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-calendar-check-o"></i> LISENSA</a>
+					<div class="dropdown-menu" aria-labelledby="ddLeave">
+						{% if can.leave_request %}<a class="dropdown-item" href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o"></i> Husu Lisensa</a>
+						<a class="dropdown-item" href="{% url 'leave-mine' %}"><i class="fa fa-list"></i> Ha'u-nia Lisensa</a>{% endif %}
+						{% if can.leave_view_all %}<a class="dropdown-item" href="{% url 'leave-all' %}"><i class="fa fa-users"></i> Lisensa hotu</a>{% endif %}
+					</div>
+				</li>
+				{% endif %}
+				{% if can.placement_view %}<li class="nav-item active"><a class="nav-link" href="{% url 'placement-list' %}"><i class="fa fa-exchange"></i> KOLOKASAUN</a></li>{% endif %}
 				{% include 'attendance/qr/_navbar_report.html' %}
-				{% if nav_group == 'admin' %}<li class="nav-item active"><a class="nav-link" href="{% url 'admin:index' %}"><i class="fa fa-cogs"></i> ADMIN</a></li>{% endif %}
+				<li class="nav-item active"><a class="nav-link" href="{% url 'notif-birthdays' %}"><i class="fa fa-birthday-cake"></i><span class="d-lg-none"> ANIVERSARIU</span></a></li>
+				{% include 'main/_notif.html' %}
+				{% if can.admin_site %}<li class="nav-item active"><a class="nav-link" href="{% url 'admin:index' %}"><i class="fa fa-cogs"></i> ADMIN</a></li>{% endif %}
 				{% if lang_in_navbar %}{% include 'attendance/qr/_navbar_lang.html' %}{% endif %}
 				<li class="nav-item dropdown active">
-					<a class="nav-link dropdown-toggle" href="#" id="profile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ request.user.username|upper }}</a>
+					<a class="nav-link dropdown-toggle" href="#" id="profile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user-o"></i> {{ request.user.username|upper }}</a>
 					<div class="dropdown-menu dropdown-menu-right" aria-labelledby="profile">
 						<form method="post" action="{% url 'logout' %}">{% csrf_token %}
 							<button type="submit" class="dropdown-item"><i class="fa fa-sign-out"></i> Sair</button>

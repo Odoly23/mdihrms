@@ -1,0 +1,48 @@
+{% extends "main/layout.html" %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">VARANDA</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'placement-list' %}">KOLOKASAUN</a></li>
+	<li class="breadcrumb-item active">{{ emp|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="row"><div class="col-12 col-md-8 col-lg-6">
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-exchange"></i> KOLOKASAUN FOUN · {{ emp }}</div>
+	<div class="card-body">
+		<form method="post" novalidate>{% csrf_token %}
+			{% if form.non_field_errors %}<div class="alert alert-danger p-2">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+			{% for f in form %}
+				<div class="form-group"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+				{% for e in f.errors %}<small class="text-danger d-block">{{ e }}</small>{% endfor %}</div>
+			{% endfor %}
+			<button class="btn btn-mdi" type="submit"><i class="fa fa-save"></i> Rai</button>
+			<a class="btn btn-outline-secondary" href="{% url 'placement-history' emp.pk %}">Kansela</a>
+		</form>
+	</div>
+</div>
+</div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ divisions|json_script:"j-div" }}{{ departments|json_script:"j-dep" }}{{ sections|json_script:"j-sec" }}
+<script>
+// Pilihan diresaun/departamento/seksaun hanya yang termasuk induknya.
+(function () {
+	var J = function (id) { return JSON.parse(document.getElementById(id).textContent); };
+	var map = {
+		id_division: {parent: 'id_dg', key: 'dg_id', rows: J('j-div')},
+		id_department: {parent: 'id_division', key: 'division_id', rows: J('j-dep')},
+		id_section: {parent: 'id_department', key: 'department_id', rows: J('j-sec')}
+	};
+	function apply(id) {
+		var m = map[id], sel = document.getElementById(id), par = document.getElementById(m.parent).value;
+		var ok = {}; m.rows.forEach(function (r) { if (!par || String(r[m.key]) === par) ok[r.id] = 1; });
+		Array.prototype.forEach.call(sel.options, function (o) { o.hidden = !!o.value && !ok[o.value]; });
+		if (sel.value && !ok[sel.value]) sel.value = '';
+	}
+	function all() { ['id_division', 'id_department', 'id_section'].forEach(apply); }
+	['id_dg', 'id_division', 'id_department'].forEach(function (id) { document.getElementById(id).addEventListener('change', all); });
+	all();
+})();
+</script>
+{% endblock %}

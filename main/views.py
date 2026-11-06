@@ -4,7 +4,9 @@ from django.shortcuts import render
 
 @login_required
 def home(request):
-	return render(request, 'main/home.html', {'title': 'Varanda'})
+	from notif import services
+	names = [n for _, n in services.birthdays_on(services.today())]
+	return render(request, 'main/home.html', {'title': 'Varanda', 'birthdays': names})
 
 
 def error_403(request, exception=None):

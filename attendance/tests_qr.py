@@ -447,8 +447,10 @@ class ViewTests(QRBase):
 		self.assertContains(self.client.get(reverse('qr-cards')), '403', status_code=403)
 		self.assertContains(self.client.get(reverse('qr-devices')), '403', status_code=403)
 		self.client.logout()
-		self.login('staff')
-		self.assertContains(self.client.get(reverse('qr-cards')), 'Kartu QR pegawai')
+		self.login('staff')                                                  # staff hanya melihat data
+		self.assertContains(self.client.get(reverse('qr-report')), 'Rekap absensi')
+		self.assertContains(self.client.get(reverse('qr-today')), 'Hari ini')
+		self.assertContains(self.client.get(reverse('qr-cards')), '403', status_code=403)
 		self.assertContains(self.client.get(reverse('qr-devices')), '403', status_code=403)
 		self.client.logout()
 		self.login('funsionario')
@@ -2011,7 +2013,7 @@ class BurstTests(QRBase):
 
 	def test_today_shows_flags_count_and_review_button_for_managers(self):
 		self.make_burst()
-		self.login('staff')
+		self.login('admin')
 		with mock.patch.object(timezone, 'now', lambda: at(MON, 12)):
 			html = self.client.get(reverse('qr-today')).content.decode()
 		self.assertEqual(html.count('⚑ Perlu dicek</span>'), 3)                            # chip di tiga baris
@@ -2031,7 +2033,7 @@ class BurstTests(QRBase):
 
 	def test_review_clears_the_flag(self):
 		self.make_burst()
-		self.login('staff')
+		self.login('admin')
 		st = AttendanceTime.objects.filter(flagged=True).first()
 		r = self.client.post(reverse('qr-scan-review', args=[st.pk]))
 		self.assertEqual(r.status_code, 302)
@@ -2134,3 +2136,55 @@ class ProjectCompatibilityTests(QRBase):
 			self.assertEqual(self.client.get(reverse('qr-cards')).status_code, 200)
 			self.assertEqual(self.client.get(reverse('qr-today')).status_code, 200)
 			self.assertEqual(self.client.get(reverse('qr-devices')).status_code, 403)       # hak perangkat tetap admin saja
+
+
+class RoleRuleTests(QRBase):
+	"""Aturan peran: hanya admin membuka kiosk dan mengelola kartu; admin pun wajib scan; staff/hr/direktur hanya melihat."""
+
+	def user(self, group, name=None, link=None):
+		u = User.objects.create_user(name or 'r_' + group, password='x')
+		u.groups.add(Group.objects.get_or_create(name=group)[0])
+		if link:
+			from employee.models import EmployeeUser
+			EmployeeUser.objects.create(employee=link, user=u)
+		return u
+
+	def test_only_admin_opens_the_kiosk_and_manages_cards(self):
+		for group in ('staff', 'president', 'hr', 'funsionario', 'employee'):
+			self.client.force_login(self.user(group))
+			self.assertEqual(self.client.post(reverse('qr-device-pair'), {}).status_code, 403, group)
+			self.assertEqual(self.client.get(reverse('qr-devices')).status_code, 403, group)
+			self.assertEqual(self.client.get(reverse('qr-cards')).status_code, 403, group)
+			self.client.logout()
+		self.assertEqual(ScanDevice.objects.count(), 0)
+		self.client.force_login(self.user('admin'))
+		self.assertEqual(self.client.get(reverse('qr-cards')).status_code, 200)
+		self.assertEqual(self.client.post(reverse('qr-device-pair'), {}).status_code, 302)
+		self.assertEqual(ScanDevice.objects.count(), 1)
+
+	def test_viewers_read_data_but_cannot_change_it(self):
+		for group in ('staff', 'president', 'hr'):
+			self.client.force_login(self.user(group))
+			for name in ('qr-today', 'qr-report', 'qr-dash'):
+				self.assertEqual(self.client.get(reverse(name)).status_code, 200, (group, name))
+			self.assertEqual(self.client.post(reverse('qr-scan-review', args=[1])).status_code, 403, group)
+			self.assertEqual(self.client.get(reverse('qr-cards')).status_code, 403, group)
+			self.client.logout()
+
+	def test_admin_must_scan_too_even_after_opening_the_kiosk(self):
+		"""Membuka kiosk tidak mencatat kehadiran admin; admin tetap harus menempelkan kartunya sendiri."""
+		adm_emp = self.make_employee('Admin', 'Satu')
+		adm_card = QRCard.objects.create(employee=adm_emp)
+		self.client.force_login(self.user('admin', link=adm_emp))
+		self.client.post(reverse('qr-device-pair'), {})
+		self.assertFalse(Attendance.objects.filter(employee=adm_emp).exists())          # membuka kiosk != hadir
+		with mock.patch.object(timezone, 'now', lambda: at(MON, 8)):
+			r = self.post_scan({'code': svc.make_payload(adm_card)})
+		self.assertEqual(r.json()['code'], 'in')
+		self.assertTrue(Attendance.objects.filter(employee=adm_emp, date=MON).exists())
+
+	def test_hr_and_president_get_group_in_defaults(self):
+		self.assertIn('hr', svc.conf('VIEWER_GROUPS'))
+		self.assertNotIn('hr', svc.conf('MANAGER_GROUPS'))
+		self.assertEqual(svc.conf('DEVICE_GROUPS'), ['admin'])
+		self.assertEqual(svc.conf('MANAGER_GROUPS'), ['admin'])

@@ -16,9 +16,17 @@ body { padding-top: var(--header-h); background: #f4f5f9; }
 .tb-item { color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; }
 a.tb-item:hover { color: #fff; text-decoration: underline; }
 .tb-item .fa { margin-right: 4px; opacity: .9; }
-.tb-name { text-transform: uppercase; font-weight: 600; }
-@media (max-width: 767px) { .tb-right { display: none; } .tb-addr { display: none; } }
-@media (max-width: 400px) { .tb-mail { display: none; } }
+.tb-right { flex: 0 0 auto; }
+/* bendera 4 bahasa di topbar: satu klik ganti bahasa */
+.topbar .qr-flags { gap: 3px; }
+.topbar .qr-flag { flex-direction: row; gap: 5px; min-width: 0; min-height: 0; height: 26px; padding: 2px 7px; border-width: 1px; border-radius: 6px; color: #fff; font-size: 11px; }
+.topbar .qr-flag svg { width: 22px; height: 15px; }
+.topbar .qr-flag b { font-size: 10.5px; letter-spacing: .05em; }
+.topbar .qr-flag:hover { background: rgba(255,255,255,.18); color: #fff; }
+.topbar .qr-flag.on { background: rgba(255,255,255,.25); border-color: #fff; color: #fff; }
+@media (max-width: 767px) { .tb-addr { display: none; } .topbar .qr-flag b { display: none; } .topbar .qr-flag { padding: 2px 5px; } }
+@media (pointer: coarse) { :root { --topbar-h: 42px; } .topbar .qr-flag { height: 34px; min-width: 38px; justify-content: center; } }
+@media (max-width: 520px) { .tb-mail { display: none; } }
 
 /* ── NAVBAR di bawah topbar ── */
 .navbar.fixed-top { top: var(--topbar-h); min-height: var(--navbar-h); z-index: 1030; }

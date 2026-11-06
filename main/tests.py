@@ -533,8 +533,11 @@ class TopbarTests(HrBase):
 		self.assertNotIn('<script>alert(1)</script>', h)
 		self.assertNotIn('href="tel:"><b>', h)
 
-	def test_flags_are_at_the_far_right_of_the_navbar(self):
+	def test_flags_are_in_the_topbar_not_the_navbar(self):
 		h = self.page()
-		self.assertGreater(h.index('qr-flags'), h.index('id="profile"'))      # setelah menu profil = paling kanan
+		bar, nav = h.index('class="topbar"'), h.index('<header class="site-header">')
 		self.assertEqual(h.count('class="qr-flag"') + h.count('class="qr-flag on"'), 4)
-		self.assertLess(h.index('class="topbar"'), h.index('<header class="site-header">'))
+		self.assertTrue(bar < h.index('qr-flags') < nav)                        # semua bendera di dalam topbar
+		self.assertEqual(h.count('qr-flags'), 1)
+		for code in ('tet', 'en', 'id', 'pt'):
+			self.assertIn('/attendance/qr/lang/%s/?next=' % code, h)

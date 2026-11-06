@@ -139,6 +139,12 @@ if not DEBUG:
 	SECURE_SSL_REDIRECT = env_bool('SSL_REDIRECT', False)
 	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# Topbar (dipakai bila lembaga aktif di custom.Institute belum punya datanya)
+SITE_NAME = env('SITE_NAME', 'Mata Dalan Institute')
+SITE_ADDRESS = env('SITE_ADDRESS', '')
+SITE_PHONE = env('SITE_PHONE', '')
+SITE_EMAIL = env('SITE_EMAIL', '')
+
 # ---- Absensi QR (lihat attendance/QR_INSTALL.md) ----
 ATTENDANCE_QR_SECRET = env('ATTENDANCE_QR_SECRET')
 ATTENDANCE_NETWORK_MODE = env('ATTENDANCE_NETWORK_MODE', 'device')

@@ -488,3 +488,53 @@ class EmployeeCrudTests(HrBase):
 		self.assertContains(self.client.get(reverse('staff-list')), reverse('employee-add'))
 		self.login('hr')
 		self.assertNotContains(self.client.get(reverse('staff-list')), reverse('employee-add'))
+
+
+class TopbarTests(HrBase):
+	def page(self):
+		self.login('staff', self.emp('Tes'))
+		return self.client.get(reverse('home')).content.decode()
+
+	def test_topbar_uses_the_active_institute(self):
+		from custom.models import Institute, Municipality
+		m = Municipality.objects.create(code='01', name='Dili')
+		Institute.objects.create(name='Mata Dalan Institute', address='Rua Presidente Nicolau Lobato', municipality=m,
+			phone='+670 7700 0000', email='info@mdi.tl', is_active=True)
+		cache.clear()
+		h = self.page()
+		self.assertIn('class="topbar"', h)
+		self.assertIn('Rua Presidente Nicolau Lobato, Dili', h)
+		self.assertIn('href="tel:+67077000000"', h)
+		self.assertIn('href="mailto:info@mdi.tl"', h)
+
+	def test_inactive_institute_and_empty_settings_show_no_contact(self):
+		from custom.models import Institute
+		Institute.objects.create(name='Lain', phone='123456', email='x@y.tl', is_active=False)
+		cache.clear()
+		h = self.page()
+		self.assertNotIn('tel:', h)
+		self.assertNotIn('mailto:', h)
+		self.assertIn('class="topbar"', h)
+
+	def test_settings_fallback_and_bad_email_dropped(self):
+		from django.test import override_settings
+		cache.clear()
+		with override_settings(SITE_ADDRESS='Dili', SITE_PHONE='7700', SITE_EMAIL='bukan-email'):
+			h = self.page()
+		self.assertIn('Dili', h)
+		self.assertIn('tel:7700', h)
+		self.assertNotIn('mailto:', h)
+
+	def test_contact_values_are_escaped(self):
+		from custom.models import Institute
+		Institute.objects.create(name='X', address='<script>alert(1)</script>', phone='"><b>1', is_active=True)
+		cache.clear()
+		h = self.page()
+		self.assertNotIn('<script>alert(1)</script>', h)
+		self.assertNotIn('href="tel:"><b>', h)
+
+	def test_flags_are_at_the_far_right_of_the_navbar(self):
+		h = self.page()
+		self.assertGreater(h.index('qr-flags'), h.index('id="profile"'))      # setelah menu profil = paling kanan
+		self.assertEqual(h.count('class="qr-flag"') + h.count('class="qr-flag on"'), 4)
+		self.assertLess(h.index('class="topbar"'), h.index('<header class="site-header">'))

@@ -1,8 +1,27 @@
-body { padding-top: 56px; background: #f4f5f9; }
+:root { --mdi-red: #e3171e; --mdi-red-dk: #a80f14; --topbar-h: 34px; --navbar-h: 62px; --header-h: calc(var(--topbar-h) + var(--navbar-h)); }
+body { padding-top: var(--header-h); background: #f4f5f9; }
 .breadcrumb-holder { background: #e9ecef; padding: 10px 0; font-size: .8rem; text-transform: uppercase; }
 .breadcrumb-holder .breadcrumb { background: transparent; margin: 0; padding: 0 0 0 4px; }
-.breadcrumb-item a { color: #00c853; }
 .card-header { background: #fff; }
 .btn-info { background: #00a3b8; border-color: #00a3b8; }
-.breadcrumb-item a { color: #e3171e; }
+.breadcrumb-item a { color: var(--mdi-red); }
 .navbar-brand { letter-spacing: .04em; }
+
+/* ── TOPBAR: alamat · telepon · email ── */
+.topbar { position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); background: var(--mdi-red-dk); color: rgba(255,255,255,.85);
+	font-size: 11.5px; letter-spacing: .03em; z-index: 1040; display: flex; align-items: center; }
+.topbar .container-fluid { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tb-left, .tb-right { display: flex; align-items: center; gap: 16px; min-width: 0; white-space: nowrap; }
+.tb-left { overflow: hidden; }
+.tb-item { color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; }
+a.tb-item:hover { color: #fff; text-decoration: underline; }
+.tb-item .fa { margin-right: 4px; opacity: .9; }
+.tb-name { text-transform: uppercase; font-weight: 600; }
+@media (max-width: 767px) { .tb-right { display: none; } .tb-addr { display: none; } }
+@media (max-width: 400px) { .tb-mail { display: none; } }
+
+/* ── NAVBAR di bawah topbar ── */
+.navbar.fixed-top { top: var(--topbar-h); min-height: var(--navbar-h); z-index: 1030; }
+@media (max-width: 1199px) { .navbar.fixed-top { max-height: calc(100vh - var(--topbar-h)); overflow-y: auto; } }
+.navbar .nav-link { white-space: nowrap; }
+@media (min-width: 1200px) and (max-width: 1399px) { .navbar .nav-link { padding-left: .4rem; padding-right: .4rem; font-size: .82rem; } }

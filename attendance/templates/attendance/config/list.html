@@ -17,7 +17,7 @@
 			<tbody>
 			{% for o in objects %}
 				<tr>
-					<td>{{ o.every }}</td><td>{{ o.date.year }}</td><td>{{ o.next_text }}</td>
+					<td>{% if o.recurring %}{{ o.every }}{% else %}<span class="badge badge-light">{% t 'cfg.once' %}</span> {{ o.full_text }}{% endif %}</td><td>{{ o.date.year }}</td><td>{{ o.next_text }}</td>
 					<td>{{ o.name|default:"-" }}</td>
 					<td>{% if o.is_active %}<span class="badge badge-success">{% t 'cfg.active' %}</span>{% else %}<span class="badge badge-secondary">{% t 'cfg.inactive' %}</span>{% endif %}</td>
 					<td><a class="btn btn-sm btn-mdi" href="{% url edit_url o.pk %}"><i class="fa fa-edit"></i> {% t 'btn.edit' %}</a></td>

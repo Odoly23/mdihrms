@@ -105,6 +105,7 @@ class NacionalHoliday(models.Model):
 	name = models.CharField(max_length=100, null=True, blank=True)
 	date = models.DateField(null=False)
 	is_active = models.BooleanField(default=True, null=True)
+	recurring = models.BooleanField(default=True, verbose_name="Kada tinan")    # False = hanya pada tanggal persis (mis. Jumat Agung)
 	def __str__(self):
 		template = '{0.date}'
 		return template.format(self)
@@ -114,6 +115,7 @@ class Tolerance(models.Model):
 	name = models.CharField(max_length=100, null=True, blank=True)
 	date = models.DateField(null=False)
 	is_active = models.BooleanField(default=True, null=True)
+	recurring = models.BooleanField(default=True, verbose_name="Kada tinan")
 	def __str__(self):
 		template = '{0.date}'
 		return template.format(self)

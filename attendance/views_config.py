@@ -105,8 +105,8 @@ def _rows(qs, lang, recurring):
 	today = svc.to_local(timezone.now()).date()
 	rows = []
 	for o in qs:
-		o.every = i18n.fmt_full(o.date, lang, weekday=False).rsplit(' ', 1)[0] if recurring else ''
-		nxt = hol.next_occurrence(o.date, today) if recurring else o.date
+		o.every = i18n.fmt_full(o.date, lang, weekday=False).rsplit(' ', 1)[0] if o.recurring else ''
+		nxt = hol.next_occurrence(o.date, today) if o.recurring else (o.date if o.date >= today else None)
 		o.next_text = i18n.fmt_full(nxt, lang) if nxt else '-'
 		o.full_text = i18n.fmt_full(o.date, lang, weekday=False)
 		rows.append(o)

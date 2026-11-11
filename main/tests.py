@@ -750,13 +750,13 @@ class AttendanceConfigTests(HrBase):
 		from attendance.models import NacionalHoliday
 		self.login('admin')
 		cache.set('attqr:hol', {'stale': 1}, 600)
-		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Kemerdekaan', 'date': '2026-11-28', 'is_active': 'on'})
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Kemerdekaan', 'date': '2026-11-28', 'is_active': 'on', 'recurring': 'on'})
 		h = NacionalHoliday.objects.get()
 		self.assertIsNone(cache.get('attqr:hol'))
 		self.assertEqual(svc.holiday_map()[(11, 28)][0], 'holiday')
-		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Ganda', 'date': '2026-11-28'})   # tanggal sama
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Ganda', 'date': '2026-11-28', 'recurring': 'on'})   # tanggal sama
 		self.assertEqual(NacionalHoliday.objects.count(), 1)
-		self.client.post(reverse('attendance-custom-holiday-update', args=[h.pk]), {'name': 'Kemerdekaan', 'date': '2026-11-28'})  # nonaktif
+		self.client.post(reverse('attendance-custom-holiday-update', args=[h.pk]), {'name': 'Kemerdekaan', 'date': '2026-11-28', 'recurring': 'on'})  # nonaktif
 		h.refresh_from_db()
 		self.assertFalse(h.is_active)
 		self.assertNotIn((11, 28), svc.holiday_map())
@@ -766,7 +766,7 @@ class AttendanceConfigTests(HrBase):
 		from attendance import qr_service as svc
 		from attendance.models import Tolerance, Year
 		self.login('admin')
-		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Natal', 'date': '2026-12-24', 'is_active': 'on'})
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Natal', 'date': '2026-12-24', 'is_active': 'on', 'recurring': 'on'})
 		t = Tolerance.objects.get()
 		self.assertEqual(t.year, self.y26)                                       # kolom tahun lama: ikut tahun pada tanggal
 		hol = svc.holiday_map()
@@ -784,17 +784,17 @@ class AttendanceConfigTests(HrBase):
 		from attendance.models import Tolerance, Year
 		self.login('admin')
 		Year.objects.update(is_active=False)
-		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Pontu', 'date': '2028-02-29'})
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Pontu', 'date': '2028-02-29', 'recurring': 'on'})
 		self.assertEqual(Tolerance.objects.get().year.year, 2028)
 
 	def test_same_day_and_month_cannot_repeat_in_another_year(self):
 		from attendance.models import NacionalHoliday, Tolerance
 		self.login('admin')
-		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'A', 'date': '2026-12-24', 'is_active': 'on'})
-		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'B', 'date': '2027-12-24', 'is_active': 'on'})
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'A', 'date': '2026-12-24', 'is_active': 'on', 'recurring': 'on'})
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'B', 'date': '2027-12-24', 'is_active': 'on', 'recurring': 'on'})
 		self.assertEqual(Tolerance.objects.count(), 1)
-		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'X', 'date': '1999-11-12', 'is_active': 'on'})
-		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Y', 'date': '2026-11-12', 'is_active': 'on'})
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'X', 'date': '1999-11-12', 'is_active': 'on', 'recurring': 'on'})
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Y', 'date': '2026-11-12', 'is_active': 'on', 'recurring': 'on'})
 		self.assertEqual(NacionalHoliday.objects.count(), 1)
 
 	def test_tolerance_day_is_announced_like_a_holiday_every_year(self):
@@ -910,18 +910,18 @@ class HolidayNoticeTests(HrBase):
 		self.login('admin')
 		with mock.patch.object(timezone, 'now', lambda: self.at(2026, 11, 11)):
 			h = self.client.get(reverse('attendance-custom-holiday-list')).content.decode()
-		for text in ('12 de Novembru', '1999', 'Kinta, 12 de Novembru 2026', 'Masacre Santa Cruz', 'Kada tinan', 'Tinan akontesimentu'):
+		for text in ('12 de Novembru', '1999', 'Kinta, 12 de Novembru 2026', 'Masacre Santa Cruz', 'Kada tinan', 'Tinan referénsia'):
 			self.assertIn(text, h)
 
 	def test_holiday_accepts_event_year_but_tolerance_does_not(self):
 		from attendance.models import NacionalHoliday, Tolerance, Year
 		self.login('admin')
-		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Kemerdekaan', 'date': '1975-11-28', 'is_active': 'on'})
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Kemerdekaan', 'date': '1975-11-28', 'is_active': 'on', 'recurring': 'on'})
 		self.assertTrue(NacionalHoliday.objects.filter(date=datetime.date(1975, 11, 28)).exists())
 		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Salah', 'date': '1899-01-01'})
 		self.assertFalse(NacionalHoliday.objects.filter(name='Salah').exists())
 		Year.objects.create(year=2026, is_active=True)
-		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Lama', 'date': '1999-12-24'})
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Lama', 'date': '1999-12-24', 'recurring': 'on'})
 		self.assertFalse(Tolerance.objects.exists())
 
 	def test_next_occurrence_helper(self):
@@ -932,3 +932,37 @@ class HolidayNoticeTests(HrBase):
 		leap = datetime.date(2000, 2, 29)
 		self.assertEqual(next_occurrence(leap, datetime.date(2027, 1, 1)), datetime.date(2027, 2, 28))
 		self.assertEqual(next_occurrence(leap, datetime.date(2028, 1, 1)), datetime.date(2028, 2, 29))
+
+
+class RecurringFlagTests(HrBase):
+	"""Berulang tiap tahun (bawaan) atau hanya tanggal persis; aturan duplikat mengikuti itu."""
+
+	def post(self, d, recurring, name='X'):
+		data = {'name': name, 'date': d, 'is_active': 'on'}
+		if recurring:
+			data['recurring'] = 'on'
+		return self.client.post(reverse('attendance-custom-holiday-add'), data)
+
+	def test_once_only_holiday_can_be_added_and_is_labelled(self):
+		from attendance.models import NacionalHoliday
+		self.login('admin')
+		self.post('2026-04-03', False, 'Sexta Santa')
+		self.assertFalse(NacionalHoliday.objects.get().recurring)
+		self.assertIn('Dala ida deit', self.client.get(reverse('attendance-custom-holiday-list')).content.decode())
+
+	def test_the_form_checkbox_defaults_to_recurring(self):
+		self.login('admin')
+		h = self.client.get(reverse('attendance-custom-holiday-add')).content.decode()
+		self.assertRegex(h, r'name="recurring"[^>]*checked')
+
+	def test_duplicate_rules_depend_on_recurrence(self):
+		from attendance.models import NacionalHoliday
+		self.login('admin')
+		self.post('2026-04-03', False)
+		self.post('2026-04-03', False)                       # tanggal persis ganda: ditolak
+		self.post('2027-04-03', False)                       # tahun lain: boleh karena bukan berulang
+		self.assertEqual(NacionalHoliday.objects.count(), 2)
+		self.post('2000-05-20', True)
+		self.post('2000-05-20', True)                        # berulang ganda: ditolak
+		self.post('2026-05-20', False)                       # sudah tercakup yang berulang: ditolak
+		self.assertEqual(NacionalHoliday.objects.filter(date__month=5, date__day=20).count(), 1)

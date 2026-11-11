@@ -2245,3 +2245,71 @@ class KioskHolidayNoticeTests(QRBase):
 		NacionalHoliday.objects.create(name='Akhir pekan', date=datetime.date(2000, 11, 14), is_active=True)    # 14 Nov 2026 = Sabtu
 		with self.day(datetime.date(2026, 11, 13)):
 			self.assertEqual(self.client.get(reverse('qr-kiosk')).content.decode().count('"kind": "holiday"'), 0)
+
+
+class SeedHolidaysTests(QRBase):
+	"""Feriadu resmi Timor-Leste: tanggal tetap berulang; Jumat Agung dan Corpus Christi per tahun (tanggal persis)."""
+
+	def run_seed(self, *a):
+		from io import StringIO
+		from django.core.management import call_command
+		out = StringIO()
+		call_command('seed_holidays', *a, stdout=out)
+		return out.getvalue()
+
+	def test_easter_matches_known_dates(self):
+		from attendance.management.commands.seed_holidays import easter
+		for year, want in ((2024, (3, 31)), (2025, (4, 20)), (2026, (4, 5)), (2027, (3, 28)), (2038, (4, 25))):
+			self.assertEqual(easter(year), datetime.date(year, *want), year)
+
+	def test_creates_fixed_and_movable_holidays(self):
+		out = self.run_seed('--years', '2026', '2027')
+		self.assertIn('18 baru, 0 sudah ada', out)
+		self.assertEqual(NacionalHoliday.objects.filter(recurring=True).count(), 14)
+		self.assertEqual(NacionalHoliday.objects.filter(recurring=False).count(), 4)
+		names = dict(NacionalHoliday.objects.filter(recurring=False).values_list('date', 'name'))
+		self.assertEqual(names[datetime.date(2026, 4, 3)], 'Sexta Santa')          # Jumat Agung 2026
+		self.assertEqual(names[datetime.date(2026, 6, 4)], 'Korpu Kristi')         # Corpus Christi 2026
+		self.assertEqual(names[datetime.date(2027, 3, 26)], 'Sexta Santa')
+		self.assertEqual(names[datetime.date(2027, 5, 27)], 'Korpu Kristi')
+
+	def test_idempotent_and_never_overwrites_admin_entries(self):
+		NacionalHoliday.objects.create(name='Milik admin', date=datetime.date(1999, 11, 12), recurring=True)
+		self.run_seed('--years', '2026')
+		self.assertEqual(NacionalHoliday.objects.get(date__month=11, date__day=12).name, 'Milik admin')
+		before = NacionalHoliday.objects.count()
+		self.assertIn('0 baru', self.run_seed('--years', '2026'))
+		self.assertEqual(NacionalHoliday.objects.count(), before)
+
+	def test_dry_run_saves_nothing(self):
+		self.assertIn('SIMULASI', self.run_seed('--years', '2026', '--dry-run'))
+		self.assertEqual(NacionalHoliday.objects.count(), 0)
+
+	def test_movable_holiday_applies_only_in_its_own_year(self):
+		self.run_seed('--years', '2026')
+		self.assertEqual(svc.day_off_reason(datetime.date(2026, 4, 3))[0], 'holiday')          # Jumat Agung 2026
+		self.assertIsNone(svc.day_off_reason(datetime.date(2027, 4, 2)))                       # hari lain di 2027: kerja
+		self.assertIsNone(svc.day_off_reason(datetime.date(2028, 4, 3)))                       # tanggal yang sama di tahun lain (Senin): kerja
+		self.assertEqual(svc.day_off_reason(datetime.date(2027, 11, 12))[0], 'holiday')        # tanggal tetap: berulang
+		self.assertEqual(svc.day_off_reason(datetime.date(2030, 12, 25))[0], 'holiday')
+
+	def test_scan_is_rejected_on_the_seeded_holiday(self):
+		self.run_seed('--years', '2026')
+		self.pair()
+		with mock.patch.object(timezone, 'now', lambda: at(datetime.date(2026, 11, 12), 8)):      # Kamis, Masacre Santa Cruz
+			r = self.post_scan({'code': self.payload})
+		self.assertEqual(r.json()['code'], 'holiday')
+		self.assertEqual(Attendance.objects.count(), 0)
+
+	def test_national_holiday_wins_over_tolerance_on_the_same_date(self):
+		year = Year.objects.create(year=2026)
+		Tolerance.objects.create(year=year, name='Tol', date=datetime.date(2026, 12, 25), recurring=False)
+		NacionalHoliday.objects.create(name='Natal', date=datetime.date(2000, 12, 25), recurring=True)
+		self.assertEqual(svc.day_off_reason(datetime.date(2026, 12, 25)), ('holiday', 'Natal'))
+
+	def test_report_marks_holiday_days_including_movable(self):
+		self.run_seed('--years', '2026')
+		rep = svc.month_report(2026, 4)
+		cell = {c['day']: c['code'] for c in rep['rows'][0]['cells']}
+		self.assertEqual(cell[3], 'H')                                        # Jumat Agung 3 April 2026
+		self.assertNotEqual(cell[10], 'H')

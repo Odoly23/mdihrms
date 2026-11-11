@@ -398,17 +398,25 @@ def day_off_reason(d):
 	singkat di cache (jalur scan paling sering dipanggil, sedangkan libur jarang berubah)."""
 	if d.weekday() >= 5:
 		return 'weekend', ''
-	return _holidays_for_scan().get((d.month, d.day))
+	return holiday_for(_holidays_for_scan(), d)
+
+
+def holiday_for(hol, d):
+	"""(jenis, nama) untuk tanggal `d` dari peta libur, atau None. Kunci (bulan, tanggal) = berulang tiap tahun;
+	kunci (tahun, bulan, tanggal) = hanya tanggal itu (mis. Jumat Agung). Libur nasional menang atas hari toleransi."""
+	a, b = hol.get((d.month, d.day)), hol.get((d.year, d.month, d.day))
+	if a and b:
+		return a if a[0] == 'holiday' else b
+	return a or b
 
 
 def holiday_map():
-	"""{(bulan, tanggal): (jenis, nama)} dari NacionalHoliday dan Tolerance yang aktif, hanya 2 query.
-	Urutan prioritas sama dengan day_off_reason: libur nasional menang atas hari toleransi."""
+	"""Peta libur dari NacionalHoliday dan Tolerance yang aktif, hanya 2 query (lihat holiday_for untuk bentuk kuncinya)."""
 	out = {}
 	for t in Tolerance.objects.exclude(is_active=False):
-		out[(t.date.month, t.date.day)] = ('tolerance', t.name or '')
+		out[((t.date.month, t.date.day) if t.recurring else (t.date.year, t.date.month, t.date.day))] = ('tolerance', t.name or '')
 	for h in NacionalHoliday.objects.exclude(is_active=False):
-		out[(h.date.month, h.date.day)] = ('holiday', h.name or '')
+		out[((h.date.month, h.date.day) if h.recurring else (h.date.year, h.date.month, h.date.day))] = ('holiday', h.name or '')
 	return out
 
 
@@ -611,7 +619,7 @@ def month_report(year, month, division=None, employee=None, hol=None):
 	off = {}
 	for d in days:
 		date = first_day.replace(day=d)
-		reason = ('weekend', '') if date.weekday() >= 5 else hol.get((month, d))
+		reason = ('weekend', '') if date.weekday() >= 5 else holiday_for(hol, date)
 		if reason:
 			off[d] = ('W' if reason[0] == 'weekend' else 'H', reason)
 

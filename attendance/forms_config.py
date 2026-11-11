@@ -71,10 +71,11 @@ class AttendanceStatusForm(_Base):
 
 class _DateForm(_Base):
 	"""Dasar untuk feriadu dan tolerânsia: tanggal wajib, tidak ganda."""
-	LABELS = {'name': 'th.name', 'date': 'f.date', 'is_active': 'f.active'}
+	LABELS = {'name': 'th.name', 'date': 'f.date', 'is_active': 'f.active', 'recurring': 'f.recurring'}
 	MODEL = None
 	# BooleanField(null=True) di model menghasilkan pilihan Ya/Tidak/Tak tahu; di sini kotak centang biasa (kosong = nonaktif)
 	is_active = forms.BooleanField(required=False, initial=True)
+	recurring = forms.BooleanField(required=False, initial=True)
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -91,12 +92,25 @@ class _DateForm(_Base):
 		d = self.cleaned_data['date']
 		if not self.MIN_YEAR <= d.year <= 2100:
 			raise self._err('cfg.err.date_range' if self.MIN_YEAR < 2000 else 'cfg.err.year')
-		qs = self._scope().filter(date__month=d.month, date__day=d.day)      # berulang tiap tahun: bulan+tanggal tidak boleh ganda
+		return d
+
+	def clean(self):
+		data = super().clean()
+		d = data.get('date')
+		if d is None:
+			return data
+		recurring = bool(data.get('recurring'))
+		qs = self._scope()
 		if self.instance.pk:
 			qs = qs.exclude(pk=self.instance.pk)
-		if qs.exists():
-			raise self._err('cfg.err.date_dup')
-		return d
+		if recurring:      # berulang: bulan+tanggal tidak boleh sama dengan yang berulang lain atau tanggal persis lain
+			clash = qs.filter(recurring=True, date__month=d.month, date__day=d.day).exists()
+		else:              # sekali saja: tidak boleh sama dengan tanggal persis lain atau yang berulang di hari itu
+			clash = (qs.filter(recurring=False, date=d).exists()
+					 or qs.filter(recurring=True, date__month=d.month, date__day=d.day).exists())
+		if clash:
+			self.add_error('date', self._err('cfg.err.date_dup'))
+		return data
 
 
 class NacionalHolidayForm(_DateForm):
@@ -105,7 +119,7 @@ class NacionalHolidayForm(_DateForm):
 
 	class Meta:
 		model = NacionalHoliday
-		fields = ['name', 'date', 'is_active']
+		fields = ['name', 'date', 'is_active', 'recurring']
 
 
 class ToleranceForm(_DateForm):
@@ -114,4 +128,4 @@ class ToleranceForm(_DateForm):
 
 	class Meta:
 		model = Tolerance
-		fields = ['name', 'date', 'is_active']
+		fields = ['name', 'date', 'is_active', 'recurring']

@@ -12,7 +12,7 @@ def upcoming(today, days=90, limit=6, weekdays_only=False):
 	out = []
 	for n in range(days + 1):
 		d = today + datetime.timedelta(days=n)
-		hit = hol.get((d.month, d.day))
+		hit = svc.holiday_for(hol, d)
 		if not hit or (weekdays_only and d.weekday() >= 5):
 			continue
 		out.append({'date': d, 'kind': hit[0], 'name': hit[1], 'days_left': n, 'weekend': d.weekday() >= 5})

@@ -26,7 +26,7 @@ cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
 ## Tes
 ```bash
-DEBUG=True python manage.py test        # 303 tes: absensi QR + proyek
+DEBUG=True python manage.py test        # 314 tes: absensi QR + proyek
 ```
 
 ## Peran (grup)
@@ -47,6 +47,15 @@ Menu **Absensia QR → Konfigurasaun** (`/attendance/config/`), mengikuti halama
 **Feriadu nasionál**, dan **Tolerânsia** (keduanya berulang tiap tahun pada bulan/tanggal yang sama). Mengaktifkan tahun/bulan lewat POST. Sigla status F/P/L terkunci karena dipakai
 absensi QR. Scan QR selalu memakai tanggal asli hari ini; libur dan hari toleransi yang aktif dianggap bukan hari kerja.
 `python manage.py mdi_setup` mengisi 12 bulan dan tahun berjalan ±1.
+
+## Feriadu resmi Timor-Leste
+```bash
+python manage.py seed_holidays                 # 14 feriadu tetap (berulang tiap tahun) + Sexta Santa dan Korpu Kristi tahun ini dan 2 berikutnya
+python manage.py seed_holidays --years 2028    # tambah tahun lain; --dry-run untuk simulasi
+```
+Aman diulang dan tidak menimpa isian admin. Sexta Santa (Jumat Agung) dan Korpu Kristi (Corpus Christi) dihitung dari tanggal Paskah dan
+disimpan sebagai tanggal persis ("sekali saja"). **Idul Fitri dan Idul Adha** mengikuti kalender bulan: isi manual tiap tahun.
+Daftar disusun dari kalender sekunder, bukan teks hukum: cocokkan dengan keputusan resmi RDTL lewat Konfigurasaun > Feriadu nasionál.
 
 ## Impor daftar staf
 ```bash

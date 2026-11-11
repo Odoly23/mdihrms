@@ -1,0 +1,76 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder">
+	<div class="container-fluid">
+		<ul class="breadcrumb">
+			<li class="breadcrumb-item"><a href="{% url 'attendance-dash' %}">{% t 'cfg.crumb' %}</a></li>
+			<li class="breadcrumb-item active" aria-current="page">{{ title|upper }}</li>
+		</ul>
+	</div>
+</div>
+<div class="container-fluid"><br/>
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="card shadow-lg pt-1 qr-border rounded">
+				<div class="card-header"><i class="fa fa-cogs"></i> {{ title|upper }}</div>
+				<div class="card-body">
+					<div class="alert alert-info p-2 small">{% t 'cfg.note' %}</div>
+					<div class="row">
+						<div class="col-12 col-md-6 col-lg-3 mb-3">
+							<h6 align="center">{% t 'cfg.year.title' %}</h6>
+							<table class="table table-sm table-striped">
+								<tr><th>{% t 'th.year' %}</th><th>{% t 'th.status' %}</th><th>#</th></tr>
+							{% for y in years %}
+								<tr>
+									<td>{{ y }}</td>
+									<td>{% if y.is_active %}<i class="fa fa-check" style="color: green;" title="{% t 'cfg.active' %}"></i><span class="sr-only">{% t 'cfg.active' %}</span>{% endif %}</td>
+									<td>{% if not y.is_active %}<form method="post" action="{% url 'attendance-custom-year' y.id %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit" title="{% t 'cfg.activate' %}" aria-label="{% t 'cfg.activate' %} {{ y }}"><i class="fa fa-check"></i></button></form>{% endif %}</td>
+								</tr>
+							{% empty %}<tr><td colspan="3" class="text-muted">{% t 'none.data' %}</td></tr>
+							{% endfor %}
+							</table>
+							<form method="post" action="{% url 'attendance-custom-year-add' %}" class="form-inline">{% csrf_token %}
+								<input type="number" name="year" min="2000" max="2100" class="form-control form-control-sm mr-1" style="width:90px" required aria-label="{% t 'f.year' %}" placeholder="{% t 'th.year' %}">
+								<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-plus"></i> {% t 'cfg.year.add' %}</button>
+							</form>
+							<hr/>
+							<a class="btn btn-sm btn-mdi mb-1" href="{% url 'attendance-custom-holiday-list' %}"><i class="fa fa-flag"></i> {% t 'cfg.holiday' %}</a>
+							<a class="btn btn-sm btn-mdi mb-1" href="{% url 'attendance-custom-tolerance-list' %}"><i class="fa fa-calendar-times-o"></i> {% t 'cfg.tolerance' %}</a>
+						</div><!--end col-->
+						<div class="col-12 col-md-6 col-lg-3 mb-3">
+							<h6 align="center">{% t 'cfg.month.title' %}</h6>
+							<table class="table table-sm table-striped">
+								<tr><th>{% t 'th.month' %}</th><th>{% t 'th.status' %}</th><th>#</th></tr>
+							{% for m in months %}
+								<tr>
+									<td>{{ m.label }}</td>
+									<td>{% if m.is_active %}<i class="fa fa-check" style="color: green;" title="{% t 'cfg.active' %}"></i><span class="sr-only">{% t 'cfg.active' %}</span>{% endif %}</td>
+									<td>{% if not m.is_active %}<form method="post" action="{% url 'attendance-custom-month' m.id %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit" title="{% t 'cfg.activate' %}" aria-label="{% t 'cfg.activate' %} {{ m.label }}"><i class="fa fa-check"></i></button></form>{% endif %}</td>
+								</tr>
+							{% empty %}<tr><td colspan="3" class="text-muted">{% t 'none.data' %}</td></tr>
+							{% endfor %}
+							</table>
+						</div><!--end col-->
+						<div class="col-12 col-lg-6 mb-3">
+							<h5 align="center">{% t 'cfg.status.title' %}
+							<a class="btn btn-sm btn-mdi" href="{% url 'attendance-custom-status-add' %}" title="{% t 'cfg.status.add' %}" aria-label="{% t 'cfg.status.add' %}"><i class="fa fa-plus"></i></a></h5>
+							<table class="table table-sm table-striped">
+								<tr><th>{% t 'th.id' %}</th><th>{% t 'th.code' %}</th><th>{% t 'th.name' %}</th><th>#</th></tr>
+							{% for s in status %}
+								<tr>
+									<td>{{ s.id }}</td>
+									<td>{{ s.code }}{% if s.code in locked %} <i class="fa fa-lock text-muted" title="{% t 'cfg.locked' %}"></i>{% endif %}</td>
+									<td>{{ s.name }}</td>
+									<td><a class="btn btn-sm btn-mdi" href="{% url 'attendance-custom-status-update' s.id %}" title="{% t 'btn.edit' %}" aria-label="{% t 'btn.edit' %} {{ s.code }}"><i class="fa fa-edit"></i></a></td>
+								</tr>
+							{% endfor %}
+							</table>
+						</div><!--end col-->
+					</div><!--end row-->
+				</div> <!--end card-body-->
+			</div> <!--end card-->
+		</div> <!--end col-->
+	</div> <!--end row-->
+</div> <!--end container-->
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'attendance-dash' %}">{% t 'cfg.crumb' %}</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'attendance-custom-dash' %}">{% t 'cfg.title' %}</a></li>
+	<li class="breadcrumb-item active" aria-current="page">{{ title|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-calendar"></i> {{ title|upper }}
+		{% if kind == 'holiday' or y_active %}<a class="btn btn-sm btn-mdi float-right" href="{% url add_url %}"><i class="fa fa-plus"></i> {% t 'btn.new' %}</a>{% endif %}</div>
+	<div class="card-body">
+		{% if kind == 'tolerance' and not y_active %}<div class="alert alert-warning p-2">{% t 'cfg.err.no_year' %}</div>{% endif %}
+		<div class="table-responsive">
+		<table class="table table-sm table-striped">
+			<thead><tr><th>{% t 'th.date' %}</th><th>{% t 'th.name' %}</th><th>{% t 'th.status' %}</th><th></th></tr></thead>
+			<tbody>
+			{% for o in objects %}
+				<tr>
+					<td>{{ o.date|date:"d/m/Y" }}</td><td>{{ o.name|default:"-" }}</td>
+					<td>{% if o.is_active %}<span class="badge badge-success">{% t 'cfg.active' %}</span>{% else %}<span class="badge badge-secondary">{% t 'cfg.inactive' %}</span>{% endif %}</td>
+					<td><a class="btn btn-sm btn-mdi" href="{% url edit_url o.pk %}"><i class="fa fa-edit"></i> {% t 'btn.edit' %}</a></td>
+				</tr>
+			{% empty %}<tr><td colspan="4" class="text-center text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+</div></div>
+{% endblock %}

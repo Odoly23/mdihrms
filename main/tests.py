@@ -679,3 +679,127 @@ class ShellLayoutTests(HrBase):
 	def test_logo_red_only_in_theme_meta_not_inline_styles(self):
 		h = self.html('admin')
 		self.assertEqual(h.count('#e3171e'), 1)                                  # hanya <meta name="theme-color">
+
+
+class AttendanceConfigTests(HrBase):
+	def setUp(self):
+		super().setUp()
+		from attendance.models import AttendanceStatus, Month, Year
+		Year.objects.all().delete(); Month.objects.all().delete()                   # buang isian mdi_setup agar tes deterministik
+		self.y25, self.y26 = Year.objects.create(year=2025), Year.objects.create(year=2026, is_active=True)
+		self.m = [Month.objects.create(code=i, name='M%d' % i, is_active=(i == 11)) for i in (10, 11, 12)]
+		for c, n in (('F', 'Falta'), ('P', 'Presensa'), ('L', 'Lisensa')):
+			AttendanceStatus.objects.get_or_create(code=c, defaults={'name': n})
+
+	def test_only_admin_can_open_any_config_page(self):
+		urls = [reverse('attendance-custom-dash'), reverse('attendance-custom-holiday-list'), reverse('attendance-custom-holiday-add'),
+			reverse('attendance-custom-tolerance-list'), reverse('attendance-custom-tolerance-add'), reverse('attendance-custom-status-add')]
+		for g in ('staff', 'president', 'hr', 'funsionario', 'employee'):
+			self.login(g)
+			for u in urls:
+				self.assertEqual(self.client.get(u).status_code, 403, (g, u))
+			self.assertEqual(self.client.post(reverse('attendance-custom-year', args=[self.y25.pk])).status_code, 403, g)
+		self.login('admin')
+		for u in urls:
+			self.assertEqual(self.client.get(u).status_code, 200, u)
+
+	def test_dash_has_year_month_status_like_the_old_page(self):
+		self.login('admin')
+		h = self.client.get(reverse('attendance-custom-dash')).content.decode()
+		for text in ('Ativa tinan', 'Ativa fulan', 'STATUS ABSENSIA', '2025', '2026', 'Novembru', 'Falta'):
+			self.assertIn(text, h)
+		self.assertIn('fa fa-check', h)
+		self.assertIn('fa-lock', h)                                          # sigla F/P/L terkunci
+
+	def test_activating_a_year_or_month_is_post_only_and_exclusive(self):
+		self.login('admin')
+		self.assertEqual(self.client.get(reverse('attendance-custom-year', args=[self.y25.pk])).status_code, 405)
+		self.client.post(reverse('attendance-custom-year', args=[self.y25.pk]))
+		self.y25.refresh_from_db(); self.y26.refresh_from_db()
+		self.assertEqual((self.y25.is_active, self.y26.is_active), (True, False))
+		self.assertEqual(self.client.get(reverse('attendance-custom-month', args=[self.m[0].pk])).status_code, 405)
+		self.client.post(reverse('attendance-custom-month', args=[self.m[0].pk]))
+		from attendance.models import Month
+		self.assertEqual(list(Month.objects.filter(is_active=True).values_list('code', flat=True)), [10])
+		self.assertEqual(self.client.post(reverse('attendance-custom-year', args=[99999])).status_code, 404)
+
+	def test_add_year_validation(self):
+		from attendance.models import Year
+		self.login('admin')
+		self.client.post(reverse('attendance-custom-year-add'), {'year': 2027})
+		self.assertTrue(Year.objects.filter(year=2027).exists())
+		for bad in ('2027', '1999', '2101', 'abc', ''):
+			self.client.post(reverse('attendance-custom-year-add'), {'year': bad})
+		self.assertEqual(Year.objects.filter(year=2027).count(), 1)
+		self.assertEqual(Year.objects.count(), 3)
+
+	def test_status_codes_used_by_qr_are_protected(self):
+		from attendance.models import AttendanceStatus
+		self.login('admin')
+		p = AttendanceStatus.objects.get(code='P')
+		r = self.client.post(reverse('attendance-custom-status-update', args=[p.pk]), {'code': 'X', 'name': 'Hadir'})
+		p.refresh_from_db()
+		self.assertEqual((p.code, p.name), ('P', 'Hadir'))                   # nama boleh diubah, sigla tidak
+		self.client.post(reverse('attendance-custom-status-add'), {'code': 'p', 'name': 'Palsu'})   # meniru sigla terkunci
+		self.client.post(reverse('attendance-custom-status-add'), {'code': 'S', 'name': 'Sakit'})
+		self.client.post(reverse('attendance-custom-status-add'), {'code': 's', 'name': 'Ganda'})
+		self.assertEqual(list(AttendanceStatus.objects.filter(code__in=['p', 'S', 's']).values_list('code', flat=True)), ['S'])
+
+	def test_holiday_crud_and_scan_cache_is_dropped(self):
+		from attendance import qr_service as svc
+		from attendance.models import NacionalHoliday
+		self.login('admin')
+		cache.set('attqr:hol', {'stale': 1}, 600)
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Kemerdekaan', 'date': '2026-11-28', 'is_active': 'on'})
+		h = NacionalHoliday.objects.get()
+		self.assertIsNone(cache.get('attqr:hol'))
+		self.assertEqual(svc.holiday_map()[(11, 28)][0], 'holiday')
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Ganda', 'date': '2026-11-28'})   # tanggal sama
+		self.assertEqual(NacionalHoliday.objects.count(), 1)
+		self.client.post(reverse('attendance-custom-holiday-update', args=[h.pk]), {'name': 'Kemerdekaan', 'date': '2026-11-28'})  # nonaktif
+		h.refresh_from_db()
+		self.assertFalse(h.is_active)
+		self.assertNotIn((11, 28), svc.holiday_map())
+		self.assertContains(self.client.get(reverse('attendance-custom-holiday-list')), 'Kemerdekaan')
+
+	def test_tolerance_belongs_to_the_active_year(self):
+		from attendance.models import Tolerance
+		self.login('admin')
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Natal', 'date': '2026-12-24', 'is_active': 'on'})
+		t = Tolerance.objects.get()
+		self.assertEqual(t.year, self.y26)
+		self.assertContains(self.client.get(reverse('attendance-custom-tolerance-list')), 'Natal')
+		self.client.post(reverse('attendance-custom-year', args=[self.y25.pk]))
+		self.assertNotContains(self.client.get(reverse('attendance-custom-tolerance-list')), 'Natal')     # daftar mengikuti tahun aktif
+		from attendance.models import Year
+		Year.objects.update(is_active=False)
+		r = self.client.get(reverse('attendance-custom-tolerance-add'))
+		self.assertRedirects(r, reverse('attendance-custom-dash'))
+
+	def test_translated_in_four_languages(self):
+		self.login('admin')
+		want = {'tet': 'Ativa tinan', 'en': 'Active year', 'id': 'Tahun aktif', 'pt': 'Ano ativo'}
+		for lang, text in want.items():
+			self.client.cookies['mdi_lang'] = lang
+			self.assertContains(self.client.get(reverse('attendance-custom-dash')), text)
+		self.client.cookies['mdi_lang'] = 'en'
+		self.assertContains(self.client.get(reverse('attendance-custom-dash')), 'November')
+		r = self.client.post(reverse('attendance-custom-year-add'), {'year': 1900}, follow=True)
+		self.assertContains(r, 'The year must be between 2000 and 2100.')
+
+	def test_setup_command_seeds_months_and_years(self):
+		from attendance.models import Month, Year
+		Month.objects.all().delete(); Year.objects.all().delete()
+		call_command('mdi_setup', verbosity=0)
+		call_command('mdi_setup', verbosity=0)
+		self.assertEqual(Month.objects.count(), 12)
+		self.assertEqual(Year.objects.count(), 3)
+		self.assertEqual(Month.objects.filter(is_active=True).count(), 1)
+		self.assertEqual(Year.objects.filter(is_active=True).count(), 1)
+		self.assertEqual(Month.objects.get(code=1).name, 'Janeiru')
+
+	def test_menu_links_for_admin_only(self):
+		self.login('admin', self.emp('A'))
+		self.assertContains(self.client.get(reverse('home')), reverse('attendance-custom-dash'))
+		self.login('hr', self.emp('H'))
+		self.assertNotContains(self.client.get(reverse('home')), reverse('attendance-custom-dash'))

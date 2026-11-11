@@ -16,6 +16,7 @@
 					<a class="dropdown-item" href="{% url 'qr-report' %}"><i class="fa fa-table" aria-hidden="true"></i> {% t 'nav.report' %}</a>
 					{% if can.qr_manage %}<a class="dropdown-item" href="{% url 'qr-cards' %}"><i class="fa fa-id-card" aria-hidden="true"></i> {% t 'nav.cards' %}</a>{% endif %}
 					{% if can.qr_device %}<a class="dropdown-item" href="{% url 'qr-devices' %}"><i class="fa fa-desktop" aria-hidden="true"></i> {% t 'nav.devices' %}</a>{% endif %}
+					{% if can.attendance_config %}<a class="dropdown-item" href="{% url 'attendance-custom-dash' %}"><i class="fa fa-cogs" aria-hidden="true"></i> {% t 'cfg.title' %}</a>{% endif %}
 				</div>
 			</li>
 			{% endif %}
@@ -80,6 +81,7 @@
 			{% endif %}
 			{% if can.qr_manage %}<li><a href="{% url 'qr-cards' %}"><i class="fa fa-id-card" aria-hidden="true"></i>{% t 'sb.cards' %}</a></li>{% endif %}
 			{% if can.qr_device %}<li><a href="{% url 'qr-devices' %}"><i class="fa fa-desktop" aria-hidden="true"></i>{% t 'sb.kiosk' %}</a></li>{% endif %}
+			{% if can.attendance_config %}<li><a href="{% url 'attendance-custom-dash' %}"><i class="fa fa-cogs" aria-hidden="true"></i>{% t 'cfg.nav' %}</a></li>{% endif %}
 			<li><a href="{% qr_tab_url %}"><i class="fa fa-bar-chart" aria-hidden="true"></i>{% t 'nav.tab' %}</a></li>
 			<li><a href="{% qr_chart_url %}"><i class="fa fa-area-chart" aria-hidden="true"></i>{% t 'nav.chart' %}</a></li>
 		</ul>

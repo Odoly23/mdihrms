@@ -21,6 +21,7 @@ _DEFAULTS = {
 	'PLACEMENT_EDIT_GROUPS': ['admin', 'president'],
 	'PLACEMENT_VIEW_GROUPS': ['admin', 'president', 'hr', 'staff'],
 	'DIRECTORY_GROUPS': ['admin', 'president', 'hr'],
+	'ATTENDANCE_CONFIG_GROUPS': ['admin'],        # tinan/fulan aktif, status absensi, feriadu, tolerânsia
 	'EMPLOYEE_EDIT_GROUPS': ['admin'],            # tambah/ubah data funsionariu dan membuat akun login-nya
 }
 

@@ -966,3 +966,39 @@ class RecurringFlagTests(HrBase):
 		self.post('2000-05-20', True)                        # berulang ganda: ditolak
 		self.post('2026-05-20', False)                       # sudah tercakup yang berulang: ditolak
 		self.assertEqual(NacionalHoliday.objects.filter(date__month=5, date__day=20).count(), 1)
+
+
+class ToleranceFromHolidayTests(HrBase):
+	"""Tombol '+ Tolerânsia' di baris feriadu: formulir tolerânsia terisi nama dan tanggal; admin menyesuaikan harinya."""
+
+	def setUp(self):
+		super().setUp()
+		from attendance.models import NacionalHoliday
+		self.h = NacionalHoliday.objects.create(name='Natal', date=datetime.date(2000, 12, 25), recurring=True)
+
+	def test_holiday_row_links_to_prefilled_tolerance_form(self):
+		from unittest import mock
+		self.login('admin')
+		with mock.patch.object(timezone, 'now', lambda: datetime.datetime(2026, 11, 11, 10, tzinfo=datetime.timezone.utc)):
+			page = self.client.get(reverse('attendance-custom-holiday-list')).content.decode()
+			self.assertIn('%s?from=%d' % (reverse('attendance-custom-tolerance-add'), self.h.pk), page)
+			form = self.client.get(reverse('attendance-custom-tolerance-add'), {'from': self.h.pk}).content.decode()
+		self.assertIn('value="Tolerânsia Natal"', form)
+		self.assertIn('value="2026-12-25"', form)
+
+	def test_bad_or_missing_source_gives_an_empty_form(self):
+		self.login('admin')
+		for src in ('x', '99999', '', '-1', '99999999999999999999'):
+			r = self.client.get(reverse('attendance-custom-tolerance-add'), {'from': src})
+			self.assertEqual(r.status_code, 200, src)
+			self.assertNotIn('Tolerânsia Natal', r.content.decode(), src)
+
+	def test_saving_still_validates_and_creates_the_year(self):
+		from attendance.models import Tolerance
+		self.login('admin')
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Tolerânsia Natal', 'date': '2026-12-24', 'is_active': 'on', 'recurring': 'on'})
+		self.assertEqual(Tolerance.objects.get().year.year, 2026)
+
+	def test_only_admin_sees_the_prefill_route(self):
+		self.login('hr')
+		self.assertEqual(self.client.get(reverse('attendance-custom-tolerance-add'), {'from': self.h.pk}).status_code, 403)

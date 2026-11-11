@@ -245,6 +245,7 @@ UI = {
 							'Kode {code} dipakai absensi QR dan tidak boleh diubah.', 'A sigla {code} é usada pela assiduidade QR e não pode ser alterada.'),
 	'cfg.err.code_dup': ('Sigla ne\'e uza ona.', 'This code is already in use.', 'Kode ini sudah dipakai.', 'Esta sigla já está em uso.'),
 	'th.from_year': ('Hahu husi tinan', 'From year', 'Mulai tahun', 'A partir do ano'),
+	'cfg.tolerance.prefix': ('Tolerânsia {name}', 'Tolerance: {name}', 'Toleransi {name}', 'Tolerância: {name}'),
 	'cfg.tolerance.hint': ('Loron tolerânsia mosu kada tinan iha loron/fulan hanesan, hanesan feriadu. Tinan iha data = tinan hahu.',
 						   'Tolerance days recur every year on the same day and month, like holidays. The year in the date is the starting year.',
 						   'Hari toleransi berulang setiap tahun pada tanggal dan bulan yang sama, seperti libur. Tahun pada tanggal = tahun mulai.',

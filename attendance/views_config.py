@@ -154,7 +154,14 @@ def tolerance_list(request):
 
 @roles.role_required(CONFIG)
 def tolerance_add(request):
-	form = ToleranceForm(request.POST or None, lang=ui.lang(request))
+	initial = {}
+	src = request.GET.get('from', '')
+	if request.method == 'GET' and src.isdigit() and int(src) < 2 ** 31:          # tombol "+ Tolerânsia" di baris feriadu
+		h = NacionalHoliday.objects.filter(pk=int(src)).first()
+		if h:
+			nxt = hol.next_occurrence(h.date, svc.to_local(timezone.now()).date()) if h.recurring else h.date
+			initial = {'name': ui.tr(request, 'cfg.tolerance.prefix', name=h.name or ''), 'date': nxt or h.date}
+	form = ToleranceForm(request.POST or None, initial=initial, lang=ui.lang(request))
 	if request.method == 'POST' and form.is_valid():
 		obj = form.save(commit=False)
 		obj.year, _ = Year.objects.get_or_create(year=obj.date.year)       # kolom tahun wajib di model lama: ikut tahun pada tanggal

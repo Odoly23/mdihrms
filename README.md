@@ -26,7 +26,7 @@ cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
 ## Tes
 ```bash
-DEBUG=True python manage.py test        # 286 tes: absensi QR + proyek
+DEBUG=True python manage.py test        # 295 tes: absensi QR + proyek
 ```
 
 ## Peran (grup)

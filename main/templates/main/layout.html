@@ -19,6 +19,9 @@
 	<body class="app">
 		{% include 'main/topbar.html' %}
 		{% include 'main/navbar.html' %}
+		{% if holiday_notice %}
+		<div class="holiday-banner{% if holiday_notice.today %} is-today{% endif %}" role="status"><div class="container"><i class="fa fa-flag" aria-hidden="true"></i> {{ holiday_notice.text }}</div></div>
+		{% endif %}
 		<main role="main" class="container page-wrapper">
 			<div class="row">
 				<div class="col-md-12">

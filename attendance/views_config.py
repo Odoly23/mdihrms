@@ -4,12 +4,15 @@ from django.contrib import messages
 from django.core.cache import cache
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from main import roles, ui
 
+from . import holidays as hol
 from . import qr_i18n as i18n
 from .forms_config import AttendanceStatusForm, LOCKED_CODES, NacionalHolidayForm, ToleranceForm, YearForm
+from . import qr_service as svc
 from .models import AttendanceStatus, Month, NacionalHoliday, Tolerance, Year
 
 CONFIG = 'ATTENDANCE_CONFIG_GROUPS'
@@ -73,8 +76,8 @@ def month_set(request, pk):
 	return redirect('attendance-custom-dash')
 
 
-def _form_page(request, form, title_key):
-	return render(request, 'attendance/config/form.html', {'title': ui.tr(request, title_key), 'form': form})
+def _form_page(request, form, title_key, hint=None):
+	return render(request, 'attendance/config/form.html', {'title': ui.tr(request, title_key), 'form': form, 'hint': hint})
 
 
 @roles.role_required(CONFIG)
@@ -98,10 +101,23 @@ def status_update(request, pk):
 	return _form_page(request, form, 'cfg.status.edit')
 
 
+def _rows(qs, lang, recurring):
+	today = svc.to_local(timezone.now()).date()
+	rows = []
+	for o in qs:
+		o.every = i18n.fmt_full(o.date, lang, weekday=False).rsplit(' ', 1)[0] if recurring else ''
+		nxt = hol.next_occurrence(o.date, today) if recurring else o.date
+		o.next_text = i18n.fmt_full(nxt, lang) if nxt else '-'
+		o.full_text = i18n.fmt_full(o.date, lang, weekday=False)
+		rows.append(o)
+	return rows
+
+
 @roles.role_required(CONFIG)
 def holiday_list(request):
+	lang = ui.lang(request)
 	return render(request, 'attendance/config/list.html', {
-		'title': ui.tr(request, 'cfg.holiday'), 'objects': NacionalHoliday.objects.order_by('date'), 'kind': 'holiday',
+		'title': ui.tr(request, 'cfg.holiday'), 'objects': _rows(NacionalHoliday.objects.order_by('date__month', 'date__day'), lang, True), 'kind': 'holiday',
 		'add_url': 'attendance-custom-holiday-add', 'edit_url': 'attendance-custom-holiday-update'})
 
 
@@ -113,7 +129,7 @@ def holiday_add(request):
 		_drop_holiday_cache()
 		messages.success(request, ui.tr(request, 'cfg.msg.saved'))
 		return redirect('attendance-custom-holiday-list')
-	return _form_page(request, form, 'cfg.holiday.add')
+	return _form_page(request, form, 'cfg.holiday.add', hint='cfg.holiday.hint')
 
 
 @roles.role_required(CONFIG)
@@ -125,14 +141,15 @@ def holiday_update(request, pk):
 		_drop_holiday_cache()
 		messages.success(request, ui.tr(request, 'cfg.msg.saved'))
 		return redirect('attendance-custom-holiday-list')
-	return _form_page(request, form, 'cfg.holiday.edit')
+	return _form_page(request, form, 'cfg.holiday.edit', hint='cfg.holiday.hint')
 
 
 @roles.role_required(CONFIG)
 def tolerance_list(request):
 	y = Year.objects.filter(is_active=True).first()
 	return render(request, 'attendance/config/list.html', {
-		'title': ui.tr(request, 'cfg.tolerance.title', year=y or '-'), 'objects': Tolerance.objects.filter(year=y).order_by('date') if y else [],
+		'title': ui.tr(request, 'cfg.tolerance.title', year=y or '-'),
+		'objects': _rows(Tolerance.objects.filter(year=y).order_by('date'), ui.lang(request), False) if y else [],
 		'kind': 'tolerance', 'y_active': y, 'add_url': 'attendance-custom-tolerance-add', 'edit_url': 'attendance-custom-tolerance-update'})
 
 

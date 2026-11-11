@@ -10,6 +10,7 @@
 <div class="card shadow-lg pt-1 qr-border rounded">
 	<div class="card-header"><i class="fa fa-edit"></i> {{ title|upper }}</div>
 	<div class="card-body">
+		{% if hint %}<div class="alert alert-info p-2 small">{% t hint %}</div>{% endif %}
 		<form method="post" novalidate>{% csrf_token %}
 			{% if form.non_field_errors %}<div class="alert alert-danger p-2" role="alert">{{ form.non_field_errors|join:" " }}</div>{% endif %}
 			{% for f in form %}

@@ -19,8 +19,21 @@
 			</div>
 		</div>
 	</div>
-	{% if birthdays %}
 	<div class="col-sm-12 col-md-8 col-lg-6 mt-3 mt-lg-0">
+		<div class="card shadow-lg pt-1 qr-border rounded mb-3">
+			<div class="card-header"><i class="fa fa-flag"></i> {% t 'hol.upcoming' %}</div>
+			<div class="card-body">
+				{% for h in holidays %}
+				<div class="d-flex justify-content-between align-items-start py-1{% if not forloop.last %} border-bottom{% endif %}">
+					<div><b>{{ h.date_text }}</b><br/><span>{{ h.name }}</span>{% if h.weekend %} <small class="text-muted">· {% t 'hol.weekend' %}</small>{% endif %}</div>
+					<span class="badge {% if h.days_left <= 1 %}badge-warning{% else %}badge-light{% endif %} ml-2 text-nowrap">{{ h.when }}</span>
+				</div>
+				{% empty %}<span class="text-muted">{% t 'hol.none' n=holiday_days %}</span>{% endfor %}
+			</div>
+		</div>
+	</div>
+	{% if birthdays %}
+	<div class="col-sm-12 col-md-8 col-lg-6 mt-3">
 		<div class="card shadow-lg pt-1 qr-border rounded">
 			<div class="card-header"><i class="fa fa-birthday-cake"></i> {% t 'home.bday' %}</div>
 			<div class="card-body">{{ birthdays|join:", " }}<br/><small><a href="{% url 'notif-birthdays' %}">{% t 'home.see_all' %}</a></small></div>

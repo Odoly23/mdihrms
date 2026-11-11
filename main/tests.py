@@ -803,3 +803,102 @@ class AttendanceConfigTests(HrBase):
 		self.assertContains(self.client.get(reverse('home')), reverse('attendance-custom-dash'))
 		self.login('hr', self.emp('H'))
 		self.assertNotContains(self.client.get(reverse('home')), reverse('attendance-custom-dash'))
+
+
+class HolidayNoticeTests(HrBase):
+	"""12 de Novembru (Masacre Santa Cruz) berulang tiap tahun; semua orang diberi tahu hari sebelumnya."""
+
+	def at(self, y, m, d, hh=10):
+		import datetime as dt
+		from zoneinfo import ZoneInfo
+		return dt.datetime(y, m, d, hh, 0, tzinfo=ZoneInfo('Asia/Dili'))
+
+	def setUp(self):
+		super().setUp()
+		from attendance.models import NacionalHoliday
+		NacionalHoliday.objects.create(name='Masacre Santa Cruz', date=datetime.date(1999, 11, 12), is_active=True)
+
+	def page(self, y, m, d, group='funsionario', lang=None, url='home'):
+		from unittest import mock
+		self.login(group, self.emp('E%s' % group))
+		if lang:
+			self.client.cookies['mdi_lang'] = lang
+		with mock.patch.object(timezone, 'now', lambda: self.at(y, m, d)):
+			return self.client.get(reverse(url)).content.decode()
+
+	def test_full_date_formats(self):
+		from attendance import qr_i18n as i18n
+		d = datetime.date(2026, 11, 12)                                        # Kamis
+		self.assertEqual(i18n.fmt_full(d, 'tet'), 'Kinta, 12 de Novembru 2026')
+		self.assertEqual(i18n.fmt_full(d, 'pt', weekday=False), '12 de Novembro 2026')
+		self.assertEqual(i18n.fmt_full(d, 'en'), 'Thursday, 12 November 2026')
+		self.assertEqual(i18n.fmt_full(d, 'id'), 'Kamis, 12 November 2026')
+
+	def test_everyone_sees_tomorrows_holiday_banner_in_each_language(self):
+		want = {'tet': 'Aban, Kinta, 12 de Novembru 2026, feriadu: Masacre Santa Cruz',
+			'en': 'Tomorrow, Thursday, 12 November 2026, is a holiday: Masacre Santa Cruz',
+			'id': 'Besok, Kamis, 12 November 2026, libur: Masacre Santa Cruz',
+			'pt': 'Amanhã, Quinta-feira, 12 de Novembro 2026, é feriado: Masacre Santa Cruz'}
+		for g in ('funsionario', 'staff', 'president', 'hr', 'admin'):
+			for lang, text in want.items():
+				h = self.page(2026, 11, 11, g, lang)
+				self.assertIn('class="holiday-banner"', h, (g, lang))
+				self.assertIn(text, h, (g, lang))
+
+	def test_banner_today_then_gone(self):
+		self.assertIn('is-today', self.page(2026, 11, 12))
+		self.assertIn('Ohin, Kinta, 12 de Novembru 2026', self.page(2026, 11, 12))
+		self.assertNotIn('holiday-banner', self.page(2026, 11, 13))
+		self.assertNotIn('holiday-banner', self.page(2026, 11, 10))           # dua hari sebelumnya: belum
+
+	def test_recurs_every_year_but_only_on_weekdays(self):
+		from attendance import holidays
+		n27 = holidays.notice(datetime.date(2027, 11, 11), 'tet')               # 12 Nov 2027 = Jumat
+		self.assertIn('Sexta, 12 de Novembru 2027', n27['text'])
+		self.assertIn('Masacre Santa Cruz', n27['text'])
+		self.assertIsNone(holidays.notice(datetime.date(2028, 11, 11), 'tet'))  # 12 Nov 2028 = Minggu: libur toh sudah
+		self.assertEqual(holidays.upcoming(datetime.date(2028, 11, 1), days=30)[0]['weekend'], True)   # tetap tampil di daftar
+
+	def test_no_banner_for_anonymous_or_inactive_holiday(self):
+		from attendance.models import NacionalHoliday
+		self.client.logout()
+		self.assertNotIn('holiday-banner', self.client.get(reverse('login')).content.decode())
+		NacionalHoliday.objects.update(is_active=False)
+		cache.clear()
+		self.assertNotIn('holiday-banner', self.page(2026, 11, 11))
+
+	def test_home_card_lists_upcoming_holidays_with_days_left(self):
+		h = self.page(2026, 11, 5)
+		self.assertIn('FERIADU BESIK', h)
+		self.assertIn('Kinta, 12 de Novembru 2026', h)
+		self.assertIn('Iha loron 7', h)
+		self.assertIn('Aban', self.page(2026, 11, 11))
+		self.assertIn('Laiha feriadu iha loron 90 oin mai.', self.page(2026, 11, 13))
+
+	def test_config_list_shows_every_year_event_year_and_next_date(self):
+		from unittest import mock
+		self.login('admin')
+		with mock.patch.object(timezone, 'now', lambda: self.at(2026, 11, 11)):
+			h = self.client.get(reverse('attendance-custom-holiday-list')).content.decode()
+		for text in ('12 de Novembru', '1999', 'Kinta, 12 de Novembru 2026', 'Masacre Santa Cruz', 'Kada tinan', 'Tinan akontesimentu'):
+			self.assertIn(text, h)
+
+	def test_holiday_accepts_event_year_but_tolerance_does_not(self):
+		from attendance.models import NacionalHoliday, Tolerance, Year
+		self.login('admin')
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Kemerdekaan', 'date': '1975-11-28', 'is_active': 'on'})
+		self.assertTrue(NacionalHoliday.objects.filter(date=datetime.date(1975, 11, 28)).exists())
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Salah', 'date': '1899-01-01'})
+		self.assertFalse(NacionalHoliday.objects.filter(name='Salah').exists())
+		Year.objects.create(year=2026, is_active=True)
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Lama', 'date': '1999-12-24'})
+		self.assertFalse(Tolerance.objects.exists())
+
+	def test_next_occurrence_helper(self):
+		from attendance.holidays import next_occurrence
+		d = datetime.date(1999, 11, 12)
+		self.assertEqual(next_occurrence(d, datetime.date(2026, 11, 12)), datetime.date(2026, 11, 12))       # hari ini dihitung
+		self.assertEqual(next_occurrence(d, datetime.date(2026, 11, 13)), datetime.date(2027, 11, 12))
+		leap = datetime.date(2000, 2, 29)
+		self.assertEqual(next_occurrence(leap, datetime.date(2027, 1, 1)), datetime.date(2027, 2, 28))
+		self.assertEqual(next_occurrence(leap, datetime.date(2028, 1, 1)), datetime.date(2028, 2, 29))

@@ -136,3 +136,8 @@ footer.site-footer.page-footer { background: var(--navy-dk); border-top: 3px sol
 	body.sb-open footer.site-footer.page-footer { position: fixed; bottom: 0; left: var(--sb-w); right: 0; width: auto; z-index: 1033; margin-top: 0; }
 }
 @media (prefers-reduced-motion: reduce) { #sidebar, #sidebar.active { transition: none; } }
+
+/* pengumuman libur hari ini / besok untuk semua pengguna */
+.holiday-banner { background: #fff3cd; color: #664d03; border-bottom: 1px solid #ffe69c; font-size: .88rem; padding: 7px 0; }
+.holiday-banner.is-today { background: #f8d7da; color: #58151c; border-bottom-color: #f1aeb5; }
+.holiday-banner .fa { margin-right: 6px; }

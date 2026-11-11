@@ -6,6 +6,10 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
+from django.utils import timezone
+
+from attendance import holidays as hol
+from attendance import qr_i18n
 from attendance import qr_service as svc
 
 from . import roles
@@ -26,7 +30,10 @@ def nav(request):
 			'qr_device': svc.in_groups(user, svc.conf('DEVICE_GROUPS')),
 			'admin_site': user.is_staff,
 		})
-	return {'nav_group': group, 'can': perms, 'site': site_info(), 'now_year': datetime.date.today().year,
+	notice = None
+	if user is not None and user.is_authenticated:
+		notice = hol.notice(svc.to_local(timezone.now()).date(), qr_i18n.get_lang(request))
+	return {'holiday_notice': notice, 'nav_group': group, 'can': perms, 'site': site_info(), 'now_year': datetime.date.today().year,
 		'lang_in_navbar': bool(getattr(settings, 'ATTENDANCE_LANG_IN_NAVBAR', False))}
 
 

@@ -423,6 +423,9 @@ def _holidays_for_scan():
 	return value
 
 
+holiday_map_cached = _holidays_for_scan      # dipakai pengumuman libur (cache singkat yang sama dengan scan)
+
+
 def active_leave(emp, d):
 	return (Leaves.objects.filter(employee=emp, is_active=True, is_confirm=True,
 			start_date__lte=d, end_date__gte=d).select_related('leave_type').first())

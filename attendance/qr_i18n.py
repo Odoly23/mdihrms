@@ -59,6 +59,14 @@ def fmt_date(d, lang):
 	return '%s, %d %s %d' % (WEEKDAYS[lang][d.weekday()], d.day, MONTHS[lang][d.month - 1], d.year)
 
 
+def fmt_full(d, lang, weekday=True):
+	"""'Kinta, 12 de Novembru 2026' (tet, pt: '12 de Novembro 2026') atau '12 November 2026' (en, id)."""
+	lang = norm(lang)
+	month = MONTHS[lang][d.month - 1]
+	text = ('%d de %s %d' if lang in ('tet', 'pt') else '%d %s %d') % (d.day, month, d.year)
+	return '%s, %s' % (WEEKDAYS[lang][d.weekday()], text) if weekday else text
+
+
 # urutan nilai: (tet, en, id, pt). Placeholder {nama} harus sama di keempat bahasa (dicek oleh tes).
 MESSAGES = {
 	# ---------------------------------------------------------------- navigasi

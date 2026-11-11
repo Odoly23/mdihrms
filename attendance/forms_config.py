@@ -85,10 +85,12 @@ class _DateForm(_Base):
 	def _scope(self):
 		return self.MODEL.objects.all()
 
+	MIN_YEAR = 2000                                   # hari toleransi: tahun berjalan; libur nasional: tahun peristiwa boleh lama
+
 	def clean_date(self):
 		d = self.cleaned_data['date']
-		if not 2000 <= d.year <= 2100:
-			raise self._err('cfg.err.year')
+		if not self.MIN_YEAR <= d.year <= 2100:
+			raise self._err('cfg.err.date_range' if self.MIN_YEAR < 2000 else 'cfg.err.year')
 		qs = self._scope().filter(date=d)
 		if self.instance.pk:
 			qs = qs.exclude(pk=self.instance.pk)
@@ -99,6 +101,7 @@ class _DateForm(_Base):
 
 class NacionalHolidayForm(_DateForm):
 	MODEL = NacionalHoliday
+	MIN_YEAR = 1900
 
 	class Meta:
 		model = NacionalHoliday

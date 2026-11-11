@@ -18,6 +18,7 @@
 			<small data-i18n="k.hours">{% t 'k.hours' late=late_after end=work_end %}</small>
 		</div>
 	</header>
+	<div class="k-notice" id="k-notice" role="status" hidden></div>
 	<main class="k-main">
 		<section class="k-clock">
 			<div class="k-time" id="clock">--:--:--</div>
@@ -48,6 +49,7 @@
 		</div>
 	</div>
 	{{ bundle|json_script:"i18n" }}
+	{{ notice|json_script:"notice-data" }}
 	<script defer src="{% qr_static 'attendance/qr/kiosk.js' %}"></script>
 </body>
 </html>

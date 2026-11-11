@@ -17,6 +17,22 @@
 		if (params) Object.keys(params).forEach(function (k) { s = s.split('{' + k + '}').join(params[k]); });
 		return s;
 	}
+	/* ---------- pengumuman libur hari ini / besok (data dari server, diterjemahkan di sini) ---------- */
+	var notice = JSON.parse(document.getElementById('notice-data').textContent);
+	var noticeEl = document.getElementById('k-notice');
+	function fmtDate(iso) {
+		var p = iso.split('-'), y = +p[0], m = +p[1], d = +p[2], b = bundle[lang];
+		var wd = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7;
+		var core = (lang === 'tet' || lang === 'pt') ? d + ' de ' + b._months[m - 1] + ' ' + y : d + ' ' + b._months[m - 1] + ' ' + y;
+		return b._weekdays[wd] + ', ' + core;
+	}
+	function renderNotice() {
+		if (!notice) { noticeEl.hidden = true; return; }
+		var name = notice.name || t('hol.kind.' + notice.kind);
+		noticeEl.textContent = t(notice.days_left === 0 ? 'hol.notice.today' : 'hol.notice.tomorrow', { date: fmtDate(notice.date), name: name });
+		noticeEl.classList.toggle('today', notice.days_left === 0);
+		noticeEl.hidden = false;
+	}
 	function applyLang() {
 		document.documentElement.lang = lang;
 		var p = { late: body.dataset.late, end: body.dataset.end };
@@ -24,6 +40,7 @@
 		document.querySelectorAll('.qr-flag').forEach(function (b) { b.classList.toggle('on', b.dataset.lang === lang); });
 		if (idleShown) idle();
 		renderChips();
+		renderNotice();
 		tick();
 	}
 	function setLang(l) {
@@ -187,7 +204,10 @@
 	function check() {
 		if (document.hidden) return;
 		fetch(checkUrl, { credentials: 'same-origin', cache: 'no-store' }).then(function (r) {
-			if (r.status === 200) { state.srv = 'ok'; needPair(false); }
+			if (r.status === 200) {
+				state.srv = 'ok'; needPair(false);
+				r.json().then(function (j) { notice = j.notice || null; renderNotice(); }).catch(function () {});
+			}
 			else if (r.status === 401) { state.srv = 'unpaired'; needPair(true); }
 			else if (r.status === 403) state.srv = 'net';
 			renderChips();

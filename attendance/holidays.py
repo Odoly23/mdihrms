@@ -33,13 +33,22 @@ def describe(item, lang):
 	}
 
 
+def notice_data(today):
+	"""Data mentah pengumuman (untuk layar kiosk, yang menerjemahkan sendiri di browser): libur hari ini atau besok."""
+	for item in upcoming(today, days=1, limit=2, weekdays_only=True):
+		return {'days_left': item['days_left'], 'date': item['date'].isoformat(), 'name': item['name'], 'kind': item['kind']}
+	return None
+
+
 def notice(today, lang):
 	"""Pengumuman untuk semua pengguna: libur hari ini atau besok (hanya hari kerja, akhir pekan toh libur)."""
-	for item in upcoming(today, days=1, limit=2, weekdays_only=True):
-		info = describe(item, lang)
-		key = 'hol.notice.today' if item['days_left'] == 0 else 'hol.notice.tomorrow'
-		return {'text': i18n.tr(lang, key, date=info['date_text'], name=info['name']), 'today': item['days_left'] == 0}
-	return None
+	data = notice_data(today)
+	if not data:
+		return None
+	info = describe({'date': datetime.date.fromisoformat(data['date']), 'kind': data['kind'], 'name': data['name'],
+					 'days_left': data['days_left'], 'weekend': False}, lang)
+	key = 'hol.notice.today' if data['days_left'] == 0 else 'hol.notice.tomorrow'
+	return {'text': i18n.tr(lang, key, date=info['date_text'], name=info['name']), 'today': data['days_left'] == 0}
 
 
 def next_occurrence(d, today):

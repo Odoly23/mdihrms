@@ -438,7 +438,7 @@ MESSAGES = {
 }
 
 # daftar kunci yang dikirim ke JavaScript kiosk
-KIOSK_PREFIXES = ('k.', 'res.net', 'res.device')
+KIOSK_PREFIXES = ('k.', 'res.net', 'res.device', 'hol.notice', 'hol.kind')
 
 
 from attendance.qr_i18n_ui import UI as _UI  # noqa: E402  (halaman di luar absensi QR)

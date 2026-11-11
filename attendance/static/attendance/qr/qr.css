@@ -296,3 +296,8 @@ input, select, textarea { font-size: max(16px, 1rem); }      /* iOS tidak memper
 	.cs-wrap { display: block; padding: 0; }
 	.mdi-card { zoom: 1; box-shadow: none; border-radius: 0; page-break-after: always; break-after: page; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* pengumuman libur di layar kiosk */
+.k-notice { background: #fff3cd; color: #664d03; text-align: center; font-weight: 600; font-size: 1.05rem; padding: 10px 16px; border-bottom: 1px solid #ffe69c; }
+.k-notice.today { background: #f8d7da; color: #58151c; border-bottom-color: #f1aeb5; }
+@media (min-width: 992px) { .k-notice { font-size: 1.5rem; padding: 14px 28px; } }

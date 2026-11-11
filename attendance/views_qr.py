@@ -127,6 +127,7 @@ def kiosk(request):
 	"""Halaman layar penuh untuk PC pintu kantor. Halamannya sendiri tidak berisi data; yang dilindungi adalah
 	endpoint scan (jaringan kantor + PC yang dipasangkan admin)."""
 	resp = render(request, 'attendance/qr/kiosk.html', {
+		'notice': _holiday_notice(),
 		'tz': svc.conf('TIME_ZONE'), 'late_after': svc.conf('LATE_AFTER'), 'work_end': svc.conf('WORK_END'),
 		'bundle': i18n.kiosk_bundle(), 'lang': _lang(request), 'langs': i18n.LANGS,
 		'allow_camera': bool(svc.conf('ALLOW_CAMERA')),
@@ -135,6 +136,12 @@ def kiosk(request):
 	resp['Referrer-Policy'] = 'same-origin'
 	resp['X-Frame-Options'] = 'DENY'
 	return resp
+
+
+def _holiday_notice():
+	"""Libur hari ini/besok untuk layar kiosk (data mentah; browser kiosk yang menerjemahkan dan memformat tanggalnya)."""
+	from . import holidays
+	return holidays.notice_data(_local_today())
 
 
 def _scan_error(lang, code, status):
@@ -199,7 +206,7 @@ def kiosk_check(request):
 		if svc.conf('REQUIRE_DEVICE_KEY') and not device:
 			resp = JsonResponse({'ok': False, 'state': 'key'}, status=401)
 		else:
-			resp = JsonResponse({'ok': True, 'state': 'ok'})
+			resp = JsonResponse({'ok': True, 'state': 'ok', 'notice': _holiday_notice()})
 			if device and (status == 'prev' or svc.needs_rotation(device)):
 				new_key = svc.rotate_device(device)
 				if new_key:

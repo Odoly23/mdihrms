@@ -2200,3 +2200,48 @@ class RoleRuleTests(QRBase):
 		self.assertNotIn('hr', svc.conf('MANAGER_GROUPS'))
 		self.assertEqual(svc.conf('DEVICE_GROUPS'), ['admin'])
 		self.assertEqual(svc.conf('MANAGER_GROUPS'), ['admin'])
+
+
+class KioskHolidayNoticeTests(QRBase):
+	"""Layar kiosk di pintu memberi tahu libur hari ini/besok (data mentah; browser kiosk yang menerjemahkan)."""
+
+	def setUp(self):
+		super().setUp()
+		NacionalHoliday.objects.create(name='Masacre Santa Cruz', date=datetime.date(1999, 11, 12), is_active=True)
+
+	def day(self, d, hh=10):
+		return mock.patch.object(timezone, 'now', lambda: at(d, hh))
+
+	def test_page_embeds_tomorrows_holiday_and_the_banner_element(self):
+		with self.day(datetime.date(2026, 11, 11)):
+			html = self.client.get(reverse('qr-kiosk')).content.decode()
+		self.assertIn('id="k-notice"', html)
+		data = json.loads(html.split('id="notice-data" type="application/json">')[1].split('</script>')[0])
+		self.assertEqual(data, {'days_left': 1, 'date': '2026-11-12', 'name': 'Masacre Santa Cruz', 'kind': 'holiday'})
+
+	def test_page_has_null_when_there_is_no_holiday_today_or_tomorrow(self):
+		with self.day(datetime.date(2026, 11, 9)):
+			html = self.client.get(reverse('qr-kiosk')).content.decode()
+		self.assertIn('id="notice-data" type="application/json">null</script>', html)
+
+	def test_heartbeat_refreshes_the_notice_so_midnight_needs_no_reload(self):
+		self.pair()
+		with self.day(datetime.date(2026, 11, 11)):
+			self.assertEqual(self.client.get(reverse('qr-kiosk-check')).json()['notice']['days_left'], 1)
+		with self.day(datetime.date(2026, 11, 12)):
+			self.assertEqual(self.client.get(reverse('qr-kiosk-check')).json()['notice']['days_left'], 0)
+		with self.day(datetime.date(2026, 11, 13)):
+			self.assertIsNone(self.client.get(reverse('qr-kiosk-check')).json()['notice'])
+
+	def test_bundle_has_notice_texts_in_all_languages_with_placeholders(self):
+		from attendance import qr_i18n as i18n
+		for lang, b in i18n.kiosk_bundle().items():
+			for key in ('hol.notice.today', 'hol.notice.tomorrow', 'hol.kind.holiday', 'hol.kind.tolerance'):
+				self.assertTrue(b.get(key), (lang, key))
+			self.assertIn('{date}', b['hol.notice.today'])
+			self.assertIn('{name}', b['hol.notice.tomorrow'])
+
+	def test_weekend_holiday_gives_no_kiosk_banner(self):
+		NacionalHoliday.objects.create(name='Akhir pekan', date=datetime.date(2000, 11, 14), is_active=True)    # 14 Nov 2026 = Sabtu
+		with self.day(datetime.date(2026, 11, 13)):
+			self.assertEqual(self.client.get(reverse('qr-kiosk')).content.decode().count('"kind": "holiday"'), 0)

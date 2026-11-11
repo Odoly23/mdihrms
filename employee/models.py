@@ -27,8 +27,8 @@ class Employee(models.Model):
 	hashed = models.CharField(max_length=32, null=True)
 	
 	def __str__(self):
-		template = '{0.first_name} {0.last_name}'
-		return template.format(self)
+		# nama satu kata (last_name kosong/NULL) tidak boleh tampil sebagai "Adilson None"
+		return ' '.join(x for x in (self.first_name, self.last_name) if x)
 	def age(self):
 		return int(round((datetime.date.today() - self.date_of_birth).days/365.2425,0))
 

@@ -9,3 +9,7 @@ media/
 staticfiles/
 cache/
 *.log
+
+# daftar staf asli berisi data pribadi: simpan di server, jangan di git
+employee/data/staff_*.csv
+!employee/data/staff_example.csv

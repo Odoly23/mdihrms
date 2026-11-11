@@ -1711,6 +1711,15 @@ class DeviceTokenTests(QRBase):
 
 	T0 = at(MON, 7)                                                              # jam palsu: denyut pertama yang memutar token
 
+	def pair(self, name='Pintu', fresh=False):
+		"""Seperti QRBase.pair tetapi rotated_at memakai jam palsu (7 jam sebelum T0; fresh=True: tepat T0), bukan jam asli:
+		tes tidak boleh bergantung pada tanggal hari ini (dulu gagal begitu tanggal sebenarnya melewati Senin 9 Nov 2026)."""
+		key = svc.new_device_key()
+		dev = ScanDevice.objects.create(name=name, key_sha256=svc.hash_key(key),
+			rotated_at=self.T0 if fresh else self.T0 - datetime.timedelta(hours=7))
+		self.client.cookies['mdi_kiosk'] = key
+		return dev, key
+
 	def rotate_now(self):
 		with mock.patch.object(timezone, 'now', lambda: self.T0):
 			return self.beat(), self.T0
@@ -1756,8 +1765,9 @@ class DeviceTokenTests(QRBase):
 
 	# ---------- rotasi token
 	def test_no_rotation_before_it_is_due(self):
-		self.pair()
-		r = self.beat()
+		self.pair(fresh=True)
+		with self.minutes_later(5):
+			r = self.beat()
 		self.assertEqual(r.status_code, 200)
 		self.assertNotIn('mdi_kiosk', r.cookies)
 
@@ -1786,7 +1796,8 @@ class DeviceTokenTests(QRBase):
 		dev, old = self.pair()
 		self.rotate_now()
 		self.client.cookies['mdi_kiosk'] = old                                    # Set-Cookie tidak pernah sampai ke browser
-		r = self.beat()
+		with self.minutes_later(5):
+			r = self.beat()
 		self.assertEqual(r.status_code, 200)
 		self.assertIn('mdi_kiosk', r.cookies)                                      # token baru dikirim ulang
 		self.assertTrue(ScanDevice.objects.get().is_active)

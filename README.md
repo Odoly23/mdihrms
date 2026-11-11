@@ -26,7 +26,7 @@ cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
 ## Tes
 ```bash
-DEBUG=True python manage.py test        # 272 tes: absensi QR + proyek
+DEBUG=True python manage.py test        # 276 tes: absensi QR + proyek
 ```
 
 ## Peran (grup)
@@ -41,6 +41,15 @@ DEBUG=True python manage.py test        # 272 tes: absensi QR + proyek
 Lisensa yang disetujui otomatis dibaca oleh scan (status tetap *lisensa*). Penyetuju tidak bisa menyetujui lisensanya
 sendiri. Ulang tahun hari ini muncul di Varanda dan di lonceng navbar (angka dicek tiap 60 detik, hanya saat tab
 terlihat). Daftar grup per hak bisa diganti di `settings.py` (`MDI_*`, lihat `main/roles.py`).
+
+## Impor daftar staf
+```bash
+python manage.py import_staff data/staff_mdi.csv --dry-run     # simulasi: tidak menyimpan apa pun
+python manage.py import_staff data/staff_mdi.csv               # impor; aman diulang (tidak menggandakan)
+```
+CSV berkolom `nama,posisi,diresaun` (contoh: `employee/data/staff_example.csv`). Membuat funsionariu aktif, posisi, diresaun, dan
+kartu QR; tidak membuat akun login, NRF, tanggal lahir, atau kontak. Daftar asli berisi data pribadi: simpan di server,
+jangan di git (pola `employee/data/staff_*.csv` sudah diabaikan).
 
 ## Tampilan dan bahasa
 - Kerangka halaman: **topbar** (alamat/HP/email + bendera 4 bahasa), **navbar** menu, dan **sidebar offcanvas** di layar < 1200 px

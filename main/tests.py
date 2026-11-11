@@ -762,19 +762,49 @@ class AttendanceConfigTests(HrBase):
 		self.assertNotIn((11, 28), svc.holiday_map())
 		self.assertContains(self.client.get(reverse('attendance-custom-holiday-list')), 'Kemerdekaan')
 
-	def test_tolerance_belongs_to_the_active_year(self):
-		from attendance.models import Tolerance
+	def test_tolerance_recurs_every_year_like_a_holiday(self):
+		from attendance import qr_service as svc
+		from attendance.models import Tolerance, Year
 		self.login('admin')
 		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Natal', 'date': '2026-12-24', 'is_active': 'on'})
 		t = Tolerance.objects.get()
-		self.assertEqual(t.year, self.y26)
+		self.assertEqual(t.year, self.y26)                                       # kolom tahun lama: ikut tahun pada tanggal
+		hol = svc.holiday_map()
+		self.assertEqual(hol[(12, 24)], ('tolerance', 'Natal'))                  # berlaku untuk 24 Des tahun berapa pun
+		for year in (2026, 2027, 2030):
+			self.assertEqual(svc.holiday_map().get(datetime.date(year, 12, 24).timetuple()[1:3])[0], 'tolerance')
 		self.assertContains(self.client.get(reverse('attendance-custom-tolerance-list')), 'Natal')
-		self.client.post(reverse('attendance-custom-year', args=[self.y25.pk]))
-		self.assertNotContains(self.client.get(reverse('attendance-custom-tolerance-list')), 'Natal')     # daftar mengikuti tahun aktif
-		from attendance.models import Year
+		self.client.post(reverse('attendance-custom-year', args=[self.y25.pk]))        # tahun aktif berubah: daftar tetap sama
+		h = self.client.get(reverse('attendance-custom-tolerance-list')).content.decode()
+		self.assertIn('Natal', h)
+		self.assertIn('24 de Dezembru', h)
+		self.assertIn('Kada tinan', h)
+
+	def test_tolerance_needs_no_active_year_and_creates_the_year_row(self):
+		from attendance.models import Tolerance, Year
+		self.login('admin')
 		Year.objects.update(is_active=False)
-		r = self.client.get(reverse('attendance-custom-tolerance-add'))
-		self.assertRedirects(r, reverse('attendance-custom-dash'))
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'Pontu', 'date': '2028-02-29'})
+		self.assertEqual(Tolerance.objects.get().year.year, 2028)
+
+	def test_same_day_and_month_cannot_repeat_in_another_year(self):
+		from attendance.models import NacionalHoliday, Tolerance
+		self.login('admin')
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'A', 'date': '2026-12-24', 'is_active': 'on'})
+		self.client.post(reverse('attendance-custom-tolerance-add'), {'name': 'B', 'date': '2027-12-24', 'is_active': 'on'})
+		self.assertEqual(Tolerance.objects.count(), 1)
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'X', 'date': '1999-11-12', 'is_active': 'on'})
+		self.client.post(reverse('attendance-custom-holiday-add'), {'name': 'Y', 'date': '2026-11-12', 'is_active': 'on'})
+		self.assertEqual(NacionalHoliday.objects.count(), 1)
+
+	def test_tolerance_day_is_announced_like_a_holiday_every_year(self):
+		from attendance import holidays
+		from attendance.models import Tolerance
+		Tolerance.objects.create(year=self.y26, name='Tolerânsia Natal', date=datetime.date(2026, 12, 24), is_active=True)
+		for day in (datetime.date(2026, 12, 23), datetime.date(2027, 12, 23)):         # 24 Des 2026 = Kamis, 24 Des 2027 = Jumat
+			n = holidays.notice(day, 'tet')
+			self.assertIn('Tolerânsia Natal', n['text'])
+			self.assertIn('de Dezembru %d' % (day.year), n['text'])
 
 	def test_translated_in_four_languages(self):
 		self.login('admin')

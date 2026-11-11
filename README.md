@@ -26,7 +26,7 @@ cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
 ## Tes
 ```bash
-DEBUG=True python manage.py test        # 300 tes: absensi QR + proyek
+DEBUG=True python manage.py test        # 303 tes: absensi QR + proyek
 ```
 
 ## Peran (grup)
@@ -44,7 +44,7 @@ terlihat). Daftar grup per hak bisa diganti di `settings.py` (`MDI_*`, lihat `ma
 
 ## Konfigurasaun absensia (admin)
 Menu **Absensia QR → Konfigurasaun** (`/attendance/config/`), mengikuti halaman lama: **Ativa tinan**, **Ativa fulan**, **Status absensia**,
-**Feriadu nasionál**, dan **Tolerânsia** (mengikuti tahun aktif). Mengaktifkan tahun/bulan lewat POST. Sigla status F/P/L terkunci karena dipakai
+**Feriadu nasionál**, dan **Tolerânsia** (keduanya berulang tiap tahun pada bulan/tanggal yang sama). Mengaktifkan tahun/bulan lewat POST. Sigla status F/P/L terkunci karena dipakai
 absensi QR. Scan QR selalu memakai tanggal asli hari ini; libur dan hari toleransi yang aktif dianggap bukan hari kerja.
 `python manage.py mdi_setup` mengisi 12 bulan dan tahun berjalan ±1.
 

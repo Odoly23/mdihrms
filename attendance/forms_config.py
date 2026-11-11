@@ -91,7 +91,7 @@ class _DateForm(_Base):
 		d = self.cleaned_data['date']
 		if not self.MIN_YEAR <= d.year <= 2100:
 			raise self._err('cfg.err.date_range' if self.MIN_YEAR < 2000 else 'cfg.err.year')
-		qs = self._scope().filter(date=d)
+		qs = self._scope().filter(date__month=d.month, date__day=d.day)      # berulang tiap tahun: bulan+tanggal tidak boleh ganda
 		if self.instance.pk:
 			qs = qs.exclude(pk=self.instance.pk)
 		if qs.exists():
@@ -109,15 +109,9 @@ class NacionalHolidayForm(_DateForm):
 
 
 class ToleranceForm(_DateForm):
+	"""Hari toleransi berulang tiap tahun seperti libur nasional (bulan/tanggal yang sama); tahun pada data = tahun mulai."""
 	MODEL = Tolerance
 
 	class Meta:
 		model = Tolerance
 		fields = ['name', 'date', 'is_active']
-
-	def _scope(self):
-		return Tolerance.objects.filter(year=self.year) if getattr(self, 'year', None) else Tolerance.objects.none()
-
-	def __init__(self, *args, year=None, **kwargs):
-		self.year = year
-		super().__init__(*args, **kwargs)

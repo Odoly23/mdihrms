@@ -146,37 +146,32 @@ def holiday_update(request, pk):
 
 @roles.role_required(CONFIG)
 def tolerance_list(request):
-	y = Year.objects.filter(is_active=True).first()
 	return render(request, 'attendance/config/list.html', {
-		'title': ui.tr(request, 'cfg.tolerance.title', year=y or '-'),
-		'objects': _rows(Tolerance.objects.filter(year=y).order_by('date'), ui.lang(request), False) if y else [],
-		'kind': 'tolerance', 'y_active': y, 'add_url': 'attendance-custom-tolerance-add', 'edit_url': 'attendance-custom-tolerance-update'})
+		'title': ui.tr(request, 'cfg.tolerance'), 'kind': 'tolerance',
+		'objects': _rows(Tolerance.objects.order_by('date__month', 'date__day'), ui.lang(request), True),
+		'add_url': 'attendance-custom-tolerance-add', 'edit_url': 'attendance-custom-tolerance-update'})
 
 
 @roles.role_required(CONFIG)
 def tolerance_add(request):
-	y = Year.objects.filter(is_active=True).first()
-	if y is None:
-		messages.error(request, ui.tr(request, 'cfg.err.no_year'))
-		return redirect('attendance-custom-dash')
-	form = ToleranceForm(request.POST or None, year=y, lang=ui.lang(request))
+	form = ToleranceForm(request.POST or None, lang=ui.lang(request))
 	if request.method == 'POST' and form.is_valid():
 		obj = form.save(commit=False)
-		obj.year = y
+		obj.year, _ = Year.objects.get_or_create(year=obj.date.year)       # kolom tahun wajib di model lama: ikut tahun pada tanggal
 		obj.save()
 		_drop_holiday_cache()
 		messages.success(request, ui.tr(request, 'cfg.msg.saved'))
 		return redirect('attendance-custom-tolerance-list')
-	return _form_page(request, form, 'cfg.tolerance.add')
+	return _form_page(request, form, 'cfg.tolerance.add', hint='cfg.tolerance.hint')
 
 
 @roles.role_required(CONFIG)
 def tolerance_update(request, pk):
 	obj = get_object_or_404(Tolerance, pk=pk)
-	form = ToleranceForm(request.POST or None, instance=obj, year=obj.year, lang=ui.lang(request))
+	form = ToleranceForm(request.POST or None, instance=obj, lang=ui.lang(request))
 	if request.method == 'POST' and form.is_valid():
 		form.save()
 		_drop_holiday_cache()
 		messages.success(request, ui.tr(request, 'cfg.msg.saved'))
 		return redirect('attendance-custom-tolerance-list')
-	return _form_page(request, form, 'cfg.tolerance.edit')
+	return _form_page(request, form, 'cfg.tolerance.edit', hint='cfg.tolerance.hint')

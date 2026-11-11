@@ -61,7 +61,7 @@
 								<tr>
 									<td>{{ s.id }}</td>
 									<td>{{ s.code }}{% if s.code in locked %} <i class="fa fa-lock text-muted" title="{% t 'cfg.locked' %}"></i>{% endif %}</td>
-									<td>{{ s.name }}</td>
+									<td>{% std_name s %}</td>
 									<td><a class="btn btn-sm btn-mdi" href="{% url 'attendance-custom-status-update' s.id %}" title="{% t 'btn.edit' %}" aria-label="{% t 'btn.edit' %} {{ s.code }}"><i class="fa fa-edit"></i></a></td>
 								</tr>
 							{% endfor %}

@@ -458,6 +458,28 @@ def tr(lang, key, **params):
 	return text
 
 
+def scan_log_text(code, message, params_json, lang):
+	"""Pesan catatan scan dalam bahasa pembaca halaman. Catatan lama tanpa parameter dan pesan ber-placeholder memakai teks
+	yang tersimpan apa adanya."""
+	import json
+	row = MESSAGES.get('res.%s.msg' % code)
+	if row is None:
+		return message
+	text = row[LANGS.index(norm(lang))] or row[1]
+	if '{' not in text:
+		return text
+	try:
+		params = json.loads(params_json) if params_json else {}
+	except ValueError:
+		params = {}
+	if not isinstance(params, dict) or not params:
+		return message
+	try:
+		return text.format(**params)
+	except (KeyError, IndexError, ValueError):
+		return message
+
+
 def reason_text(kind, name, lang):
 	"""Alasan hari libur untuk ditampilkan. Nama libur dari database dipakai apa adanya."""
 	if kind == 'weekend':

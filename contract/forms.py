@@ -24,6 +24,7 @@ class PlacementForm(forms.Form):
 			self.fields[n].empty_label = ui.tr(lang, 'form.blank')
 		for f in self.fields.values():
 			f.widget.attrs.setdefault('class', 'form-control')
+		ui.localize_errors(self, lang)
 
 	def _err(self, key, **kw):
 		return forms.ValidationError(ui.tr(self.lang, key, **kw))

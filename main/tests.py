@@ -1002,3 +1002,121 @@ class ToleranceFromHolidayTests(HrBase):
 	def test_only_admin_sees_the_prefill_route(self):
 		self.login('hr')
 		self.assertEqual(self.client.get(reverse('attendance-custom-tolerance-add'), {'from': self.h.pk}).status_code, 403)
+
+
+class NoTetunLeftoverTests(HrBase):
+	"""Merayap semua halaman dalam en/id/pt: tidak boleh ada kata Tetun yang tersisa (data buatan pengguna tidak dihitung)."""
+	COMMON = ['Naran', 'Hatudu', 'Ohin', 'Hadia', 'Foun', 'Loron', 'Fulan', 'Tinan', 'Kartaun', 'Aparelu', 'Rezumu', 'Hahu', 'Remata',
+		'Laiha', 'Prontu', 'Husu', 'Aban', 'Feriadu', "ne'e", "ne'ebé", 'seidauk', 'labele', 'tenke', 'Absensia', 'Funsionáriu', 'Presensa']
+	ONLY_EN_ID = ['Falta', 'Lisensa', 'Servisu', 'Tardi']
+
+	def setUp(self):
+		super().setUp()
+		from attendance import qr_service as svc
+		from attendance.models import AttendanceStatus, Month, Year
+		from attendance.models_qr import QRCard, ScanDevice, ScanLog
+		self.e = self.emp('Ana', 'Lopes', dob=datetime.date(1990, 11, 11))
+		QRCard.objects.create(employee=self.e)
+		for c, n in (('F', 'Falta'), ('P', 'Presensa'), ('L', 'Lisensa')):
+			AttendanceStatus.objects.get_or_create(code=c, defaults={'name': n})
+		self.lt.name, self.lt.code = 'Lisensa', 'L'
+		self.lt.save()
+		Leaves.objects.create(employee=self.e, leave_type=self.lt, start_date=timezone.localdate(), end_date=timezone.localdate(), is_active=True)
+		dev = ScanDevice.objects.create(name='Door', key_sha256=svc.hash_key(svc.new_device_key()))
+		ScanLog.objects.create(scanned_at=timezone.now(), code='invalid', device=dev,                  # disimpan dalam Tetun saat scan terjadi
+			message="Kartaun ida-ne'e laos kartaun absensia ne'ebé válidu.")
+		self.login('admin', self.emp('Admin'))
+
+	def urls(self):
+		e = self.e
+		names = ['home', 'attendance-dash', 'qr-today', 'qr-report', 'qr-cards', 'qr-devices', 'qr-dash', 'qr-dash-chart', 'qr-me', 'qr-me-chart',
+			'qr-kiosk', 'leave-mine', 'leave-new', 'leave-all', 'placement-list', 'staff-list', 'employee-add', 'notif-birthdays',
+			'attendance-custom-dash', 'attendance-custom-holiday-list', 'attendance-custom-tolerance-list', 'attendance-custom-status-add',
+			'attendance-custom-holiday-add', 'attendance-custom-tolerance-add']
+		return [reverse(n) for n in names] + [reverse('placement-history', args=[e.pk]), reverse('placement-new', args=[e.pk]),
+			reverse('staff-detail', args=[e.pk]), reverse('employee-edit', args=[e.pk]), reverse('employee-address', args=[e.pk])]
+
+	def visible_text(self, html):
+		import re
+		body = html[html.index('<body'):]
+		body = re.sub(r'<script.*?</script>|<style.*?</style>', '', body, flags=re.S)
+		return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', body))
+
+	def test_no_tetun_words_remain_in_other_languages(self):
+		for lang in ('en', 'id', 'pt'):
+			self.client.cookies['mdi_lang'] = lang
+			words = self.COMMON + (self.ONLY_EN_ID if lang != 'pt' else [])
+			for url in self.urls():
+				r = self.client.get(url)
+				self.assertEqual(r.status_code, 200, (lang, url))
+				text = self.visible_text(r.content.decode())
+				found = [w for w in words if w in text]
+				self.assertEqual(found, [], (lang, url, found))
+
+	def test_scan_log_message_is_shown_in_the_readers_language(self):
+		want = {'tet': 'Kartaun ida-ne', 'en': 'not a valid attendance card', 'id': 'bukan kartu absensi yang sah', 'pt': 'não é um cartão de assiduidade válido'}
+		for lang, text in want.items():
+			self.client.cookies['mdi_lang'] = lang
+			self.assertIn(text, self.client.get(reverse('qr-today')).content.decode(), lang)
+
+	def test_scan_log_stores_params_and_translates_placeholders(self):
+		from attendance import qr_i18n as i18n, qr_service as svc
+		from attendance.models import AttendanceStatus
+		from attendance.models_qr import QRCard, ScanLog
+		AttendanceStatus.objects.get_or_create(code='P', defaults={'name': 'Presensa'})
+		card = QRCard.objects.get(employee=self.e)
+		now = datetime.datetime(2026, 11, 9, 8, 30, tzinfo=datetime.timezone(datetime.timedelta(hours=9)))
+		svc.process_scan(svc.make_payload(card), now=now, lang='tet')                 # kiosk berbahasa Tetun
+		log = ScanLog.objects.filter(code='in_late').first() or ScanLog.objects.order_by('-id').first()
+		self.assertTrue(log.params)
+		self.assertIn('08:30', i18n.scan_log_text(log.code, log.message, log.params, 'id'))
+		self.assertIn('Masuk', i18n.scan_log_text('in_late', 'x', log.params, 'id'))
+		# catatan lama tanpa parameter dan pesan ber-placeholder: pakai teks tersimpan apa adanya
+		self.assertEqual(i18n.scan_log_text('in_late', 'teks lama', '', 'en'), 'teks lama')
+		self.assertEqual(i18n.scan_log_text('kode_tak_dikenal', 'teks lama', '', 'en'), 'teks lama')
+		self.assertEqual(i18n.scan_log_text('in_late', 'teks lama', '{rusak', 'en'), 'teks lama')
+
+	def test_default_status_and_leave_type_names_are_translated_but_custom_ones_are_kept(self):
+		from attendance.models import AttendanceStatus
+		self.client.cookies['mdi_lang'] = 'en'
+		h = self.client.get(reverse('attendance-custom-dash')).content.decode()
+		self.assertIn('Absent', h)
+		AttendanceStatus.objects.filter(code='F').update(name='Mangkir')            # nama buatan admin tidak ditimpa
+		self.assertIn('Mangkir', self.client.get(reverse('attendance-custom-dash')).content.decode())
+		r = self.client.get(reverse('leave-new')).content.decode()
+		self.assertIn('>Leave<', r)                                                  # opsi dropdown tipe lisensa bawaan
+		self.assertNotIn('L -&gt; Lisensa', r)
+
+
+class FormErrorTranslationTests(HrBase):
+	"""Pesan galat bawaan Django (yang sebelumnya selalu Inggris) harus ikut bahasa pengguna."""
+	ENGLISH = ['This field is required', 'Enter a valid', 'Select a valid choice', 'Ensure this value']
+
+	def test_required_errors_follow_the_language_on_every_form(self):
+		want = {'tet': 'Kampu ne\'e tenke prense.', 'en': 'This field is required.', 'id': 'Kolom ini wajib diisi.', 'pt': 'Este campo é obrigatório.'}
+		e = self.emp('Maria')
+		self.login('admin', self.emp('Admin'))
+		posts = [reverse('employee-add'), reverse('leave-new'), reverse('placement-new', args=[e.pk]), reverse('attendance-custom-status-add'),
+			reverse('attendance-custom-holiday-add')]
+		for lang, text in want.items():
+			self.client.cookies['mdi_lang'] = lang
+			for url in posts:
+				h = self.client.post(url, {'csrfmiddlewaretoken': 'x'}).content.decode()      # browser selalu mengirim token CSRF: POST tidak pernah benar-benar kosong
+				from django.utils.html import escape
+				self.assertIn(escape(text), h, (lang, url))
+				if lang != 'en':
+					for phrase in self.ENGLISH:
+						self.assertNotIn(phrase, h, (lang, url, phrase))
+
+	def test_invalid_date_number_choice_and_length_are_translated(self):
+		self.login('admin', self.emp('Admin'))
+		self.client.cookies['mdi_lang'] = 'id'
+		h = self.client.post(reverse('employee-add'), {'first_name': 'X' * 60, 'date_of_birth': 'bukan-tanggal', 'status': 999,
+			'phone': '1', 'nrf': ''}).content.decode()
+		for text in ('Tanggal tidak valid.', 'Pilihan tidak valid.', 'Terlalu panjang (maks. 30 karakter).'):
+			self.assertIn(text, h)
+		for phrase in self.ENGLISH:
+			self.assertNotIn(phrase, h)
+		self.client.cookies['mdi_lang'] = 'pt'
+		h = self.client.post(reverse('attendance-custom-year-add'), {'year': 'abc'}, follow=True).content.decode()
+		self.assertIn('Introduza um número inteiro.', h)

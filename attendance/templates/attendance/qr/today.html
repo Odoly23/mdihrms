@@ -44,7 +44,7 @@
 			<td data-label="{% t 'th.time' %}" class="qr-main">{{ l.local }}</td>
 			<td data-label="{% t 'th.person' %}">{% if l.employee %}{{ l.employee }}{% else %}{% t 'today.unknown' %}{% endif %}</td>
 			<td data-label="{% t 'th.result' %}"><span class="badge {% if l.code == 'duplicate' or l.code == 'already_in' %}badge-secondary{% else %}badge-danger{% endif %}">{{ l.label }}</span></td>
-			<td data-label="{% t 'th.message' %}">{{ l.message }}</td>
+			<td data-label="{% t 'th.message' %}">{{ l.text }}</td>
 			<td data-label="{% t 'th.device' %}">{{ l.device|default:"-" }}</td>
 		</tr>
 	{% empty %}<tr><td colspan="5" class="text-muted">{% t 'none' %}</td></tr>

@@ -79,6 +79,7 @@ class EmployeeForm(forms.ModelForm):
 			self.fields.pop('create_account')
 			self._load_related()
 		_style(self)
+		ui.localize_errors(self, lang)
 
 	def _err(self, key, **kw):
 		return forms.ValidationError(ui.tr(self.lang, key, **kw))
@@ -175,6 +176,7 @@ class AddressForm(forms.Form):
 		if p:
 			self.fields['village'].queryset = Village.objects.filter(administrativepost_id=p).order_by('name')
 		_style(self)
+		ui.localize_errors(self, lang)
 
 	def clean(self):
 		d = super().clean()

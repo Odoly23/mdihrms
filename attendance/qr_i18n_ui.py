@@ -276,6 +276,15 @@ UI = {
 						 'Os feriados nacionais repetem-se todos os anos no mesmo dia e mês. O ano da data é o ano do acontecimento ou um ano de referência (ex.: 12 de novembro). Nos feriados móveis (Sexta-feira Santa) desmarque "repete-se todos os anos".'),
 	'cfg.err.date_range': ('Tinan tenke entre 1900 no 2100.', 'The year must be between 1900 and 2100.',
 						   'Tahun harus antara 1900 dan 2100.', 'O ano tem de estar entre 1900 e 2100.'),
+	# ---- pesan galat bawaan Django (wajib diisi, nilai salah, dll.) agar ikut bahasa pengguna
+	'err.required': ('Kampu ne\'e tenke prense.', 'This field is required.', 'Kolom ini wajib diisi.', 'Este campo é obrigatório.'),
+	'err.invalid': ('Valór la loos.', 'Enter a valid value.', 'Nilai tidak valid.', 'Introduza um valor válido.'),
+	'err.invalid_choice': ('Pilihan la loos.', 'Select a valid choice.', 'Pilihan tidak valid.', 'Selecione uma opção válida.'),
+	'err.invalid_date': ('Data la loos.', 'Enter a valid date.', 'Tanggal tidak valid.', 'Introduza uma data válida.'),
+	'err.invalid_number': ('Númeru la loos.', 'Enter a whole number.', 'Masukkan angka bulat.', 'Introduza um número inteiro.'),
+	'err.invalid_image': ('Ficheiru la\'ós imajen válidu.', 'Upload a valid image.', 'Unggah gambar yang valid.', 'Carregue uma imagem válida.'),
+	'err.max_length': ('Naruk liu (máx. {max} karakter).', 'Too long (max. {max} characters).', 'Terlalu panjang (maks. {max} karakter).',
+					   'Demasiado longo (máx. {max} caracteres).'),
 	# ---- ulang tahun
 	'bday.title': ('Aniversáriu', 'Birthdays', 'Ulang tahun', 'Aniversários'),
 	'bday.none': ('Laiha aniversáriu fulan ne\'e.', 'No birthdays this month.', 'Tidak ada ulang tahun bulan ini.', 'Sem aniversários este mês.'),

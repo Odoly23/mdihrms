@@ -25,6 +25,8 @@ class LeaveRequestForm(forms.Form):
 		ui.set_labels(self, lang, {'leave_type': 'leave.f.type', 'start_date': 'leave.f.start',
 			'end_date': 'leave.f.end', 'file': 'leave.f.file'})
 		self.fields['leave_type'].empty_label = ui.tr(lang, 'form.choose')
+		self.fields['leave_type'].label_from_instance = lambda lt: ui.std_name(lt, lang)
+		ui.localize_errors(self, lang)
 		for f in self.fields.values():
 			f.widget.attrs.setdefault('class', 'form-control')
 

@@ -3,6 +3,7 @@
 Semua aturan jam dan grup bisa diubah di settings.py lewat nama ATTENDANCE_* (lihat QR_INSTALL.md).
 """
 import datetime
+import json
 import hashlib
 import hmac
 import ipaddress
@@ -309,7 +310,7 @@ def revoke_for_reuse(dev, ip=''):
 	"""Token lama dipakai setelah token baru: kemungkinan cookie disalin. Cabut PC dan catat untuk admin."""
 	ScanDevice.objects.filter(pk=dev.pk).update(is_active=False)
 	ScanLog.objects.create(device=dev, scanned_at=timezone.now(), code='device_reuse', ip=ip or None,
-						   message='PC "%s" dicabut: token lama dipakai setelah token baru' % dev.name[:100])
+						   message='PC "%s" revoked: old token used after the new one' % dev.name[:100])
 	log.warning('PC kiosk "%s" dicabut otomatis: token lama dipakai dari %s setelah token baru dipakai.', dev.name, ip or '?')
 
 
@@ -447,6 +448,7 @@ def _result(ok, result_code, level, emp, lang, hide=False, **params):
 		   'title': qr_i18n.tr(lang, 'res.%s.title' % result_code, **params),
 		   'message': qr_i18n.tr(lang, 'res.%s.msg' % result_code, **params),
 		   'employee': employee_info(emp) if emp and not hide else None, 'employee_id': emp.pk if emp else None}
+	res['params'] = {k: str(v) for k, v in params.items()}
 	if 'time' in params:
 		res['time'] = params['time']
 	return res
@@ -467,7 +469,8 @@ def process_scan(raw, device=None, now=None, lang=None, ip=None):
 			log.warning('Scan beruntun di PC kiosk "%s": %d pegawai dalam %d detik.',
 						device.name if device else '-', len(burst_ids), conf('BURST_SECONDS'))
 	ScanLog.objects.create(employee_id=res['employee_id'], device=device, scanned_at=now,
-						   code=res['code'], message=res['message'][:200], ip=ip or None, flag=flag)
+						   code=res['code'], message=res['message'][:200], ip=ip or None, flag=flag,
+						   params=json.dumps(res.get('params') or {}, ensure_ascii=False))
 	return res
 
 

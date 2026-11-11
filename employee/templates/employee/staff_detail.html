@@ -45,7 +45,7 @@
 <div class="col-12 col-lg-6 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">
 	<div class="card-header"><i class="fa fa-calendar-check-o"></i> {% t 'staff.leave' %}</div>
 	<div class="card-body"><div class="table-responsive"><table class="table table-sm table-striped">
-		{% for lv in leaves %}<tr><td>{{ lv.leave_type.name|default:"-" }}</td><td>{{ lv.start_date|date:"d/m/Y" }} – {{ lv.end_date|date:"d/m/Y" }}</td>
+		{% for lv in leaves %}<tr><td>{% if lv.leave_type %}{% std_name lv.leave_type %}{% else %}-{% endif %}</td><td>{{ lv.start_date|date:"d/m/Y" }} – {{ lv.end_date|date:"d/m/Y" }}</td>
 		<td><span class="badge badge-{{ lv.state_class }}">{{ lv.state_text }}</span></td></tr>
 		{% empty %}<tr><td class="text-muted">{% t 'staff.no_leave' %}</td></tr>{% endfor %}
 	</table></div></div>

@@ -57,7 +57,8 @@ class ScanLog(models.Model):
 	device = models.ForeignKey(ScanDevice, null=True, blank=True, on_delete=models.SET_NULL)
 	scanned_at = models.DateTimeField()
 	code = models.CharField(max_length=20)
-	message = models.CharField(max_length=200, blank=True)
+	message = models.CharField(max_length=200, blank=True)   # teks saat scan terjadi (cadangan untuk catatan lama)
+	params = models.TextField(blank=True, default='')         # JSON parameter pesan, agar diterjemahkan sesuai bahasa pembaca
 	ip = models.GenericIPAddressField(null=True, blank=True)
 	flag = models.CharField(max_length=20, blank=True)    # 'burst' bila scan ini bagian dari scan beruntun
 

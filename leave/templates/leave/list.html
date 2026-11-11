@@ -31,7 +31,7 @@
 		{% for lv in rows %}
 			<tr>
 				{% if mode == 'all' %}<td>{{ lv.employee }}</td>{% endif %}
-				<td>{{ lv.leave_type.name|default:"-" }}</td>
+				<td>{% if lv.leave_type %}{% std_name lv.leave_type %}{% else %}-{% endif %}</td>
 				<td>{{ lv.start_date|date:"d/m/Y" }}</td><td>{{ lv.end_date|date:"d/m/Y" }}</td><td>{{ lv.days }}</td>
 				<td><span class="badge badge-{{ lv.state_class }}">{{ lv.state_text }}</span>
 					{% if lv.file %}<a href="{{ lv.file.url }}" target="_blank" rel="noopener" title="PDF"><i class="fa fa-file-pdf-o"></i></a>{% endif %}</td>

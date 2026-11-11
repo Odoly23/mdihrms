@@ -17,6 +17,7 @@ class _Base(forms.ModelForm):
 		super().__init__(*args, **kwargs)
 		self.lang = lang
 		ui.set_labels(self, lang, self.LABELS)
+		ui.localize_errors(self, lang)
 		for f in self.fields.values():
 			f.widget.attrs.setdefault('class', 'form-check-input' if isinstance(f.widget, forms.CheckboxInput) else 'form-control')
 

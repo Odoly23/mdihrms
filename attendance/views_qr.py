@@ -241,6 +241,7 @@ def today(request):
 		log.local = svc.to_local(log.scanned_at).strftime('%H:%M:%S')
 		key = 'res.%s.title' % log.code
 		log.label = i18n.tr(lang, key) if key in i18n.MESSAGES else log.code
+		log.text = i18n.scan_log_text(log.code, log.message, log.params, lang)
 	week_ago = timezone.now() - datetime.timedelta(days=7)
 	alerts = [{'text': i18n.tr(lang, 'today.reuse_alert', name=a.device.name if a.device else '?', ip=a.ip or '?',
 							   time=svc.to_local(a.scanned_at).strftime('%d/%m %H:%M'))}

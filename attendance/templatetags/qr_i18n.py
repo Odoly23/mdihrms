@@ -101,3 +101,15 @@ def qr_static(path):
 			v = ''
 		_ASSET_VERSION[path] = v
 	return static(path) + ('?v=' + v if v else '')
+
+
+# nama bawaan hasil mdi_setup / database lama (kode, nama Tetun) -> kunci terjemahan; nama yang sudah diubah admin ditampilkan apa adanya
+_STD_NAMES = {('F', 'Falta'): 'legend.absent', ('P', 'Presensa'): 'legend.present', ('L', 'Lisensa'): 'legend.leave'}
+
+
+@register.simple_tag(takes_context=True)
+def std_name(context, obj):
+	"""Nama status absensia / tipe lisensa; yang masih nama bawaan Tetun diterjemahkan ke bahasa pengguna."""
+	name = (getattr(obj, 'name', '') or '').strip()
+	key = _STD_NAMES.get(((getattr(obj, 'code', '') or '').strip().upper(), name))
+	return i18n.tr(_lang(context), key) if key else name

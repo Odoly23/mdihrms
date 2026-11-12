@@ -21,7 +21,11 @@ def badge(request):
 	if roles.has_role(request.user, 'LEAVE_APPROVER_GROUPS'):
 		mine = roles.linked_employee(request.user)
 		leaves = services.pending_leaves(mine.pk if mine else None)
-	resp = JsonResponse({'value': len(names) + leaves, 'birthdays': len(names), 'names': names[:5], 'leaves': leaves})
+	mine = roles.linked_employee(request.user) if (roles.has_role(request.user, 'HEALTH_APPROVER_GROUPS') or roles.has_role(request.user, 'ASSET_MANAGER_GROUPS')) else None
+	health = services.pending_health(mine.pk if mine else None) if roles.has_role(request.user, 'HEALTH_APPROVER_GROUPS') else 0
+	assets = services.broken_assets() if roles.has_role(request.user, 'ASSET_MANAGER_GROUPS') else 0
+	resp = JsonResponse({'value': len(names) + leaves + health + assets, 'birthdays': len(names), 'names': names[:5], 'leaves': leaves,
+		'health': health, 'assets': assets})
 	resp['Cache-Control'] = 'no-store'
 	return resp
 

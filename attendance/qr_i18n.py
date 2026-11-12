@@ -443,6 +443,10 @@ KIOSK_PREFIXES = ('k.', 'res.net', 'res.device', 'hol.notice', 'hol.kind')
 
 from attendance.qr_i18n_ui import UI as _UI  # noqa: E402  (halaman di luar absensi QR)
 MESSAGES.update(_UI)
+from attendance.qr_i18n_hr import ASSETS as _ASSETS  # noqa: E402  (aset)
+MESSAGES.update(_ASSETS)
+from attendance.qr_i18n_hr import HEALTH as _HEALTH  # noqa: E402  (health care)
+MESSAGES.update(_HEALTH)
 
 
 def tr(lang, key, **params):

@@ -15,12 +15,18 @@ from django.contrib.auth.views import redirect_to_login
 from django.shortcuts import render
 
 _DEFAULTS = {
-	'LEAVE_REQUEST_GROUPS': ['admin', 'staff', 'president', 'hr', 'funsionario', 'employee'],
+	'LEAVE_REQUEST_GROUPS': ['admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee'],
 	'LEAVE_APPROVER_GROUPS': ['admin', 'president'],
 	'LEAVE_VIEW_ALL_GROUPS': ['admin', 'president', 'hr'],
 	'PLACEMENT_EDIT_GROUPS': ['admin', 'president'],
 	'PLACEMENT_VIEW_GROUPS': ['admin', 'president', 'hr', 'staff'],
 	'DIRECTORY_GROUPS': ['admin', 'president', 'hr'],
+	'ASSET_MANAGER_GROUPS': ['admin', 'logistik'],     # mendaftarkan, menyerahkan, menerima kembali, merapikan di rak
+	'ASSET_VIEW_ALL_GROUPS': ['admin', 'logistik', 'president', 'hr'],
+	'ASSET_SELF_GROUPS': ['admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee'],
+	'HEALTH_REQUEST_GROUPS': ['admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee'],
+	'HEALTH_APPROVER_GROUPS': ['admin', 'president'],
+	'HEALTH_VIEW_ALL_GROUPS': ['admin', 'president', 'hr'],
 	'ATTENDANCE_CONFIG_GROUPS': ['admin'],        # tinan/fulan aktif, status absensi, feriadu, tolerânsia
 	'EMPLOYEE_EDIT_GROUPS': ['admin'],            # tambah/ubah data funsionariu dan membuat akun login-nya
 }

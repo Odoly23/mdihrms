@@ -13,7 +13,7 @@
 			.then(function (d) {
 				failures = 0;
 				setAll('notif-total', d.value > 0 ? d.value : '');
-				set('notif-bday', d.birthdays); set('notif-leave', d.leaves);
+				set('notif-bday', d.birthdays); set('notif-leave', d.leaves); set('notif-health', d.health); set('notif-assets', d.assets);
 				var n = document.getElementById('notif-names');
 				if (n) n.textContent = d.names.length ? d.names.join(', ') : '';
 			})

@@ -1,0 +1,26 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item active">{{ title|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-laptop"></i> {{ title|upper }}</div>
+	<div class="card-body">
+		{% if not emp %}<div class="alert alert-warning p-2">{% t 'leave.unlinked' %}</div>{% endif %}
+		<p class="text-muted small">{% t 'as.mine_hint' %}</p>
+		<div class="table-responsive"><table class="table table-sm table-striped">
+			<thead><tr><th>{% t 'th.code' %}</th><th>{% t 'th.name' %}</th><th>{% t 'as.f.category' %}</th><th>{% t 'th.status' %}</th><th>{% t 'as.last_checked' %}</th><th></th></tr></thead>
+			{% for a in items %}
+			<tr><td><a href="{% url 'asset-detail' a.pk %}">{{ a.code }}</a></td><td>{{ a.name }}</td><td>{{ a.category_text }}</td>
+			<td><span class="badge badge-{{ a.badge }}">{{ a.status_text }}</span></td><td>{{ a.last_checked|date:"d/m/Y"|default:"-" }}</td>
+			<td class="text-nowrap">
+				<form method="post" action="{% url 'asset-self-status' a.pk %}" class="d-inline">{% csrf_token %}<input type="hidden" name="to_status" value="in_use"><button class="btn btn-sm btn-success" type="submit"><i class="fa fa-check"></i> {% t 'as.still_used' %}</button></form>
+				<form method="post" action="{% url 'asset-self-status' a.pk %}" class="d-inline">{% csrf_token %}<input type="hidden" name="to_status" value="broken"><button class="btn btn-sm btn-danger" type="submit"><i class="fa fa-warning"></i> {% t 'as.report_broken' %}</button></form>
+			</td></tr>
+			{% empty %}<tr><td colspan="6" class="text-center text-muted">{% t 'as.none_mine' %}</td></tr>{% endfor %}
+		</table></div>
+	</div>
+</div></div>
+{% endblock %}

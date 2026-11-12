@@ -45,6 +45,8 @@ INSTALLED_APPS = [
 	'contract',
 	'leave',
 	'attendance',
+	'assets',
+	'health',
 	'notif',
 ]
 

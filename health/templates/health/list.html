@@ -1,0 +1,54 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item active">{{ title|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-heartbeat"></i> {{ title|upper }}</div>
+	<div class="card-body">
+	<div class="alert alert-info p-2 small"><i class="fa fa-lock"></i> {% t 'hl.hint' %}</div>
+	{% if mode == 'mine' %}
+		{% if can.health_request %}<a class="btn btn-sm btn-mdi" href="{% url 'health-new' %}"><i class="fa fa-plus"></i> {% t 'hl.new' %}</a>{% endif %}
+		{% if not emp %}<div class="alert alert-warning p-2 mt-2">{% t 'leave.unlinked' %}</div>{% endif %}
+		{% if summary %}<p class="mt-2 mb-0 small text-muted">{% t 'hl.year_used' year=summary.year used=summary.used %}
+			· {% if summary.limit != None %}{% t 'hl.limit' limit=summary.limit %} · {% t 'hl.left' left=summary.left %}{% else %}{% t 'hl.no_limit' %}{% endif %}</p>{% endif %}
+	{% else %}
+		<form class="form-inline mb-2" method="get">
+			<select name="status" class="form-control form-control-sm mr-2 mb-1" onchange="this.form.submit()" aria-label="{% t 'th.status' %}">
+				{% for code, key in status_choices %}<option value="{{ code }}" {% if status == code %}selected{% endif %}>{% t key %}</option>{% endfor %}
+			</select>
+			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="{% t 'leave.f.name' %}" maxlength="50">
+			<button class="btn btn-sm btn-mdi mb-1"><i class="fa fa-search"></i> {% t 'btn.search' %}</button>
+			{% if limit != None %}<span class="small text-muted ml-2">{% t 'hl.limit' limit=limit %}</span>{% endif %}
+		</form>
+	{% endif %}
+	<hr/>
+	<div class="table-responsive"><table class="table table-sm table-striped">
+		<thead><tr>{% if mode == 'all' %}<th>{% t 'th.emp' %}</th>{% endif %}<th>{% t 'th.date' %}</th><th>{% t 'hl.th.amount' %}</th><th>{% t 'hl.th.approved' %}</th><th>{% t 'th.status' %}</th><th>{% t 'th.note' %}</th><th></th></tr></thead>
+		<tbody>
+		{% for c in rows %}
+			<tr>{% if mode == 'all' %}<td>{{ c.employee }}</td>{% endif %}
+			<td class="text-nowrap">{{ c.claim_date|date:"d/m/Y" }}</td><td>US$ {{ c.amount }}</td><td>{% if c.approved_amount != None %}US$ {{ c.approved_amount }}{% else %}-{% endif %}</td>
+			<td><span class="badge badge-{{ c.badge }}">{{ c.status_text }}</span></td>
+			<td>{{ c.description|default:"" }}{% if c.decision_note %}<br/><small class="text-muted">{{ c.decision_note }}</small>{% endif %}</td>
+			<td class="text-nowrap">
+				<a class="btn btn-sm btn-outline-secondary" href="{% url 'health-receipt' c.pk %}"><i class="fa fa-paperclip"></i> {% t 'hl.receipt' %}</a>
+				{% if mode == 'mine' and c.status == 'pending' %}
+					<form method="post" action="{% url 'health-cancel' c.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-times"></i> {% t 'btn.cancel' %}</button></form>
+				{% elif mode == 'all' and can_decide and c.status == 'pending' and c.employee_id != mine_id %}
+					<form method="post" action="{% url 'health-decide' c.pk 'approve' %}" class="form-inline d-inline-flex">{% csrf_token %}
+						<input name="approved_amount" type="number" step="0.01" min="0.01" max="{{ c.amount }}" value="{{ c.amount }}" class="form-control form-control-sm mr-1" style="width:90px" aria-label="{% t 'hl.approve_amount' %}">
+						<button class="btn btn-sm btn-success mr-1" type="submit"><i class="fa fa-check"></i> {% t 'btn.approve' %}</button></form>
+					<form method="post" action="{% url 'health-decide' c.pk 'reject' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-danger" type="submit"><i class="fa fa-ban"></i> {% t 'btn.reject' %}</button></form>
+				{% elif mode == 'all' and can_decide and c.status == 'approved' %}
+					<form method="post" action="{% url 'health-pay' c.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-money"></i> {% t 'hl.btn.pay' %}</button></form>
+				{% endif %}
+			</td></tr>
+		{% empty %}<tr><td colspan="7" class="text-center text-muted">{% t 'hl.none' %}</td></tr>{% endfor %}
+		</tbody>
+	</table></div>
+	</div>
+</div></div>
+{% endblock %}

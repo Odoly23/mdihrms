@@ -59,5 +59,14 @@
 	</table></div></div>
 </div></div>
 </div>
+{% if can.asset_view_all %}
+<div class="row"><div class="col-12 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-laptop"></i> {% t 'ui.nav.assets' %}</div>
+	<div class="card-body"><div class="table-responsive"><table class="table table-sm table-striped">
+		{% for a in held_assets %}<tr><td><a href="{% url 'asset-detail' a.pk %}">{{ a.code }}</a></td><td>{{ a.name }}</td><td>{{ a.status_text }}</td></tr>
+		{% empty %}<tr><td class="text-muted">{% t 'as.none_mine' %}</td></tr>{% endfor %}
+	</table></div></div>
+</div></div></div>
+{% endif %}
 </div>
 {% endblock %}

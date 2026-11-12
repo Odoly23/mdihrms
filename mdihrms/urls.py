@@ -18,6 +18,8 @@ urlpatterns = [
 	path('leave/', include('leave.urls')),
 	path('kolokasaun/', include('contract.urls')),
 	path('funsionariu/', include('employee.urls')),
+	path('assets/', include('assets.urls')),
+	path('health/', include('health.urls')),
 	path('notif/', include('notif.urls')),
 	path('custom/', include('custom.urls')),
 ]

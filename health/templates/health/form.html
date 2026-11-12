@@ -1,0 +1,26 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'health-mine' %}">{% t 'ui.nav.health' %}</a></li>
+	<li class="breadcrumb-item active">{{ title|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="row"><div class="col-12 col-md-8 col-lg-6">
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-heartbeat"></i> {{ title|upper }}</div>
+	<div class="card-body">
+		<div class="alert alert-info p-2 small"><i class="fa fa-lock"></i> {% t 'hl.hint' %}</div>
+		<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+			{% if form.non_field_errors %}<div class="alert alert-danger p-2" role="alert">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+			{% for f in form %}
+				<div class="form-group"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+				{% for e in f.errors %}<small class="text-danger d-block">{{ e }}</small>{% endfor %}</div>
+			{% endfor %}
+			<button class="btn btn-mdi" type="submit"><i class="fa fa-paper-plane"></i> {% t 'btn.send' %}</button>
+			<a class="btn btn-outline-secondary" href="{% url 'health-mine' %}">{% t 'btn.cancel' %}</a>
+		</form>
+	</div>
+</div></div></div>
+</div>
+{% endblock %}

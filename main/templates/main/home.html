@@ -11,6 +11,8 @@
 					{% include 'attendance/qr/_home_button.html' %}
 					{% if can.leave_request %}<a class="btn btn-mdi btn-block mb-2 py-3" href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o"></i> {% t 'ui.leave.new' %}</a>{% endif %}
 					{% if can.leave_approver %}<a class="btn btn-mdi btn-block mb-2 py-3" href="{% url 'leave-all' %}"><i class="fa fa-calendar-check-o"></i> {% t 'home.approve' %}</a>{% endif %}
+					{% if can.asset_self %}<a class="btn btn-mdi btn-block mb-2 py-3" href="{% url 'asset-mine' %}"><i class="fa fa-laptop"></i> {% t 'as.mine' %}</a>{% endif %}
+					{% if can.health_request %}<a class="btn btn-mdi btn-block mb-2 py-3" href="{% url 'health-new' %}"><i class="fa fa-heartbeat"></i> {% t 'hl.new' %}</a>{% endif %}
 					{% if can.placement_edit %}<a class="btn btn-mdi btn-block mb-2 py-3" href="{% url 'placement-list' %}"><i class="fa fa-exchange"></i> {% t 'home.place' %}</a>{% endif %}
 					{% if can.qr_view %}{% include 'attendance/qr/_dash_button.html' %}{% endif %}
 				{% else %}

@@ -1,0 +1,56 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item active">{% t 'ui.nav.assets' %}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-laptop"></i> {{ title|upper }} ({{ page.paginator.count }})
+		<span class="float-right">
+			<a class="btn btn-sm btn-mdi" href="{% url 'asset-survey' %}"><i class="fa fa-table"></i> {% t 'as.survey' %}</a>
+			{% if can_manage %}<a class="btn btn-sm btn-mdi" href="{% url 'asset-add' %}"><i class="fa fa-plus"></i> {% t 'btn.new' %}</a>{% endif %}
+		</span></div>
+	<div class="card-body">
+		<div class="qr-tiles mb-3">
+			{% for t in tiles %}<a class="qr-tile{% if status == t.code %} on{% endif %}" href="?status={{ t.code }}&q={{ q|urlencode }}&category={{ cat }}&where={{ where }}"><b>{{ t.n }}</b><span>{{ t.text }}</span></a>{% endfor %}
+		</div>
+		<form class="form-inline mb-2" method="get">
+			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="{% t 'as.search_ph' %}" maxlength="60">
+			<select name="category" class="form-control form-control-sm mr-2 mb-1" aria-label="{% t 'as.f.category' %}">
+				<option value="">{% t 'as.all_cat' %}</option>
+				{% for pk, name in categories %}<option value="{{ pk }}" {% if cat == pk|stringformat:"s" %}selected{% endif %}>{{ name }}</option>{% endfor %}
+			</select>
+			<select name="where" class="form-control form-control-sm mr-2 mb-1" aria-label="{% t 'as.where' %}">
+				<option value="">{% t 'as.where_all' %}</option>
+				<option value="stock" {% if where == 'stock' %}selected{% endif %}>{% t 'as.where_stock' %}</option>
+				<option value="held" {% if where == 'held' %}selected{% endif %}>{% t 'as.where_held' %}</option>
+			</select>
+			<select name="status" class="form-control form-control-sm mr-2 mb-1" aria-label="{% t 'th.status' %}">
+				<option value="">{% t 'as.status_all' %}</option>
+				{% for t in tiles %}<option value="{{ t.code }}" {% if status == t.code %}selected{% endif %}>{{ t.text }}</option>{% endfor %}
+			</select>
+			<button class="btn btn-sm btn-mdi mb-1"><i class="fa fa-search"></i> {% t 'btn.search' %}</button>
+		</form>
+		<div class="table-responsive">
+		<table class="table table-sm table-striped">
+			<thead><tr><th>{% t 'th.code' %}</th><th>{% t 'th.name' %}</th><th>{% t 'as.f.category' %}</th><th>{% t 'th.emp' %}</th><th>{% t 'th.status' %}</th><th>{% t 'as.f.shelf' %}</th><th></th></tr></thead>
+			<tbody>
+			{% for a in page %}
+				<tr><td>{{ a.code }}</td><td>{{ a.name }}{% if a.brand %} <small class="text-muted">{{ a.brand }} {{ a.model }}</small>{% endif %}</td><td>{{ a.category_text }}</td>
+				<td>{{ a.holder|default:"-" }}</td><td><span class="badge badge-{{ a.badge }}">{{ a.status_text }}</span></td><td>{{ a.shelf|default:"-" }}</td>
+				<td><a class="btn btn-sm btn-mdi" href="{% url 'asset-detail' a.pk %}"><i class="fa fa-eye"></i> {% t 'btn.detail' %}</a></td></tr>
+			{% empty %}<tr><td colspan="7" class="text-center text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
+			</tbody>
+		</table>
+		</div>
+		{% if page.has_other_pages %}
+		<nav><ul class="pagination pagination-sm">
+			{% if page.has_previous %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&category={{ cat }}&where={{ where }}&status={{ status }}&page={{ page.previous_page_number }}">&laquo;</a></li>{% endif %}
+			<li class="page-item disabled"><span class="page-link">{{ page.number }} / {{ page.paginator.num_pages }}</span></li>
+			{% if page.has_next %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&category={{ cat }}&where={{ where }}&status={{ status }}&page={{ page.next_page_number }}">&raquo;</a></li>{% endif %}
+		</ul></nav>
+		{% endif %}
+	</div>
+</div></div>
+{% endblock %}

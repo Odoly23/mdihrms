@@ -6,7 +6,7 @@ import datetime
 from attendance.models import AttendanceStatus, Month, Year
 from leave.models import LeaveType
 
-GROUPS = ['admin', 'staff', 'president', 'hr', 'funsionario', 'employee']
+GROUPS = ['admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee']
 STATUS = [('F', 'Falta'), ('P', 'Presensa'), ('L', 'Lisensa')]
 
 
@@ -25,6 +25,7 @@ class Command(BaseCommand):
 			if opts.get('verbosity', 1) > 0:
 				self.stdout.write('Buat status absensi F, P, L')
 		self._seed_calendar(opts)
+		self._seed_categories()
 		if not LeaveType.objects.exists():
 			LeaveType.objects.create(code='L', name='Lisensa')
 		if opts.get('verbosity', 1) > 0:
@@ -42,3 +43,10 @@ class Command(BaseCommand):
 			Month.objects.filter(code=today.month).update(is_active=True)
 		if not Year.objects.filter(is_active=True).exists():
 			Year.objects.filter(year=today.year).update(is_active=True)
+
+	def _seed_categories(self):
+		"""Kategori aset bawaan; namanya diterjemahkan otomatis lewat kode (nama Inggris disimpan sebagai cadangan)."""
+		from assets.models import AssetCategory
+		for code, name in (('computer', 'Computer'), ('laptop', 'Laptop'), ('printer', 'Printer'), ('monitor', 'Monitor'),
+				('phone', 'Phone'), ('scanner', 'Scanner'), ('other', 'Other')):
+			AssetCategory.objects.get_or_create(code=code, defaults={'name': name})

@@ -10,7 +10,7 @@ class ProjectTests(TestCase):
 	def test_setup_command_is_idempotent(self):
 		call_command('mdi_setup', verbosity=0)
 		call_command('mdi_setup', verbosity=0)
-		self.assertEqual(Group.objects.count(), 6)
+		self.assertEqual(Group.objects.count(), 7)
 		self.assertEqual(list(AttendanceStatus.objects.order_by('id').values_list('code', flat=True)), ['F', 'P', 'L'])
 
 	def test_login_required_and_login_page(self):
@@ -19,7 +19,7 @@ class ProjectTests(TestCase):
 
 	def test_home_for_each_group_and_without_group(self):
 		call_command('mdi_setup', verbosity=0)
-		for name in ('admin', 'staff', 'president', 'hr', 'funsionario', 'employee', None):
+		for name in ('admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee', None):
 			u = User.objects.create_user('u_%s' % name, password='x')
 			if name:
 				u.groups.add(Group.objects.get(name=name))
@@ -1032,7 +1032,8 @@ class NoTetunLeftoverTests(HrBase):
 		names = ['home', 'attendance-dash', 'qr-today', 'qr-report', 'qr-cards', 'qr-devices', 'qr-dash', 'qr-dash-chart', 'qr-me', 'qr-me-chart',
 			'qr-kiosk', 'leave-mine', 'leave-new', 'leave-all', 'placement-list', 'staff-list', 'employee-add', 'notif-birthdays',
 			'attendance-custom-dash', 'attendance-custom-holiday-list', 'attendance-custom-tolerance-list', 'attendance-custom-status-add',
-			'attendance-custom-holiday-add', 'attendance-custom-tolerance-add']
+			'attendance-custom-holiday-add', 'attendance-custom-tolerance-add', 'asset-list', 'asset-add', 'asset-mine', 'asset-survey',
+			'health-mine', 'health-new', 'health-all']
 		return [reverse(n) for n in names] + [reverse('placement-history', args=[e.pk]), reverse('placement-new', args=[e.pk]),
 			reverse('staff-detail', args=[e.pk]), reverse('employee-edit', args=[e.pk]), reverse('employee-address', args=[e.pk])]
 

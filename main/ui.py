@@ -56,3 +56,9 @@ def localize_errors(form, lang):
 		for v in field.validators:
 			if isinstance(v, validators.MaxLengthValidator):
 				v.message = i18n.tr(lang, 'err.max_length', max='%(limit_value)s')
+
+
+def csv_safe(value):
+	"""Cegah injeksi rumus saat CSV dibuka di Excel/Sheets: sel yang diawali = + - @ diberi apostrof di depan."""
+	text = '' if value is None else str(value)
+	return "'" + text if text[:1] in ('=', '+', '-', '@', '\t', '\r') else text

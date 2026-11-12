@@ -1,0 +1,39 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'asset-list' %}">{% t 'ui.nav.assets' %}</a></li>
+	<li class="breadcrumb-item active">{{ title|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="card shadow-lg pt-1 qr-border rounded mb-3">
+	<div class="card-header"><i class="fa fa-table"></i> {{ title|upper }}
+		<a class="btn btn-sm btn-mdi float-right" href="{% url 'asset-survey-csv' %}"><i class="fa fa-download"></i> CSV</a></div>
+	<div class="card-body">
+		<div class="qr-tiles mb-3">
+			<div class="qr-tile"><b>{{ s.grand }}</b><span>{% t 'as.total' %}</span></div>
+			<div class="qr-tile ok"><b>{{ s.stock }}</b><span>{% t 'as.stock_logistics' %}</span></div>
+			<div class="qr-tile bad"><b>{{ s.totals.broken }}</b><span>{% t 'ast.broken' %}</span></div>
+			<div class="qr-tile warn"><b>{{ s.stale }}</b><span>{% t 'as.stale' days=s.stale_days %}</span></div>
+		</div>
+		<div class="table-responsive"><table class="table table-sm table-striped">
+			<thead><tr><th>{% t 'as.f.category' %}</th>{% for c in cols %}<th class="text-center"><span class="badge badge-{{ c.badge }}">{{ c.text }}</span></th>{% endfor %}<th class="text-center">{% t 'as.total' %}</th></tr></thead>
+			<tbody>
+			{% for r in s.rows %}<tr><td>{{ r.name }}</td>{% for c in cols %}<td class="text-center">{{ r.by|get_item:c.code }}</td>{% endfor %}<td class="text-center"><b>{{ r.total }}</b></td></tr>
+			{% empty %}<tr><td colspan="8" class="text-center text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
+			</tbody>
+			<tfoot><tr><th>{% t 'as.total' %}</th>{% for c in cols %}<th class="text-center">{{ c.total }}</th>{% endfor %}<th class="text-center">{{ s.grand }}</th></tr></tfoot>
+		</table></div>
+	</div>
+</div>
+<div class="card shadow-lg pt-1 qr-border rounded mb-3">
+	<div class="card-header"><i class="fa fa-warning"></i> {% t 'as.attention' %}</div>
+	<div class="card-body"><div class="table-responsive"><table class="table table-sm table-striped">
+		<thead><tr><th>{% t 'th.code' %}</th><th>{% t 'th.name' %}</th><th>{% t 'th.status' %}</th><th>{% t 'th.emp' %}</th><th>{% t 'as.f.shelf' %}</th><th></th></tr></thead>
+		{% for a in s.attention %}<tr><td>{{ a.code }}</td><td>{{ a.name }}</td><td><span class="badge badge-{{ a.badge }}">{{ a.status_text }}</span></td><td>{{ a.holder|default:"-" }}</td><td>{{ a.shelf|default:"-" }}</td>
+		<td><a class="btn btn-sm btn-mdi" href="{% url 'asset-detail' a.pk %}"><i class="fa fa-eye"></i></a></td></tr>
+		{% empty %}<tr><td colspan="6" class="text-muted">{% t 'as.none_attention' %}</td></tr>{% endfor %}
+	</table></div></div>
+</div>
+</div>
+{% endblock %}

@@ -48,7 +48,13 @@ def staff_detail(request, emp_id):
 	row = rep['rows'][0] if rep['rows'] else None
 	leaves = leave_rows(Leaves.objects.filter(employee=emp).select_related('leave_type').order_by('-start_date')[:10], ui.lang(request))
 	places = Kolokasaun.objects.filter(employee=emp).select_related('position', 'division').order_by('-start_date')[:10]
-	return render(request, 'employee/staff_detail.html', {
+	held = []
+	if roles.has_role(request.user, 'ASSET_VIEW_ALL_GROUPS'):
+		from assets.models import Asset
+		held = list(Asset.objects.filter(holder=emp, is_active=True).select_related('category').order_by('code'))
+		for a in held:
+			a.status_text = ui.tr(ui.lang(request), 'ast.' + a.status)
+	return render(request, 'employee/staff_detail.html', {'held_assets': held, 
 		'title': str(emp), 'emp': emp, 'row': row, 'month': today.month, 'year': today.year, 'leaves': leaves, 'places': places,
 		'can_edit_place': roles.has_role(request.user, 'PLACEMENT_EDIT_GROUPS')})
 

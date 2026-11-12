@@ -52,3 +52,13 @@ def pending_leaves(exclude_employee_id=None):
 
 def today():
 	return svc.to_local(timezone.now()).date()
+
+
+def pending_health(exclude_employee_id=None):
+	from health.services import pending_count
+	return pending_count(exclude_employee_id)
+
+
+def broken_assets():
+	from assets.models import Asset
+	return Asset.objects.filter(is_active=True, status='broken').count()

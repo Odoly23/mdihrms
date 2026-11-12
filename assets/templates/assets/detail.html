@@ -1,0 +1,74 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item"><a href="{% if can.asset_view_all %}{% url 'asset-list' %}{% else %}{% url 'asset-mine' %}{% endif %}">{% t 'ui.nav.assets' %}</a></li>
+	<li class="breadcrumb-item active">{{ asset.code }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="row">
+<div class="col-12 col-lg-5 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-laptop"></i> {{ asset.code }} <span class="badge badge-{{ asset.badge }} ml-2">{{ asset.status_text }}</span></div>
+	<div class="card-body">
+		<table class="table table-sm table-borderless mb-0">
+			<tr><th>{% t 'th.name' %}</th><td>{{ asset.name }}</td></tr>
+			<tr><th>{% t 'as.f.category' %}</th><td>{{ asset.category_text }}</td></tr>
+			<tr><th>{% t 'as.f.brand' %}</th><td>{{ asset.brand|default:"-" }} {{ asset.model }}</td></tr>
+			<tr><th>{% t 'as.f.serial' %}</th><td>{{ asset.serial_number|default:"-" }}</td></tr>
+			<tr><th>{% t 'as.f.purchase' %}</th><td>{{ asset.purchase_date|date:"d/m/Y"|default:"-" }}</td></tr>
+			<tr><th>{% t 'th.emp' %}</th><td>{% if asset.holder %}{% if can.directory %}<a href="{% url 'staff-detail' asset.holder_id %}">{{ asset.holder }}</a>{% else %}{{ asset.holder }}{% endif %}{% else %}-{% endif %}</td></tr>
+			<tr><th>{% t 'as.f.shelf' %}</th><td>{{ asset.shelf|default:"-" }}</td></tr>
+			<tr><th>{% t 'as.last_checked' %}</th><td>{{ asset.last_checked|date:"d/m/Y"|default:"-" }}</td></tr>
+			<tr><th>{% t 'as.f.notes' %}</th><td>{{ asset.notes|default:"-" }}</td></tr>
+		</table>
+		{% if can_manage %}<hr/>
+		<a class="btn btn-sm btn-mdi mb-1" href="{% url 'asset-edit' asset.pk %}"><i class="fa fa-pencil"></i> {% t 'btn.edit' %}</a>
+		<form method="post" action="{% url 'asset-confirm' asset.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi mb-1" type="submit"><i class="fa fa-check"></i> {% t 'as.confirm' %}</button></form>
+		{% elif is_holder %}<hr/>
+		<form method="post" action="{% url 'asset-self-confirm' asset.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-check"></i> {% t 'as.still_used' %}</button></form>
+		{% endif %}
+	</div>
+</div></div>
+{% if can_manage %}
+<div class="col-12 col-lg-7 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-exchange"></i> {% t 'as.actions' %}</div>
+	<div class="card-body">
+		{% if not asset.holder %}
+		<form method="post" action="{% url 'asset-assign' asset.pk %}" class="mb-3">{% csrf_token %}
+			<h6>{% t 'as.assign' %}</h6>
+			<div class="form-row"><div class="col-md-6 mb-1">{{ assign_form.employee }}</div><div class="col-md-6 mb-1">{{ assign_form.note }}</div></div>
+			<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-user-plus"></i> {% t 'as.assign' %}</button>
+		</form><hr/>
+		<form method="post" action="{% url 'asset-shelf' asset.pk %}" class="mb-3">{% csrf_token %}
+			<h6>{% t 'as.to_shelf' %}</h6>
+			<div class="form-row"><div class="col-md-6 mb-1"><input name="shelf" class="form-control" maxlength="60" value="{{ asset.shelf }}" placeholder="{% t 'as.f.shelf' %}" required></div>
+			<div class="col-md-6 mb-1"><input name="note" class="form-control" maxlength="300" placeholder="{% t 'th.note' %}"></div></div>
+			<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-archive"></i> {% t 'as.save_shelf' %}</button>
+		</form><hr/>
+		{% else %}
+		<form method="post" action="{% url 'asset-return' asset.pk %}" class="mb-3">{% csrf_token %}
+			<h6>{% t 'as.return' %}</h6>
+			<div class="form-row"><div class="col-md-4 mb-1">{{ return_form.to_status }}</div><div class="col-md-4 mb-1">{{ return_form.shelf }}</div><div class="col-md-4 mb-1">{{ return_form.note }}</div></div>
+			<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-undo"></i> {% t 'as.return' %}</button>
+		</form><hr/>
+		{% endif %}
+		<form method="post" action="{% url 'asset-status' asset.pk %}">{% csrf_token %}
+			<h6>{% t 'as.change_status' %}</h6>
+			<div class="form-row"><div class="col-md-4 mb-1">{{ status_form.to_status }}</div><div class="col-md-4 mb-1">{{ status_form.shelf }}</div><div class="col-md-4 mb-1">{{ status_form.note }}</div></div>
+			<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-refresh"></i> {% t 'as.change_status' %}</button>
+		</form>
+	</div>
+</div></div>
+{% endif %}
+</div>
+<div class="card shadow-lg pt-1 qr-border rounded mb-3">
+	<div class="card-header"><i class="fa fa-history"></i> {% t 'as.history' %}</div>
+	<div class="card-body"><div class="table-responsive"><table class="table table-sm table-striped">
+		<thead><tr><th>{% t 'th.date' %}</th><th>{% t 'as.event' %}</th><th>{% t 'th.status' %}</th><th>{% t 'th.emp' %}</th><th>{% t 'as.f.shelf' %}</th><th>{% t 'th.note' %}</th></tr></thead>
+		{% for ev in events %}<tr><td class="text-nowrap">{{ ev.at|date:"d/m/Y H:i" }}</td><td>{{ ev.kind_text }}</td>
+		<td>{% if ev.from_text and ev.from_text != ev.to_text %}{{ ev.from_text }} &rarr; {% endif %}{{ ev.to_text|default:"-" }}</td><td>{{ ev.employee|default:"-" }}</td><td>{{ ev.shelf|default:"-" }}</td><td>{{ ev.note|default:"-" }}</td></tr>
+		{% empty %}<tr><td colspan="6" class="text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
+	</table></div></div>
+</div>
+</div>
+{% endblock %}

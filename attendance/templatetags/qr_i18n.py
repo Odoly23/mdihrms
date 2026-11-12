@@ -113,3 +113,12 @@ def std_name(context, obj):
 	name = (getattr(obj, 'name', '') or '').strip()
 	key = _STD_NAMES.get(((getattr(obj, 'code', '') or '').strip().upper(), name))
 	return i18n.tr(_lang(context), key) if key else name
+
+
+@register.filter
+def get_item(mapping, key):
+	"""{{ dict|get_item:key }}"""
+	try:
+		return mapping.get(key, '')
+	except AttributeError:
+		return ''

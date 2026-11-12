@@ -26,7 +26,7 @@ cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
 ## Tes
 ```bash
-DEBUG=True python manage.py test        # 324 tes: absensi QR + proyek
+DEBUG=True python manage.py test        # 375 tes: absensi QR + proyek
 ```
 
 ## Peran (grup)
@@ -34,6 +34,7 @@ DEBUG=True python manage.py test        # 324 tes: absensi QR + proyek
 |---|---|
 | `admin` | Semuanya. **Satu-satunya** yang membuka PC kiosk, mengelola kartu QR, dan menambah/mengubah funsionariu (akun login dibuat otomatis dengan kata sandi acak yang tampil sekali). Admin juga wajib scan kartunya sendiri. |
 | `president` (direktur) | Melihat rekap bulanan dan dashboard, **menyetujui/menolak lisensa**, **mengalokasikan staf ke posisi** (Kolokasaun). |
+| `logistik` | Mengelola **aset**: mendaftarkan barang, menyerahkan ke staf, menerima kembali, menaruh di rak, mengubah status, dan survei. |
 | `hr` | **Melihat semua** (absensi, lisensa, kolokasaun) dan daftar staf beserta detail masing-masing. Hanya baca. |
 | `staff` | Melihat data absensi (hanya baca), melihat kolokasaun, **mengajukan lisensa** sendiri. |
 | `funsionario`, `employee` | Laporan absensi sendiri dan mengajukan lisensa sendiri. |
@@ -47,6 +48,19 @@ Menu **Absensia QR → Konfigurasaun** (`/attendance/config/`), mengikuti halama
 **Feriadu nasionál**, dan **Tolerânsia** (keduanya berulang tiap tahun pada bulan/tanggal yang sama). Mengaktifkan tahun/bulan lewat POST. Sigla status F/P/L terkunci karena dipakai
 absensi QR. Scan QR selalu memakai tanggal asli hari ini; libur dan hari toleransi yang aktif dianggap bukan hari kerja.
 `python manage.py mdi_setup` mengisi 12 bulan dan tahun berjalan ±1.
+
+## Aset dan survei status
+Menu **ASET**: daftar barang (komputer, laptop, printer, monitor, telepon, scanner, dll.) dengan status **Foun** (baru), **Uza hela** (dipakai),
+**Fila fali** (dikembalikan), **Hadi'a hela** (diperbaiki), **Estraga** (rusak), dan **Stok (di rak)**. Logistik/admin mendaftarkan, menyerahkan ke staf,
+menerima kembali, dan menaruh di rak; setiap perubahan tercatat di riwayat (tidak bisa diubah). Staf melihat **aset miliknya** dan bisa menekan
+"masih dipakai" atau "laporkan rusak" (survei mandiri). **Survei aset** menampilkan tabel kategori x status, stok di logistik, aset rusak/diperbaiki, aset
+yang lama tidak dicek, dan ekspor CSV. HR dan direktur hanya melihat. Kategori bawaan dibuat oleh `mdi_setup`; kategori lain lewat `/admin/`.
+
+## Health care (bonus saat sakit)
+Menu **HEALTH CARE**: staf yang sakit mengajukan klaim (tanggal, jumlah US$, bukti PDF/JPG/PNG maks. 5 MB, cuti sakit terkait opsional). Direktur/admin
+menyetujui dengan jumlah yang bisa lebih kecil dari yang diajukan, lalu menandai sudah dibayar; HR hanya melihat. **Diagnosis tidak disimpan.** Bukti tidak
+punya URL publik: hanya pemilik klaim, HR, direktur, dan admin yang bisa mengunduhnya lewat tautan yang memeriksa hak akses. Batas tahunan per pegawai
+(opsional) diatur di `settings.py`: `MDI_HEALTH_ANNUAL_LIMIT = 500`. Kebijakan nominal dan siapa yang berhak adalah keputusan lembaga.
 
 ## Feriadu resmi Timor-Leste
 ```bash

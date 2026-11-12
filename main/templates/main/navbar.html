@@ -30,6 +30,26 @@
 				</div>
 			</li>
 			{% endif %}
+			{% if can.asset_self or can.asset_view_all %}
+			<li class="dropdown">
+				<a class="nl dropdown-toggle" href="#" id="ddAsset" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-laptop" aria-hidden="true"></i> {% t 'ui.nav.assets' %}</a>
+				<div class="dropdown-menu" aria-labelledby="ddAsset">
+					{% if can.asset_self %}<a class="dropdown-item" href="{% url 'asset-mine' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'as.mine' %}</a>{% endif %}
+					{% if can.asset_view_all %}<a class="dropdown-item" href="{% url 'asset-list' %}"><i class="fa fa-th-list" aria-hidden="true"></i> {% t 'as.title' %}</a>
+					<a class="dropdown-item" href="{% url 'asset-survey' %}"><i class="fa fa-table" aria-hidden="true"></i> {% t 'as.survey' %}</a>{% endif %}
+				</div>
+			</li>
+			{% endif %}
+			{% if can.health_request or can.health_view_all %}
+			<li class="dropdown">
+				<a class="nl dropdown-toggle" href="#" id="ddHealth" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-heartbeat" aria-hidden="true"></i> {% t 'ui.nav.health' %}</a>
+				<div class="dropdown-menu" aria-labelledby="ddHealth">
+					{% if can.health_request %}<a class="dropdown-item" href="{% url 'health-new' %}"><i class="fa fa-plus" aria-hidden="true"></i> {% t 'hl.new' %}</a>
+					<a class="dropdown-item" href="{% url 'health-mine' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'hl.title.mine' %}</a>{% endif %}
+					{% if can.health_view_all %}<a class="dropdown-item" href="{% url 'health-all' %}"><i class="fa fa-users" aria-hidden="true"></i> {% t 'hl.title.all' %}</a>{% endif %}
+				</div>
+			</li>
+			{% endif %}
 			{% if can.placement_view %}<li class="{% if 'placement' in request.resolver_match.url_name %}on{% endif %}"><a class="nl" href="{% url 'placement-list' %}"><i class="fa fa-exchange" aria-hidden="true"></i> {% t 'ui.nav.place' %}</a></li>{% endif %}
 			<li class="dropdown">
 				<a class="nl dropdown-toggle" href="#" id="ddRep" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-bar-chart" aria-hidden="true"></i> {% t 'menu.report' %}</a>
@@ -49,6 +69,8 @@
 				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="notifDropdown" style="min-width:250px">
 					<a class="dropdown-item" href="{% url 'notif-birthdays' %}"><i class="fa fa-birthday-cake" aria-hidden="true"></i> <span>{% t 'notif.bday' %} (<strong id="notif-bday">0</strong>)<br/><small class="text-muted" id="notif-names"></small></span></a>
 					{% if can.leave_approver %}<a class="dropdown-item" href="{% url 'leave-all' %}"><i class="fa fa-calendar-check-o" aria-hidden="true"></i> <span>{% t 'notif.leave' %} (<strong id="notif-leave">0</strong>)</span></a>{% endif %}
+					{% if can.health_approver %}<a class="dropdown-item" href="{% url 'health-all' %}"><i class="fa fa-heartbeat" aria-hidden="true"></i> <span>{% t 'notif.health' %} (<strong id="notif-health">0</strong>)</span></a>{% endif %}
+					{% if can.asset_manager %}<a class="dropdown-item" href="{% url 'asset-list' %}?status=broken"><i class="fa fa-wrench" aria-hidden="true"></i> <span>{% t 'notif.assets' %} (<strong id="notif-assets">0</strong>)</span></a>{% endif %}
 				</div>
 			</div>
 			<div class="dropdown">
@@ -85,7 +107,7 @@
 			<li><a href="{% qr_tab_url %}"><i class="fa fa-bar-chart" aria-hidden="true"></i>{% t 'nav.tab' %}</a></li>
 			<li><a href="{% qr_chart_url %}"><i class="fa fa-area-chart" aria-hidden="true"></i>{% t 'nav.chart' %}</a></li>
 		</ul>
-		{% if can.leave_request or can.leave_view_all or can.placement_view %}
+		{% if can.leave_request or can.leave_view_all or can.placement_view or can.asset_self or can.health_request %}
 		<div class="sb-sec">{% t 'sb.sec.hr' %}</div>
 		<ul>
 			{% if can.leave_request %}
@@ -94,6 +116,10 @@
 			{% endif %}
 			{% if can.leave_view_all %}<li><a href="{% url 'leave-all' %}"><i class="fa fa-calendar-check-o" aria-hidden="true"></i>{% t 'sb.allleave' %}</a></li>{% endif %}
 			{% if can.placement_view %}<li><a href="{% url 'placement-list' %}"><i class="fa fa-exchange" aria-hidden="true"></i>{% t 'sb.place' %}</a></li>{% endif %}
+			{% if can.asset_self %}<li><a href="{% url 'asset-mine' %}"><i class="fa fa-laptop" aria-hidden="true"></i>{% t 'sb.assets' %}</a></li>{% endif %}
+			{% if can.asset_view_all %}<li><a href="{% url 'asset-survey' %}"><i class="fa fa-table" aria-hidden="true"></i>{% t 'as.survey' %}</a></li>{% endif %}
+			{% if can.health_request %}<li><a href="{% url 'health-mine' %}"><i class="fa fa-heartbeat" aria-hidden="true"></i>{% t 'sb.health' %}</a></li>{% endif %}
+			{% if can.health_view_all %}<li><a href="{% url 'health-all' %}"><i class="fa fa-medkit" aria-hidden="true"></i>{% t 'sb.allleave' %}</a></li>{% endif %}
 			<li><a href="{% url 'notif-birthdays' %}"><i class="fa fa-birthday-cake" aria-hidden="true"></i>{% t 'sb.bday' %}</a></li>
 		</ul>
 		{% endif %}

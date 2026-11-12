@@ -9,14 +9,24 @@ from django.utils import timezone
 
 from .models import HealthClaim
 
-MAX_AMOUNT = Decimal('50000')
 MAX_AGE_DAYS = 90
+DEFAULT_BONUS = Decimal('50.00')
 
 
 class ClaimError(Exception):
 	def __init__(self, key, **params):
 		super().__init__(key)
 		self.key, self.params = key, params
+
+
+def bonus_amount():
+	"""Bonus health care tetap per sakit (US$). Setelan: MDI_HEALTH_BONUS (bawaan 50)."""
+	v = getattr(settings, 'MDI_HEALTH_BONUS', None)
+	try:
+		amount = Decimal(str(v)) if v not in (None, '') else DEFAULT_BONUS
+	except Exception:
+		return DEFAULT_BONUS
+	return amount.quantize(Decimal('0.01')) if amount > 0 else DEFAULT_BONUS
 
 
 def annual_limit():
@@ -38,8 +48,8 @@ def year_summary(employee, year):
 
 
 @transaction.atomic
-def decide(claim_id, approve, user, approved_amount=None, note='', approver_employee=None, now=None):
-	"""Setujui (jumlah disetujui <= jumlah diajukan dan <= sisa batas tahunan) atau tolak. Baris dikunci; hanya klaim 'pending'."""
+def decide(claim_id, approve, user, note='', approver_employee=None, now=None):
+	"""Setujui (bonus tetap sebesar jumlah klaim, dan tidak melewati sisa batas tahunan bila ada) atau tolak. Baris dikunci; hanya 'pending'."""
 	now = now or timezone.now()
 	c = HealthClaim.objects.select_for_update().select_related('employee').get(pk=claim_id)
 	if approver_employee is not None and c.employee_id == approver_employee.pk:
@@ -47,9 +57,7 @@ def decide(claim_id, approve, user, approved_amount=None, note='', approver_empl
 	if c.status != 'pending':
 		raise ClaimError('hl.err.done')
 	if approve:
-		amount = Decimal(str(approved_amount)) if approved_amount not in (None, '') else c.amount
-		if amount <= 0 or amount > c.amount:
-			raise ClaimError('hl.err.over_requested')
+		amount = c.amount                                   # bonus tetap: tidak ada persetujuan sebagian
 		limit = annual_limit()
 		if limit is not None:
 			left = limit - used_in_year(c.employee, c.claim_date.year, exclude_pk=c.pk)

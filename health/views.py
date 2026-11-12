@@ -16,7 +16,7 @@ from . import services
 from .forms import ClaimForm
 from .models import HealthClaim, STATUSES
 
-REQUEST, APPROVER, VIEW_ALL = 'HEALTH_REQUEST_GROUPS', 'HEALTH_APPROVER_GROUPS', 'HEALTH_VIEW_ALL_GROUPS'
+REQUEST, APPROVER, VIEW_ALL, PAYER = 'HEALTH_REQUEST_GROUPS', 'HEALTH_APPROVER_GROUPS', 'HEALTH_VIEW_ALL_GROUPS', 'HEALTH_PAYER_GROUPS'
 BADGE = {'pending': 'warning', 'approved': 'info', 'rejected': 'danger', 'paid': 'success'}
 
 
@@ -40,7 +40,7 @@ def my_claims(request):
 	emp = roles.linked_employee(request.user)
 	claims = list(HealthClaim.objects.filter(employee=emp).order_by('-claim_date', '-id')[:100]) if emp else []
 	return render(request, 'health/list.html', {
-		'title': ui.tr(lang, 'hl.title.mine'), 'rows': _decorate(claims, lang), 'mode': 'mine', 'emp': emp,
+		'title': ui.tr(lang, 'hl.title.mine'), 'rows': _decorate(claims, lang), 'mode': 'mine', 'emp': emp, 'bonus': services.bonus_amount(),
 		'summary': services.year_summary(emp, _today().year) if emp else None})
 
 
@@ -58,7 +58,7 @@ def claim_new(request):
 		c.save()
 		messages.success(request, ui.tr(lang, 'hl.msg.sent'))
 		return redirect('health-mine')
-	return render(request, 'health/form.html', {'title': ui.tr(lang, 'hl.new'), 'form': form})
+	return render(request, 'health/form.html', {'title': ui.tr(lang, 'hl.new'), 'form': form, 'bonus': services.bonus_amount()})
 
 
 @require_POST
@@ -90,7 +90,7 @@ def all_claims(request):
 	mine = roles.linked_employee(request.user)
 	return render(request, 'health/list.html', {
 		'title': ui.tr(lang, 'hl.title.all'), 'rows': _decorate(list(page.object_list), lang), 'page': page, 'mode': 'all', 'status': status, 'q': q,
-		'can_decide': roles.has_role(request.user, APPROVER), 'mine_id': mine.pk if mine else None, 'limit': services.annual_limit(),
+		'can_decide': roles.has_role(request.user, APPROVER), 'can_pay': roles.has_role(request.user, PAYER), 'mine_id': mine.pk if mine else None, 'limit': services.annual_limit(),
 		'status_choices': [('pending', 'hl.st.pending'), ('approved', 'hl.st.approved'), ('paid', 'hl.st.paid'), ('rejected', 'hl.st.rejected'), ('all', 'leave.f.all')]})
 
 
@@ -101,18 +101,16 @@ def claim_decide(request, pk, action):
 		return redirect('health-all')
 	get_object_or_404(HealthClaim, pk=pk)
 	try:
-		services.decide(pk, action == 'approve', request.user, request.POST.get('approved_amount') or None, request.POST.get('note', ''),
+		services.decide(pk, action == 'approve', request.user, request.POST.get('note', ''),
 			approver_employee=roles.linked_employee(request.user))
 		messages.success(request, ui.tr(request, 'hl.msg.approved' if action == 'approve' else 'hl.msg.rejected'))
 	except services.ClaimError as e:
 		_fail(request, e)
-	except (ArithmeticError, ValueError):
-		messages.error(request, ui.tr(request, 'hl.err.amount'))
 	return redirect('health-all')
 
 
 @require_POST
-@roles.role_required(APPROVER)
+@roles.role_required(PAYER)
 def claim_pay(request, pk):
 	get_object_or_404(HealthClaim, pk=pk)
 	try:

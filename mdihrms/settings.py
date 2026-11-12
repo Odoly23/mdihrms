@@ -147,6 +147,11 @@ SITE_ADDRESS = env('SITE_ADDRESS', '')
 SITE_PHONE = env('SITE_PHONE', '')
 SITE_EMAIL = env('SITE_EMAIL', '')
 
+# Bonus health care tetap per sakit (US$) dan batas tahunan per pegawai (opsional; kosong = tanpa batas)
+MDI_HEALTH_BONUS = env('HEALTH_BONUS', '50')
+_limit = env('HEALTH_ANNUAL_LIMIT', '')
+MDI_HEALTH_ANNUAL_LIMIT = _limit or None
+
 # ---- Absensi QR (lihat attendance/QR_INSTALL.md) ----
 ATTENDANCE_QR_SECRET = env('ATTENDANCE_QR_SECRET')
 ATTENDANCE_NETWORK_MODE = env('ATTENDANCE_NETWORK_MODE', 'device')

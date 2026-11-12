@@ -5,7 +5,16 @@ from .models import HealthClaim
 
 @admin.register(HealthClaim)
 class ClaimAdmin(admin.ModelAdmin):
-	list_display = ('employee', 'claim_date', 'amount', 'approved_amount', 'status')
+	"""Hanya lihat: keputusan klaim milik direktur lewat halaman Health care, tidak bisa diubah dari admin."""
+	list_display = ('employee', 'claim_date', 'amount', 'approved_amount', 'status', 'decided_by')
 	list_filter = ('status',)
-	raw_id_fields = ('employee', 'leave', 'decided_by', 'user')
-	exclude = ('receipt',)                       # bukti tidak ditampilkan di admin (hanya lewat unduhan yang diperiksa haknya)
+	exclude = ('receipt',)                       # bukti hanya lewat unduhan yang diperiksa haknya
+
+	def has_add_permission(self, request):
+		return False
+
+	def has_change_permission(self, request, obj=None):
+		return False
+
+	def has_delete_permission(self, request, obj=None):
+		return False

@@ -10,6 +10,7 @@
 	<div class="card-body">
 	<div class="alert alert-info p-2 small"><i class="fa fa-lock"></i> {% t 'hl.hint' %}</div>
 	{% if mode == 'mine' %}
+		<p class="small mb-2"><i class="fa fa-info-circle"></i> {% t 'hl.bonus_info' amount=bonus %}</p>
 		{% if can.health_request %}<a class="btn btn-sm btn-mdi" href="{% url 'health-new' %}"><i class="fa fa-plus"></i> {% t 'hl.new' %}</a>{% endif %}
 		{% if not emp %}<div class="alert alert-warning p-2 mt-2">{% t 'leave.unlinked' %}</div>{% endif %}
 		{% if summary %}<p class="mt-2 mb-0 small text-muted">{% t 'hl.year_used' year=summary.year used=summary.used %}
@@ -38,11 +39,9 @@
 				{% if mode == 'mine' and c.status == 'pending' %}
 					<form method="post" action="{% url 'health-cancel' c.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-times"></i> {% t 'btn.cancel' %}</button></form>
 				{% elif mode == 'all' and can_decide and c.status == 'pending' and c.employee_id != mine_id %}
-					<form method="post" action="{% url 'health-decide' c.pk 'approve' %}" class="form-inline d-inline-flex">{% csrf_token %}
-						<input name="approved_amount" type="number" step="0.01" min="0.01" max="{{ c.amount }}" value="{{ c.amount }}" class="form-control form-control-sm mr-1" style="width:90px" aria-label="{% t 'hl.approve_amount' %}">
-						<button class="btn btn-sm btn-success mr-1" type="submit"><i class="fa fa-check"></i> {% t 'btn.approve' %}</button></form>
+					<form method="post" action="{% url 'health-decide' c.pk 'approve' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-success" type="submit"><i class="fa fa-check"></i> {% t 'btn.approve' %}</button></form>
 					<form method="post" action="{% url 'health-decide' c.pk 'reject' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-danger" type="submit"><i class="fa fa-ban"></i> {% t 'btn.reject' %}</button></form>
-				{% elif mode == 'all' and can_decide and c.status == 'approved' %}
+				{% elif mode == 'all' and can_pay and c.status == 'approved' %}
 					<form method="post" action="{% url 'health-pay' c.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-money"></i> {% t 'hl.btn.pay' %}</button></form>
 				{% endif %}
 			</td></tr>

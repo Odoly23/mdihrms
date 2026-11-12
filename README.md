@@ -26,14 +26,14 @@ cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
 ## Tes
 ```bash
-DEBUG=True python manage.py test        # 375 tes: absensi QR + proyek
+DEBUG=True python manage.py test        # 380 tes: absensi QR + proyek
 ```
 
 ## Peran (grup)
 | Grup | Bisa |
 |---|---|
 | `admin` | Semuanya. **Satu-satunya** yang membuka PC kiosk, mengelola kartu QR, dan menambah/mengubah funsionariu (akun login dibuat otomatis dengan kata sandi acak yang tampil sekali). Admin juga wajib scan kartunya sendiri. |
-| `president` (direktur) | Melihat rekap bulanan dan dashboard, **menyetujui/menolak lisensa**, **mengalokasikan staf ke posisi** (Kolokasaun). |
+| `president` (direktur) | Melihat rekap bulanan dan dashboard, **menyetujui/menolak lisensa dan klaim health care (hanya direktur)**, **mengalokasikan staf ke posisi** (Kolokasaun). |
 | `logistik` | Mengelola **aset**: mendaftarkan barang, menyerahkan ke staf, menerima kembali, menaruh di rak, mengubah status, dan survei. |
 | `hr` | **Melihat semua** (absensi, lisensa, kolokasaun) dan daftar staf beserta detail masing-masing. Hanya baca. |
 | `staff` | Melihat data absensi (hanya baca), melihat kolokasaun, **mengajukan lisensa** sendiri. |
@@ -57,10 +57,12 @@ menerima kembali, dan menaruh di rak; setiap perubahan tercatat di riwayat (tida
 yang lama tidak dicek, dan ekspor CSV. HR dan direktur hanya melihat. Kategori bawaan dibuat oleh `mdi_setup`; kategori lain lewat `/admin/`.
 
 ## Health care (bonus saat sakit)
-Menu **HEALTH CARE**: staf yang sakit mengajukan klaim (tanggal, jumlah US$, bukti PDF/JPG/PNG maks. 5 MB, cuti sakit terkait opsional). Direktur/admin
-menyetujui dengan jumlah yang bisa lebih kecil dari yang diajukan, lalu menandai sudah dibayar; HR hanya melihat. **Diagnosis tidak disimpan.** Bukti tidak
-punya URL publik: hanya pemilik klaim, HR, direktur, dan admin yang bisa mengunduhnya lewat tautan yang memeriksa hak akses. Batas tahunan per pegawai
-(opsional) diatur di `settings.py`: `MDI_HEALTH_ANNUAL_LIMIT = 500`. Kebijakan nominal dan siapa yang berhak adalah keputusan lembaga.
+Menu **HEALTH CARE**: bonus **tetap US$ 50 per sakit** (ubah lewat `HEALTH_BONUS` di `.env`). Staf yang sakit mengajukan klaim dengan tanggal sakit dan dokumen
+pendukung (surat dokter atau kuitansi, PDF/JPG/PNG maks. 5 MB; cuti sakit terkait opsional). Jumlah tidak diisi pengguna. Satu bonus per sakit: tanggal sakit atau
+cuti sakit yang sama tidak bisa diklaim dua kali. **Hanya direktur (grup `president`) yang menyetujui atau menolak**; admin dan HR tidak bisa, dan halaman admin Django
+untuk klaim hanya-baca sehingga keputusan tidak bisa diubah dari sana. Admin dan direktur boleh menandai klaim yang sudah disetujui sebagai sudah dibayar; HR hanya melihat.
+**Diagnosis tidak disimpan.** Bukti tidak punya URL publik: hanya pemilik klaim, HR, direktur, dan admin yang bisa mengunduhnya lewat tautan yang memeriksa hak akses.
+Batas tahunan per pegawai (opsional): `HEALTH_ANNUAL_LIMIT=150` di `.env`.
 
 ## Feriadu resmi Timor-Leste
 ```bash

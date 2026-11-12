@@ -3,7 +3,7 @@ Setiap daftar bisa diganti di settings.py dengan MDI_<NAMA>, mis. MDI_LEAVE_APPR
 
 Ringkasan peran:
   admin      semua hak; satu-satunya yang membuka PC kiosk, mengelola kartu QR, menambah/mengubah funsionariu
-  president  (direktur) melihat rekap bulanan, menyetujui lisensa, mengalokasikan staf ke posisi
+  president  (direktur) melihat rekap bulanan, menyetujui lisensa dan klaim health care, mengalokasikan staf ke posisi
   hr         melihat semua data dan daftar staf (hanya baca)
   staff      melihat data absensi (hanya baca), mengajukan lisensa sendiri
   funsionario / employee   laporan absensi sendiri, mengajukan lisensa sendiri
@@ -25,7 +25,8 @@ _DEFAULTS = {
 	'ASSET_VIEW_ALL_GROUPS': ['admin', 'logistik', 'president', 'hr'],
 	'ASSET_SELF_GROUPS': ['admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee'],
 	'HEALTH_REQUEST_GROUPS': ['admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee'],
-	'HEALTH_APPROVER_GROUPS': ['admin', 'president'],
+	'HEALTH_APPROVER_GROUPS': ['president'],            # hanya direktur yang menyetujui; admin tidak bisa menyetujui atau mengubah keputusan
+	'HEALTH_PAYER_GROUPS': ['admin', 'president'],      # menandai klaim yang sudah disetujui sebagai sudah dibayar
 	'HEALTH_VIEW_ALL_GROUPS': ['admin', 'president', 'hr'],
 	'ATTENDANCE_CONFIG_GROUPS': ['admin'],        # tinan/fulan aktif, status absensi, feriadu, tolerânsia
 	'EMPLOYEE_EDIT_GROUPS': ['admin'],            # tambah/ubah data funsionariu dan membuat akun login-nya

@@ -24,7 +24,7 @@
 	<tbody>
 	{% for r in rows %}
 		<tr><td data-label="{% t 'th.name' %}" class="qr-main">{{ r.employee.name }}<br/><small class="text-muted">{{ r.employee.position }}{% if r.employee.division %} · {{ r.employee.division }}{% endif %}</small></td>
-		<td data-label="{% t 'th.late_days' %}" class="text-center">{% if r.late %}<b class="text-warning">{{ r.late }}</b>{% else %}0{% endif %}</td>
+		<td data-label="{% t 'th.late_days' %}" class="text-center">{% if r.late %}<span class="badge badge-warning rounded-pill px-3"><i class="fa fa-clock-o" aria-hidden="true"></i> {{ r.late }}</span>{% else %}0{% endif %}</td>
 		<td data-label="{% t 'th.late_min' %}" class="text-center">{{ r.late_min }}</td><td data-label="{% t 'th.avg_late' %}" class="text-center">{{ r.avg }}</td>
 		<td data-label="{% t 'th.early_days' %}" class="text-center">{{ r.early }}</td><td data-label="{% t 'th.early_min' %}" class="text-center">{{ r.early_min }}</td>
 		<td data-label="{% t 'tile.noout' %}" class="text-center">{{ r.no_out }}</td>

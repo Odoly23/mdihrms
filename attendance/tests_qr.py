@@ -1839,6 +1839,7 @@ class DeviceTokenTests(QRBase):
 		u.groups.add(Group.objects.get_or_create(name='admin')[0])
 		self.client.force_login(u)
 		self.client.cookies['mdi_lang'] = 'id'
+		ScanLog.objects.filter(code='device_reuse').update(scanned_at=timezone.now())   # jendela 7 hari memakai jam asli; jangan bergantung pada tanggal tetap tes
 		html = self.client.get(reverse('qr-today')).content.decode()
 		self.assertIn('dicabut otomatis', html)
 		self.assertIn(self.HOME, html)
@@ -2313,3 +2314,84 @@ class SeedHolidaysTests(QRBase):
 		cell = {c['day']: c['code'] for c in rep['rows'][0]['cells']}
 		self.assertEqual(cell[3], 'H')                                        # Jumat Agung 3 April 2026
 		self.assertNotEqual(cell[10], 'H')
+
+
+class LatenessReportTests(QRBase):
+	"""Laporan keterlambatan: hari, menit, rata-rata, pulang cepat, lupa scan pulang, alpa."""
+
+	def login(self, group):
+		u = User.objects.get_or_create(username='late_' + group)[0]
+		u.groups.add(Group.objects.get_or_create(name=group)[0])
+		self.client.force_login(u)
+		self.client.cookies['mdi_lang'] = 'id'
+
+	def setUp(self):
+		super().setUp()
+		self.e2 = self.make_employee('Ana', 'Lopes')
+		self.c2 = QRCard.objects.create(employee=self.e2)
+		self.p2 = svc.make_payload(self.c2)
+
+	def seed(self):
+		d1, d2, d3 = MON, MON + datetime.timedelta(days=1), MON + datetime.timedelta(days=2)
+		self.scan(d1, 8, 45)              # Maria terlambat 30 menit
+		self.scan(d1, 15, 30)             # pulang 30 menit lebih cepat dari 16:00
+		self.scan(d2, 9, 15)              # terlambat 60 menit, lupa pulang
+		self.scan(d3, 8, 0)               # tepat waktu
+		self.scan(d3, 16, 5)
+		svc.process_scan(self.p2, now=at(d1, 8, 20))                  # Ana terlambat 5 menit
+
+	def rep(self):
+		with mock.patch.object(timezone, 'now', lambda: at(datetime.date(2026, 11, 13), 12)):
+			return svc.lateness_rows(svc.month_report(2026, 11, division=self.div))
+
+	def test_minutes_and_counts(self):
+		self.seed()
+		rows, totals = self.rep()
+		by = {r['employee']['name']: r for r in rows}
+		m, a = by['Maria Silva'], by['Ana Lopes']
+		self.assertEqual((m['late'], m['late_min'], m['avg']), (2, 90, 45))
+		self.assertEqual((m['early'], m['early_min'], m['no_out']), (1, 30, 1))
+		self.assertEqual((a['late'], a['late_min'], a['avg']), (1, 5, 5))
+		self.assertEqual(totals['late'], 3)
+		self.assertEqual(totals['late_min'], 95)
+
+	def test_sorted_by_minutes_late_then_name(self):
+		self.seed()
+		rows, _ = self.rep()
+		self.assertEqual([r['employee']['name'] for r in rows], ['Maria Silva', 'Ana Lopes'])
+
+	def test_on_time_arrival_counts_zero_minutes(self):
+		self.scan(MON, 8, 15)                                          # tepat di batas: tidak terlambat
+		rows, totals = self.rep()
+		self.assertEqual((totals['late'], totals['late_min']), (0, 0))
+
+	def test_month_report_totals_keep_working(self):
+		self.seed()
+		with mock.patch.object(timezone, 'now', lambda: at(datetime.date(2026, 11, 13), 12)):
+			t = svc.month_report(2026, 11, division=self.div)['rows'][0]['totals']
+		self.assertIn('late_min', t)
+		self.assertEqual(svc.year_summary(self.emp, 2026)[0]['late_min'], 0)
+
+	def test_page_roles_csv_and_translations(self):
+		self.seed()
+		for g, code in (('admin', 200), ('staff', 200), ('president', 200), ('hr', 200), ('funsionario', 403), ('employee', 403)):
+			self.client.logout()
+			self.login(g)
+			self.assertEqual(self.client.get(reverse('qr-late'), {'year': 2026, 'month': 11}).status_code, code, g)
+		self.login('hr')
+		r = self.client.get(reverse('qr-late'), {'year': 2026, 'month': 11})
+		self.assertContains(r, 'Menit terlambat')
+		self.client.cookies['mdi_lang'] = 'en'
+		self.assertContains(self.client.get(reverse('qr-late'), {'year': 2026, 'month': 11}), 'Minutes late')
+		resp = self.client.get(reverse('qr-late-export'), {'year': 2026, 'month': 11})
+		text = b''.join(resp.streaming_content).decode('utf-8')
+		self.assertTrue(text.startswith('﻿'))
+		self.assertIn('Maria Silva', text)
+		self.assertEqual(self.client.get(reverse('qr-late'), {'year': 'x', 'month': '99'}).status_code, 200)
+
+	def test_csv_is_formula_safe(self):
+		self.emp.first_name = '=HYPERLINK("x")'
+		self.emp.save()
+		self.login('admin')
+		text = b''.join(self.client.get(reverse('qr-late-export'), {'year': 2026, 'month': 11}).streaming_content).decode('utf-8')
+		self.assertIn("'=HYPERLINK", text)

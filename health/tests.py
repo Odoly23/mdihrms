@@ -249,7 +249,7 @@ class DecisionTests(HealthBase):
 	def test_cannot_approve_own_claim_or_decide_twice(self):
 		own = self.claim(self.boss)
 		self.login('president', self.boss)
-		self.client.post(reverse('health-decide', args=[own.pk, 'approve']), {})
+		self.assertEqual(self.client.post(reverse('health-decide', args=[own.pk, 'approve']), {}).status_code, 403)
 		own.refresh_from_db()
 		self.assertEqual(own.status, 'pending')
 		c = self.claim()
@@ -317,7 +317,7 @@ class NotifAndI18nTests(HealthBase):
 		d = self.client.get(reverse('notif-badge')).json()
 		self.assertEqual((d['health'], d['assets']), (1, 0))                        # klaim sendiri tidak dihitung; bukan pengelola aset
 		self.login('admin', self.emp('Adm3'))
-		self.assertEqual(self.client.get(reverse('notif-badge')).json()['health'], 0)       # admin bukan penyetuju
+		self.assertEqual(self.client.get(reverse('notif-badge')).json()['health'], 1)       # admin hanya melihat klaim direktur (klaim Bos)
 		self.login('logistik', self.emp('Log'))
 		d = self.client.get(reverse('notif-badge')).json()
 		self.assertEqual((d['health'], d['assets']), (0, 1))
@@ -344,3 +344,76 @@ class NotifAndI18nTests(HealthBase):
 		self.assertNotIn(reverse('health-all'), h)
 		self.login('hr', self.emp('H3'))
 		self.assertIn(reverse('health-all'), self.client.get(reverse('home')).content.decode())
+
+
+class DirectorClaimTests(HealthBase):
+	"""Klaim milik direktur hanya disetujui admin; klaim lain tetap hanya oleh direktur."""
+
+	def setUp(self):
+		super().setUp()
+		self.director_emp = self.emp('Direktur', 'Utama')
+		self.director = self.login('president', self.director_emp)
+		self.other_director_emp = self.emp('Direktur', 'Dua')
+		self.other_director = self.user('president', self.other_director_emp)
+		self.admin_emp = self.emp('Admin', 'Satu')
+		self.admin_user = self.user('admin', self.admin_emp)
+		self.dclaim = self.claim(self.director_emp)
+
+	def post(self, user, claim, action='approve'):
+		self.client.force_login(user)
+		return self.client.post(reverse('health-decide', args=[claim.pk, action]), {})
+
+	def test_admin_approves_the_directors_claim(self):
+		r = self.post(self.admin_user, self.dclaim)
+		self.assertEqual(r.status_code, 302)
+		self.dclaim.refresh_from_db()
+		self.assertEqual((self.dclaim.status, self.dclaim.approved_amount, self.dclaim.decided_by), ('approved', Decimal('50.00'), self.admin_user))
+
+	def test_no_director_can_decide_a_directors_claim_not_even_a_colleague(self):
+		for u in (self.director, self.other_director):
+			self.assertEqual(self.post(u, self.dclaim).status_code, 403)
+			self.assertEqual(self.post(u, self.dclaim, 'reject').status_code, 403)
+		self.dclaim.refresh_from_db()
+		self.assertEqual(self.dclaim.status, 'pending')
+
+	def test_admin_still_cannot_decide_ordinary_claims(self):
+		c = self.claim(self.maria)
+		self.assertEqual(self.post(self.admin_user, c).status_code, 403)
+		self.assertEqual(self.post(self.director, c).status_code, 302)
+		c.refresh_from_db()
+		self.assertEqual(c.status, 'approved')
+
+	def test_admin_cannot_approve_own_claim(self):
+		own = self.claim(self.admin_emp)
+		self.assertEqual(self.post(self.admin_user, own).status_code, 403)
+		self.assertEqual(self.post(self.director, own).status_code, 302)          # klaim admin disetujui direktur
+		own.refresh_from_db()
+		self.assertEqual(own.status, 'approved')
+
+	def test_buttons_follow_the_rule_on_the_list(self):
+		c = self.claim(self.maria)
+		self.client.force_login(self.admin_user)
+		h = self.client.get(reverse('health-all')).content.decode()
+		self.assertIn(reverse('health-decide', args=[self.dclaim.pk, 'approve']), h)
+		self.assertNotIn(reverse('health-decide', args=[c.pk, 'approve']), h)
+		self.client.force_login(self.director)
+		h = self.client.get(reverse('health-all')).content.decode()
+		self.assertIn(reverse('health-decide', args=[c.pk, 'approve']), h)
+		self.assertNotIn(reverse('health-decide', args=[self.dclaim.pk, 'approve']), h)
+
+	def test_bell_counts_follow_the_rule(self):
+		c = self.claim(self.maria)
+		self.client.force_login(self.admin_user)
+		self.assertEqual(self.client.get(reverse('notif-badge')).json()['health'], 1)      # hanya klaim direktur
+		self.client.force_login(self.director)
+		self.assertEqual(self.client.get(reverse('notif-badge')).json()['health'], 1)      # klaim Maria (klaim sendiri tidak dihitung)
+		HealthClaim.objects.filter(pk=self.dclaim.pk).update(status='approved')
+		self.client.force_login(self.admin_user)
+		self.assertEqual(self.client.get(reverse('notif-badge')).json()['health'], 0)
+
+	def test_paid_marking_unchanged(self):
+		self.post(self.admin_user, self.dclaim)
+		self.client.force_login(self.admin_user)
+		self.client.post(reverse('health-pay', args=[self.dclaim.pk]))
+		self.dclaim.refresh_from_db()
+		self.assertEqual(self.dclaim.status, 'paid')

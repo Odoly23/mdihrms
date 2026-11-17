@@ -26,14 +26,15 @@ cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
 ## Tes
 ```bash
-DEBUG=True python manage.py test        # 380 tes: absensi QR + proyek
+DEBUG=True python manage.py test        # tes: absensi QR + proyek
 ```
 
 ## Peran (grup)
 | Grup | Bisa |
 |---|---|
 | `admin` | Semuanya. **Satu-satunya** yang membuka PC kiosk, mengelola kartu QR, dan menambah/mengubah funsionariu (akun login dibuat otomatis dengan kata sandi acak yang tampil sekali). Admin juga wajib scan kartunya sendiri. |
-| `president` (direktur) | Melihat rekap bulanan dan dashboard, **menyetujui/menolak lisensa dan klaim health care (hanya direktur)**, **mengalokasikan staf ke posisi** (Kolokasaun). |
+| `president` (direktur) | Melihat rekap bulanan dan dashboard, **menyetujui/menolak lisensa dan klaim health care staf**, mendisposisi surat masuk, **mengalokasikan staf ke posisi** (Kolokasaun). |
+| `resepsionis` | **Satu-satunya yang mendaftarkan surat masuk (Karta tama)**; juga mendaftarkan surat keluar. Memperbaiki surat yang dikembalikan. |
 | `logistik` | Mengelola **aset**: mendaftarkan barang, menyerahkan ke staf, menerima kembali, menaruh di rak, mengubah status, dan survei. |
 | `hr` | **Melihat semua** (absensi, lisensa, kolokasaun) dan daftar staf beserta detail masing-masing. Hanya baca. |
 | `staff` | Melihat data absensi (hanya baca), melihat kolokasaun, **mengajukan lisensa** sendiri. |
@@ -59,10 +60,21 @@ yang lama tidak dicek, dan ekspor CSV. HR dan direktur hanya melihat. Kategori b
 ## Health care (bonus saat sakit)
 Menu **HEALTH CARE**: bonus **tetap US$ 50 per sakit** (ubah lewat `HEALTH_BONUS` di `.env`). Staf yang sakit mengajukan klaim dengan tanggal sakit dan dokumen
 pendukung (surat dokter atau kuitansi, PDF/JPG/PNG maks. 5 MB; cuti sakit terkait opsional). Jumlah tidak diisi pengguna. Satu bonus per sakit: tanggal sakit atau
-cuti sakit yang sama tidak bisa diklaim dua kali. **Hanya direktur (grup `president`) yang menyetujui atau menolak**; admin dan HR tidak bisa, dan halaman admin Django
+cuti sakit yang sama tidak bisa diklaim dua kali. **Klaim staf hanya disetujui/ditolak direktur (grup `president`)**; HR tidak bisa, dan halaman admin Django
 untuk klaim hanya-baca sehingga keputusan tidak bisa diubah dari sana. Admin dan direktur boleh menandai klaim yang sudah disetujui sebagai sudah dibayar; HR hanya melihat.
 **Diagnosis tidak disimpan.** Bukti tidak punya URL publik: hanya pemilik klaim, HR, direktur, dan admin yang bisa mengunduhnya lewat tautan yang memeriksa hak akses.
+**Klaim milik direktur sendiri hanya disetujui oleh admin** (direktur tidak bisa menyetujui klaimnya sendiri; admin tidak menyetujui klaim staf biasa).
 Batas tahunan per pegawai (opsional): `HEALTH_ANNUAL_LIMIT=150` di `.env`.
+
+## Surat masuk dan keluar (app `kts`)
+Menu **KARTA**: dasbor dengan tombol **KARTA TAMA** (surat masuk) dan **KARTA SAI** (surat keluar). Alur surat masuk: **resepsionis** mendaftarkan (dengan PDF) →
+**admin** memverifikasi dan menyetujui (atau mengembalikan dengan catatan, lalu resepsionis memperbaiki) → **direktur** mendisposisi ke satu penanggung jawab dengan
+*despacho* dan batas waktu opsional → penanggung jawab menindaklanjuti dan menandai **selesai** dengan catatan hasil. Setiap langkah tercatat (riwayat tidak bisa diubah),
+surat tidak bisa dihapus, dan PDF hanya bisa dibuka lewat tautan yang memeriksa hak akses. `KTS_REQUIRE_PDF=False` di `.env` melonggarkan syarat PDF sebelum persetujuan.
+Surat keluar didaftarkan admin/resepsionis tanpa alur persetujuan. Lonceng navbar menghitung surat yang menunggu tindakan Anda.
+
+## Laporan keterlambatan
+Menu absensi **Late**: per bulan, hari terlambat, total/rata-rata menit terlambat dan pulang lebih awal per pegawai (urut terlambat terbanyak), ekspor CSV.
 
 ## Feriadu resmi Timor-Leste
 ```bash
@@ -98,6 +110,7 @@ jangan di git (pola `employee/data/staff_*.csv` sudah diabaikan).
 | `attendance` | Attendance, hari libur, **absensi QR** (`*_qr.py`, `templates/attendance/qr`) |
 | `contract` | InitialContract, Contract, gaji, Kolokasaun + alokasi posisi |
 | `leave` | Leaves, LeaveType, AnnualLeaves + pengajuan dan persetujuan lisensa |
+| `kts` | Surat masuk (Tama) dengan alur verifikasi–disposisi, surat keluar (Sai) |
 | `notif` | Lonceng notifikasi dan ulang tahun |
 | `main` | Layout, navbar per grup, login, halaman galat, `mdi_setup` |
 | `settings_app` | `upload_utils`, `utils`, `decorators` |

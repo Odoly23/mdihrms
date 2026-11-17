@@ -38,7 +38,7 @@
 				<a class="btn btn-sm btn-outline-secondary" href="{% url 'health-receipt' c.pk %}"><i class="fa fa-paperclip"></i> {% t 'hl.receipt' %}</a>
 				{% if mode == 'mine' and c.status == 'pending' %}
 					<form method="post" action="{% url 'health-cancel' c.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-mdi" type="submit"><i class="fa fa-times"></i> {% t 'btn.cancel' %}</button></form>
-				{% elif mode == 'all' and can_decide and c.status == 'pending' and c.employee_id != mine_id %}
+				{% elif mode == 'all' and c.can_decide %}
 					<form method="post" action="{% url 'health-decide' c.pk 'approve' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-success" type="submit"><i class="fa fa-check"></i> {% t 'btn.approve' %}</button></form>
 					<form method="post" action="{% url 'health-decide' c.pk 'reject' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-danger" type="submit"><i class="fa fa-ban"></i> {% t 'btn.reject' %}</button></form>
 				{% elif mode == 'all' and can_pay and c.status == 'approved' %}

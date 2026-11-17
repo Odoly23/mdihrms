@@ -1,0 +1,35 @@
+{% extends 'attendance/qr/base.html' %}
+{% load qr_i18n %}
+{% block qr_body %}
+<h3 align="center" class="qr-h">{% t 'late.heading' month=monthname|upper year=year %}</h3>
+<p class="text-center text-muted">{% if div %}{{ div.name }}{% else %}{% t 'rep.all' %}{% endif %} · {% t 'late.rule' limit=limit end=end %}</p>
+<form method="get" class="qr-form">
+	<select name="div" class="form-control" aria-label="{% t 'f.division' %}"><option value="">{% t 'f.all_div' %}</option>
+		{% for d in divisions %}<option value="{{ d.pk }}" {% if div_id == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select>
+	<select name="month" class="form-control" aria-label="{% t 'f.month' %}">{% for n, name in months %}<option value="{{ n }}" {% if n == month %}selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+	<select name="year" class="form-control" aria-label="{% t 'f.year' %}">{% for y in years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}</select>
+	<button class="btn btn-mdi" type="submit">{% t 'f.show' %}</button>
+	<a class="btn btn-mdi" href="{% url 'qr-late-export' %}?year={{ year }}&month={{ month }}&div={{ div_id }}">{% t 'btn.csv' %} <i class="fa fa-download"></i></a>
+</form>
+<div class="qr-tiles mb-3">
+	<div class="qr-tile warn"><b>{{ totals.late }}</b><span>{% t 'late.t.days' %}</span></div>
+	<div class="qr-tile warn"><b>{{ totals.late_min }}</b><span>{% t 'late.t.min' %}</span></div>
+	<div class="qr-tile"><b>{{ totals.early }}</b><span>{% t 'tile.early' %}</span></div>
+	<div class="qr-tile"><b>{{ totals.no_out }}</b><span>{% t 'tile.noout' %}</span></div>
+	<div class="qr-tile bad"><b>{{ totals.absent }}</b><span>{% t 'tile.absent' %}</span></div>
+</div>
+<div class="table-responsive"><table class="table table-sm table-striped qr-stack">
+	<thead><tr><th>{% t 'th.name' %}</th><th class="text-center">{% t 'th.late_days' %}</th><th class="text-center">{% t 'th.late_min' %}</th><th class="text-center">{% t 'th.avg_late' %}</th>
+		<th class="text-center">{% t 'th.early_days' %}</th><th class="text-center">{% t 'th.early_min' %}</th><th class="text-center">{% t 'tile.noout' %}</th><th class="text-center">{% t 'th.absent' %}</th></tr></thead>
+	<tbody>
+	{% for r in rows %}
+		<tr><td data-label="{% t 'th.name' %}" class="qr-main">{{ r.employee.name }}<br/><small class="text-muted">{{ r.employee.position }}{% if r.employee.division %} · {{ r.employee.division }}{% endif %}</small></td>
+		<td data-label="{% t 'th.late_days' %}" class="text-center">{% if r.late %}<b class="text-warning">{{ r.late }}</b>{% else %}0{% endif %}</td>
+		<td data-label="{% t 'th.late_min' %}" class="text-center">{{ r.late_min }}</td><td data-label="{% t 'th.avg_late' %}" class="text-center">{{ r.avg }}</td>
+		<td data-label="{% t 'th.early_days' %}" class="text-center">{{ r.early }}</td><td data-label="{% t 'th.early_min' %}" class="text-center">{{ r.early_min }}</td>
+		<td data-label="{% t 'tile.noout' %}" class="text-center">{{ r.no_out }}</td>
+		<td data-label="{% t 'th.absent' %}" class="text-center">{% if r.absent %}<b class="text-danger">{{ r.absent }}</b>{% else %}0{% endif %}</td></tr>
+	{% empty %}<tr><td colspan="8" class="text-center text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
+	</tbody>
+</table></div>
+{% endblock %}

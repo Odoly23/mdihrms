@@ -54,6 +54,8 @@ def decide(claim_id, approve, user, note='', approver_employee=None, now=None):
 	c = HealthClaim.objects.select_for_update().select_related('employee').get(pk=claim_id)
 	if approver_employee is not None and c.employee_id == approver_employee.pk:
 		raise ClaimError('hl.err.own')
+	if user is not None and not may_decide(user, c):
+		raise ClaimError('hl.err.not_allowed')
 	if c.status != 'pending':
 		raise ClaimError('hl.err.done')
 	if approve:
@@ -90,8 +92,43 @@ def cancel(claim_id, employee):
 	c.delete()
 
 
-def pending_count(exclude_employee_id=None):
+def _director_q():
+	"""Klaim milik direktur: pemilik klaim punya akun yang masuk grup penyetuju biasa (HEALTH_APPROVER_GROUPS)."""
+	from django.db.models import Q
+	from main import roles
+	return Q(employee__employeeuser__user__groups__name__in=roles.names('HEALTH_APPROVER_GROUPS'))
+
+
+def is_director_claim(claim):
+	return HealthClaim.objects.filter(_director_q(), pk=claim.pk).exists()
+
+
+def may_decide(user, claim):
+	"""Aturan penyetuju: klaim biasa disetujui direktur; klaim milik direktur hanya disetujui admin. Tidak pernah klaim sendiri."""
+	from main import roles
+	if not user.is_authenticated:
+		return False
+	mine = roles.linked_employee(user)
+	if mine is not None and mine.pk == claim.employee_id:
+		return False
+	if is_director_claim(claim):
+		return roles.has_role(user, 'HEALTH_DIRECTOR_APPROVER_GROUPS')
+	return roles.has_role(user, 'HEALTH_APPROVER_GROUPS')
+
+
+def pending_count(user=None, exclude_employee_id=None):
+	"""Klaim menunggu yang boleh diputuskan `user` (direktur: klaim biasa; admin: klaim direktur)."""
+	from django.db.models import Q
+	from main import roles
 	qs = HealthClaim.objects.filter(status='pending')
 	if exclude_employee_id:
 		qs = qs.exclude(employee_id=exclude_employee_id)
-	return qs.count()
+	if user is None:
+		return qs.count()
+	director = _director_q()
+	cond = Q(pk__in=[])
+	if roles.has_role(user, 'HEALTH_APPROVER_GROUPS'):
+		cond |= ~director
+	if roles.has_role(user, 'HEALTH_DIRECTOR_APPROVER_GROUPS'):
+		cond |= director
+	return qs.filter(cond).distinct().count()

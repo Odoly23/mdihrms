@@ -1,0 +1,28 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
+	<li class="breadcrumb-item active">{{ title|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-envelope"></i> {{ title|upper }}</div>
+	<div class="card-body">
+		<div class="qr-tiles mb-3">
+			{% if counts.verify or can.kts_verify %}<a class="qr-tile warn" href="{% url 'kts-tama' %}?status=registered"><b>{{ counts.verify }}</b><span>{% t 'kts.c.verify' %}</span></a>{% endif %}
+			{% if can.kts_dispose %}<a class="qr-tile warn" href="{% url 'kts-tama' %}?status=approved"><b>{{ counts.dispose }}</b><span>{% t 'kts.c.dispose' %}</span></a>{% endif %}
+			{% if has_handled or counts.handle %}<a class="qr-tile warn" href="{% url 'kts-tama-mine' %}"><b>{{ counts.handle }}</b><span>{% t 'kts.c.handle' %}</span></a>{% endif %}
+			{% if can.kts_register %}<a class="qr-tile bad" href="{% url 'kts-tama' %}?status=returned"><b>{{ counts.returned }}</b><span>{% t 'kts.c.returned' %}</span></a>{% endif %}
+		</div>
+		{% if can_all %}
+			<a class="btn btn-sm btn-mdi" href="{% url 'kts-tama' %}">KARTA TAMA <i class="fa fa-envelope"></i></a>
+			<a class="btn btn-sm btn-mdi" href="{% url 'kts-sai' %}">KARTA SAI <i class="fa fa-envelope-open"></i></a>
+		{% endif %}
+		{% if can_register %}<a class="btn btn-sm btn-mdi" href="{% url 'kts-tama-add' %}"><i class="fa fa-plus"></i> {% t 'kts.in.add' %}</a>{% endif %}
+		{% if can_out %}<a class="btn btn-sm btn-mdi" href="{% url 'kts-sai-add' %}"><i class="fa fa-plus"></i> {% t 'kts.out.add' %}</a>{% endif %}
+		{% if has_handled or counts.handle %}<a class="btn btn-sm btn-mdi" href="{% url 'kts-tama-mine' %}"><i class="fa fa-tasks"></i> {% t 'kts.mine' %}</a>{% endif %}
+		<hr/>
+		<p class="small text-muted mb-0">{% t 'kts.flow' %}</p>
+	</div>
+</div></div>
+{% endblock %}

@@ -20,6 +20,7 @@ urlpatterns = [
 	path('funsionariu/', include('employee.urls')),
 	path('assets/', include('assets.urls')),
 	path('health/', include('health.urls')),
+	path('kts/', include('kts.urls')),
 	path('notif/', include('notif.urls')),
 	path('custom/', include('custom.urls')),
 ]

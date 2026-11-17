@@ -88,18 +88,25 @@ def all_claims(request):
 		qs = qs.filter(Q(employee__first_name__icontains=q) | Q(employee__last_name__icontains=q))
 	page = Paginator(qs, 50).get_page(request.GET.get('page'))
 	mine = roles.linked_employee(request.user)
+	rows = _decorate(list(page.object_list), lang)
+	for c in rows:
+		c.can_decide = c.status == 'pending' and services.may_decide(request.user, c)
 	return render(request, 'health/list.html', {
-		'title': ui.tr(lang, 'hl.title.all'), 'rows': _decorate(list(page.object_list), lang), 'page': page, 'mode': 'all', 'status': status, 'q': q,
-		'can_decide': roles.has_role(request.user, APPROVER), 'can_pay': roles.has_role(request.user, PAYER), 'mine_id': mine.pk if mine else None, 'limit': services.annual_limit(),
+		'title': ui.tr(lang, 'hl.title.all'), 'rows': rows, 'page': page, 'mode': 'all', 'status': status, 'q': q,
+		'can_pay': roles.has_role(request.user, PAYER), 'mine_id': mine.pk if mine else None, 'limit': services.annual_limit(),
 		'status_choices': [('pending', 'hl.st.pending'), ('approved', 'hl.st.approved'), ('paid', 'hl.st.paid'), ('rejected', 'hl.st.rejected'), ('all', 'leave.f.all')]})
 
 
 @require_POST
-@roles.role_required(APPROVER)
 def claim_decide(request, pk, action):
+	if not request.user.is_authenticated:
+		from django.contrib.auth.views import redirect_to_login
+		return redirect_to_login(request.get_full_path())
 	if action not in ('approve', 'reject'):
 		return redirect('health-all')
-	get_object_or_404(HealthClaim, pk=pk)
+	claim = get_object_or_404(HealthClaim, pk=pk)
+	if not services.may_decide(request.user, claim):                       # klaim direktur: admin; klaim lain: direktur
+		return render(request, 'home/403.html', status=403)
 	try:
 		services.decide(pk, action == 'approve', request.user, request.POST.get('note', ''),
 			approver_employee=roles.linked_employee(request.user))

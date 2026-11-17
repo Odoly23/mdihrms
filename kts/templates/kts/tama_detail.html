@@ -1,0 +1,64 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'kts-dash' %}">{% t 'kts.title' %}</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'kts-tama' %}">{% t 'kts.in' %}</a></li>
+	<li class="breadcrumb-item active">{{ letter.nu_ref }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="row">
+<div class="col-12 col-lg-6 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-envelope"></i> {{ letter.nu_ref }} <span class="badge badge-{{ letter.badge }} ml-2">{{ letter.status_text }}</span>
+		{% if overdue %}<span class="badge badge-danger ml-1">{% t 'kts.overdue' %}</span>{% endif %}</div>
+	<div class="card-body">
+		<table class="table table-sm table-borderless mb-0">
+			<tr><th>{% t 'kts.f.date_in' %}</th><td>{{ letter.data_kartatama|date:"d/m/Y" }}</td></tr>
+			<tr><th>{% t 'kts.f.from' %}</th><td>{{ letter.de }}</td></tr>
+			<tr><th>{% t 'kts.f.to' %}</th><td>{{ letter.para }}</td></tr>
+			<tr><th>{% t 'kts.f.subject' %}</th><td>{{ letter.asuntu }}</td></tr>
+			<tr><th>{% t 'kts.f.institute' %}</th><td>{{ letter.institutu|default:"-" }}</td></tr>
+			<tr><th>{% t 'kts.f.delivery' %}</th><td>{{ letter.entrega|default:"-" }}</td></tr>
+			<tr><th>{% t 'th.note' %}</th><td>{{ letter.obs|default:"-" }}</td></tr>
+			<tr><th>PDF</th><td>{% if letter.file_pdf %}<a href="{% url 'kts-tama-file' letter.pk %}" target="_blank" rel="noopener"><i class="fa fa-file-pdf-o"></i> {% t 'kts.file' %}</a>{% else %}-{% endif %}</td></tr>
+		</table>
+		{% if can_edit %}<hr/><a class="btn btn-sm btn-mdi" href="{% url 'kts-tama-edit' letter.pk %}"><i class="fa fa-pencil"></i> {% t 'btn.edit' %}</a>{% endif %}
+	</div>
+</div></div>
+<div class="col-12 col-lg-6 mb-3">
+	{% if letter.verified_at %}<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-check-square-o"></i> {% t 'kts.verification' %}</div>
+		<div class="card-body small">{{ letter.verified_by.username }} · {{ letter.verified_at|date:"d/m/Y H:i" }}{% if letter.verify_note %}<br/>{{ letter.verify_note }}{% endif %}</div></div>{% endif %}
+	{% if letter.disposed_at %}<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-share"></i> {% t 'kts.disposition' %}</div>
+		<div class="card-body"><p class="mb-1"><b>{% t 'kts.f.handler' %}:</b> {{ letter.handler|default:"-" }}{% if letter.due_date %} · <b>{% t 'kts.f.due' %}:</b> {{ letter.due_date|date:"d/m/Y" }}{% endif %}</p>
+		<p class="mb-1"><b>{% t 'kts.f.despacho' %}:</b></p><div style="white-space:pre-wrap">{{ letter.despacho }}</div>
+		<small class="text-muted">{{ letter.disposed_by.username }} · {{ letter.disposed_at|date:"d/m/Y H:i" }}</small></div></div>{% endif %}
+	{% if letter.status == 'done' %}<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-flag-checkered"></i> {% t 'kts.st.done' %}</div>
+		<div class="card-body"><div style="white-space:pre-wrap">{{ letter.done_note }}</div>
+		{% if letter.done_file %}<a href="{% url 'kts-tama-file-which' letter.pk 'done' %}" target="_blank" rel="noopener"><i class="fa fa-file-pdf-o"></i> {% t 'kts.file' %}</a><br/>{% endif %}
+		<small class="text-muted">{{ letter.done_by.username }} · {{ letter.done_at|date:"d/m/Y H:i" }}</small></div></div>{% endif %}
+	{% if can_verify %}<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-check"></i> {% t 'kts.btn.approve' %}</div>
+		<div class="card-body">
+			<form method="post" action="{% url 'kts-tama-approve' letter.pk %}" class="mb-2">{% csrf_token %}
+				<input name="note" class="form-control mb-2" maxlength="300" placeholder="{% t 'th.note' %}">
+				<button class="btn btn-success btn-sm" type="submit"><i class="fa fa-check"></i> {% t 'kts.btn.approve' %}</button></form>
+			<form method="post" action="{% url 'kts-tama-return' letter.pk %}">{% csrf_token %}
+				<input name="note" class="form-control mb-2" maxlength="300" required placeholder="{% t 'kts.return_ph' %}">
+				<button class="btn btn-danger btn-sm" type="submit"><i class="fa fa-undo"></i> {% t 'kts.btn.return' %}</button></form>
+		</div></div>{% endif %}
+	{% if can_dispose %}<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-share"></i> {% t 'kts.btn.dispose' %}</div>
+		<div class="card-body"><form method="post" action="{% url 'kts-tama-dispose' letter.pk %}">{% csrf_token %}
+			{% for f in dispose_form %}<div class="form-group"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}</div>{% endfor %}
+			<button class="btn btn-mdi btn-sm" type="submit"><i class="fa fa-share"></i> {% if letter.status == 'disposed' %}{% t 'kts.btn.redispose' %}{% else %}{% t 'kts.btn.dispose' %}{% endif %}</button></form></div></div>{% endif %}
+	{% if can_done %}<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-flag-checkered"></i> {% t 'kts.btn.done' %}</div>
+		<div class="card-body"><form method="post" action="{% url 'kts-tama-done' letter.pk %}" enctype="multipart/form-data">{% csrf_token %}
+			{% for f in done_form %}<div class="form-group"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}</div>{% endfor %}
+			<button class="btn btn-success btn-sm" type="submit"><i class="fa fa-check"></i> {% t 'kts.btn.done' %}</button></form></div></div>{% endif %}
+</div>
+</div>
+<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-history"></i> {% t 'as.history' %}</div>
+	<div class="card-body"><div class="table-responsive"><table class="table table-sm table-striped">
+		<thead><tr><th>{% t 'th.date' %}</th><th>{% t 'as.event' %}</th><th>{% t 'th.status' %}</th><th>{% t 'th.emp' %}</th><th>{% t 'th.note' %}</th></tr></thead>
+		{% for ev in events %}<tr><td class="text-nowrap">{{ ev.at|date:"d/m/Y H:i" }}</td><td>{{ ev.text }}<br/><small class="text-muted">{{ ev.user.username }}</small></td><td>{{ ev.to_text|default:"-" }}</td><td>{{ ev.employee|default:"-" }}</td><td style="white-space:pre-wrap">{{ ev.note|default:"-" }}</td></tr>
+		{% empty %}<tr><td colspan="5" class="text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
+	</table></div></div></div>
+</div>
+{% endblock %}

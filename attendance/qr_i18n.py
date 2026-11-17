@@ -447,6 +447,8 @@ from attendance.qr_i18n_hr import ASSETS as _ASSETS  # noqa: E402  (aset)
 MESSAGES.update(_ASSETS)
 from attendance.qr_i18n_hr import HEALTH as _HEALTH  # noqa: E402  (health care)
 MESSAGES.update(_HEALTH)
+from attendance.qr_i18n_hr import KTS as _KTS  # noqa: E402  (surat masuk/keluar)
+MESSAGES.update(_KTS)
 
 
 def tr(lang, key, **params):

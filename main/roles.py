@@ -26,8 +26,14 @@ _DEFAULTS = {
 	'ASSET_SELF_GROUPS': ['admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee'],
 	'HEALTH_REQUEST_GROUPS': ['admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee'],
 	'HEALTH_APPROVER_GROUPS': ['president'],            # hanya direktur yang menyetujui; admin tidak bisa menyetujui atau mengubah keputusan
+	'HEALTH_DIRECTOR_APPROVER_GROUPS': ['admin'],        # klaim milik direktur (anggota HEALTH_APPROVER_GROUPS) hanya disetujui admin
 	'HEALTH_PAYER_GROUPS': ['admin', 'president'],      # menandai klaim yang sudah disetujui sebagai sudah dibayar
 	'HEALTH_VIEW_ALL_GROUPS': ['admin', 'president', 'hr'],
+	'KTS_REGISTER_GROUPS': ['resepsionis'],            # hanya resepsionis yang mendaftarkan surat masuk
+	'KTS_VERIFY_GROUPS': ['admin'],                    # administrasi: verifikasi dan persetujuan
+	'KTS_DISPOSE_GROUPS': ['president'],               # direktur: disposisi dan despacho
+	'KTS_VIEW_ALL_GROUPS': ['admin', 'president', 'resepsionis'],
+	'KTS_OUT_GROUPS': ['admin', 'resepsionis'],        # mendaftarkan dan mengubah surat keluar
 	'ATTENDANCE_CONFIG_GROUPS': ['admin'],        # tinan/fulan aktif, status absensi, feriadu, tolerânsia
 	'EMPLOYEE_EDIT_GROUPS': ['admin'],            # tambah/ubah data funsionariu dan membuat akun login-nya
 }

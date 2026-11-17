@@ -650,7 +650,8 @@ def month_report(year, month, division=None, employee=None, hol=None):
 	rows = []
 	for e in emps:
 		cells = []
-		tot = {'workdays': 0, 'present': 0, 'late': 0, 'leave': 0, 'absent': 0, 'no_out': 0, 'early': 0, 'flagged': 0}
+		tot = {'workdays': 0, 'present': 0, 'late': 0, 'leave': 0, 'absent': 0, 'no_out': 0, 'early': 0, 'flagged': 0,
+			   'late_min': 0, 'early_min': 0}
 		for d in days:
 			date = first_day.replace(day=d)
 			cell = {'day': d, 'date': date, 'wd': date.weekday(), 'code': '', 'late': False, 'early': False,
@@ -673,6 +674,8 @@ def month_report(year, month, division=None, employee=None, hol=None):
 					cell['flag'] = st.flagged
 					cell['no_out'] = st.check_out is None and date < today
 					cell['early'] = bool(st.check_out) and to_local(st.check_out).time() < conf_time('WORK_END')
+					cell['late_min'] = _minutes_after(to_local(st.check_in).time(), conf_time('LATE_AFTER')) if st.is_late else 0
+					cell['early_min'] = _minutes_after(conf_time('WORK_END'), to_local(st.check_out).time()) if cell['early'] else 0
 			elif date < today:
 				cell['code'] = 'F'
 			if cell['code'] == 'P':
@@ -681,6 +684,8 @@ def month_report(year, month, division=None, employee=None, hol=None):
 				tot['no_out'] += cell['no_out']
 				tot['early'] += cell['early']
 				tot['flagged'] += cell['flag']
+				tot['late_min'] += cell.get('late_min', 0)
+				tot['early_min'] += cell.get('early_min', 0)
 			elif cell['code'] == 'L':
 				tot['leave'] += 1
 			elif cell['code'] == 'F':
@@ -694,6 +699,25 @@ def month_report(year, month, division=None, employee=None, hol=None):
 	return {'year': year, 'month': month, 'days': days, 'off': off, 'rows': rows}
 
 
+def _minutes_after(t, limit):
+	"""Menit dari `limit` sampai `t` (0 bila t belum melewati limit)."""
+	return max(0, (t.hour * 60 + t.minute) - (limit.hour * 60 + limit.minute))
+
+
+def lateness_rows(rep):
+	"""Baris laporan keterlambatan dari month_report: terlambat (hari, menit, rata-rata), pulang cepat, lupa scan pulang, alpa, ditandai;
+	diurutkan dari yang paling banyak terlambat. Tanpa query tambahan."""
+	out = []
+	for r in rep['rows']:
+		t = r['totals']
+		out.append({'employee': r['employee'], 'late': t['late'], 'late_min': t['late_min'],
+					'avg': round(t['late_min'] / t['late']) if t['late'] else 0, 'early': t['early'], 'early_min': t['early_min'],
+					'no_out': t['no_out'], 'absent': t['absent'], 'flagged': t['flagged'], 'present': t['present'], 'workdays': t['workdays']})
+	out.sort(key=lambda x: (-x['late_min'], -x['late'], -x['absent'], x['employee']['name']))
+	keys = ('late', 'late_min', 'early', 'early_min', 'no_out', 'absent', 'flagged')
+	return out, {k: sum(x[k] for x in out) for k in keys}
+
+
 def calendar_weeks(year, month, cells):
 	"""Kalender mini (Senin..Minggu): daftar minggu, tiap sel adalah dict hari atau None untuk kotak kosong."""
 	padded = [None] * datetime.date(year, month, 1).weekday() + list(cells)
@@ -701,7 +725,8 @@ def calendar_weeks(year, month, cells):
 	return [padded[i:i + 7] for i in range(0, len(padded), 7)]
 
 
-_ZERO = {'workdays': 0, 'present': 0, 'late': 0, 'leave': 0, 'absent': 0, 'no_out': 0, 'early': 0, 'flagged': 0, 'rate': None}
+_ZERO = {'workdays': 0, 'present': 0, 'late': 0, 'leave': 0, 'absent': 0, 'no_out': 0, 'early': 0, 'flagged': 0,
+		 'late_min': 0, 'early_min': 0, 'rate': None}
 
 
 def year_summary(employee, year):

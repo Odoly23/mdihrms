@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 	'attendance',
 	'assets',
 	'health',
+	'kts',
 	'notif',
 ]
 
@@ -151,6 +152,9 @@ SITE_EMAIL = env('SITE_EMAIL', '')
 MDI_HEALTH_BONUS = env('HEALTH_BONUS', '50')
 _limit = env('HEALTH_ANNUAL_LIMIT', '')
 MDI_HEALTH_ANNUAL_LIMIT = _limit or None
+
+# Surat masuk: PDF wajib dilampirkan sebelum administrasi menyetujui (False = boleh tanpa lampiran)
+MDI_KTS_REQUIRE_PDF = env_bool('KTS_REQUIRE_PDF', True)
 
 # ---- Absensi QR (lihat attendance/QR_INSTALL.md) ----
 ATTENDANCE_QR_SECRET = env('ATTENDANCE_QR_SECRET')

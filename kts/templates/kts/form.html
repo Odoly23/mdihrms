@@ -1,0 +1,28 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'kts-dash' %}">{% t 'kts.title' %}</a></li>
+	<li class="breadcrumb-item"><a href="{% url back %}">{% if back == 'kts-sai' %}{% t 'kts.out' %}{% else %}{% t 'kts.in' %}{% endif %}</a></li>
+	<li class="breadcrumb-item active">{{ title|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="row"><div class="col-12 col-lg-9">
+<div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-envelope"></i> {{ title|upper }}</div>
+	<div class="card-body">
+		{% if letter.status == 'returned' %}<div class="alert alert-danger p-2"><b>{% t 'kts.st.returned' %}:</b> {{ letter.verify_note }}</div>{% endif %}
+		<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+			{% if form.non_field_errors %}<div class="alert alert-danger p-2" role="alert">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+			<div class="form-row">
+			{% for f in form %}
+				<div class="form-group col-12 col-md-6"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+				{% for e in f.errors %}<small class="text-danger d-block">{{ e }}</small>{% endfor %}</div>
+			{% endfor %}
+			</div>
+			<button class="btn btn-mdi" type="submit"><i class="fa fa-save"></i> {% t 'btn.save' %}</button>
+			<a class="btn btn-outline-secondary" href="{% url back %}">{% t 'btn.cancel' %}</a>
+		</form>
+	</div>
+</div></div></div>
+</div>
+{% endblock %}

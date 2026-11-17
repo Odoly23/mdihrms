@@ -15,6 +15,17 @@ from attendance import qr_service as svc
 from . import roles
 
 
+def _is_kts_handler(user):
+	"""Apakah pengguna menjadi penanggung jawab surat masuk (menu 'Karta' muncul untuknya). Di-cache 60 detik per pengguna."""
+	key = 'main:kts-handler:%d' % user.pk
+	v = cache.get(key)
+	if v is None:
+		from kts.models import Tama
+		v = Tama.objects.filter(handler__employeeuser__user=user).exists()
+		cache.set(key, v, 60)
+	return v
+
+
 def nav(request):
 	"""Nama grup pertama (kebiasaan proyek lama) dan hak menu untuk navbar (`can.<nama>`)."""
 	user = getattr(request, 'user', None)
@@ -24,6 +35,7 @@ def nav(request):
 		g = user.groups.all()[:1]
 		group = g[0].name if g else ''
 		perms = {k[:-7].lower(): roles.has_role(user, k) for k in roles._DEFAULTS}
+		perms['kts_handler'] = _is_kts_handler(user)
 		perms.update({
 			'qr_view': svc.in_groups(user, svc.conf('VIEWER_GROUPS')),
 			'qr_manage': svc.in_groups(user, svc.conf('MANAGER_GROUPS')),

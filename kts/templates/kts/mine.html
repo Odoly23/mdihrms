@@ -1,0 +1,27 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'kts-dash' %}">{% t 'kts.title' %}</a></li>
+	<li class="breadcrumb-item active">{{ title|upper }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="card shadow-lg pt-1 qr-border rounded mb-3">
+	<div class="card-header"><i class="fa fa-tasks"></i> {{ title|upper }}</div>
+	<div class="card-body">
+		{% if not emp %}<div class="alert alert-warning p-2">{% t 'leave.unlinked' %}</div>{% endif %}
+		<div class="table-responsive"><table class="table table-sm table-striped">
+			<thead><tr><th>{% t 'kts.f.ref' %}</th><th>{% t 'kts.f.subject' %}</th><th>{% t 'kts.f.despacho' %}</th><th>{% t 'kts.f.due' %}</th><th>{% t 'th.status' %}</th><th></th></tr></thead>
+			{% for r in rows %}<tr><td>{{ r.nu_ref }}</td><td>{{ r.asuntu }}</td><td style="white-space:pre-wrap">{{ r.despacho|truncatechars:120 }}</td>
+			<td class="text-nowrap">{{ r.due_date|date:"d/m/Y"|default:"-" }}{% if r.overdue %} <span class="badge badge-danger">{% t 'kts.overdue' %}</span>{% endif %}</td>
+			<td><span class="badge badge-{{ r.badge }}">{{ r.status_text }}</span></td>
+			<td><a class="btn btn-sm btn-mdi" href="{% url 'kts-tama-detail' r.pk %}"><i class="fa fa-eye"></i> {% t 'btn.detail' %}</a></td></tr>
+			{% empty %}<tr><td colspan="6" class="text-center text-muted">{% t 'kts.none_mine' %}</td></tr>{% endfor %}
+		</table></div>
+	</div>
+</div>
+{% if done %}<div class="card shadow-lg pt-1 qr-border rounded"><div class="card-header"><i class="fa fa-check"></i> {% t 'kts.st.done' %}</div>
+	<div class="card-body"><div class="table-responsive"><table class="table table-sm table-striped">
+		{% for r in done %}<tr><td>{{ r.nu_ref }}</td><td>{{ r.asuntu }}</td><td class="text-nowrap">{{ r.done_at|date:"d/m/Y" }}</td><td><a href="{% url 'kts-tama-detail' r.pk %}"><i class="fa fa-eye"></i></a></td></tr>{% endfor %}
+	</table></div></div></div>{% endif %}
+</div>
+{% endblock %}

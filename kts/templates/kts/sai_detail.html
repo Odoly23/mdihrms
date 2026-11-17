@@ -1,0 +1,24 @@
+{% extends "main/layout.html" %}
+{% load qr_i18n %}
+{% block content %}
+<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="{% url 'kts-dash' %}">{% t 'kts.title' %}</a></li>
+	<li class="breadcrumb-item"><a href="{% url 'kts-sai' %}">{% t 'kts.out' %}</a></li>
+	<li class="breadcrumb-item active">{{ s.nu_ref }}</li></ul></div></div>
+<div class="container-fluid"><br/>
+<div class="row"><div class="col-12 col-lg-7"><div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-envelope-open"></i> {{ s.nu_ref }}</div>
+	<div class="card-body"><table class="table table-sm table-borderless mb-0">
+		<tr><th>{% t 'kts.f.date_out' %}</th><td>{{ s.data_kartasai|date:"d/m/Y" }}</td></tr>
+		<tr><th>{% t 'kts.f.from' %}</th><td>{{ s.de }}</td></tr>
+		<tr><th>{% t 'kts.f.to' %}</th><td>{{ s.para }}</td></tr>
+		<tr><th>{% t 'kts.f.subject' %}</th><td>{{ s.asuntu }}</td></tr>
+		<tr><th>{% t 'kts.f.institute' %}</th><td>{{ s.institutus|default:"-" }}</td></tr>
+		<tr><th>{% t 'th.note' %}</th><td>{{ s.obs|default:"-" }}</td></tr>
+		<tr><th>PDF</th><td>{% if s.file_pdf %}<a href="{% url 'kts-sai-file' s.pk %}" target="_blank" rel="noopener"><i class="fa fa-file-pdf-o"></i> {% t 'kts.file' %}</a>{% else %}-{% endif %}</td></tr>
+		<tr><th>{% t 'kts.registered_by' %}</th><td>{{ s.user.username|default:"-" }} · {{ s.datetime|date:"d/m/Y H:i" }}</td></tr>
+	</table>
+	{% if can_out %}<hr/><a class="btn btn-sm btn-mdi" href="{% url 'kts-sai-edit' s.pk %}"><i class="fa fa-pencil"></i> {% t 'btn.edit' %}</a>{% endif %}</div>
+</div></div></div>
+</div>
+{% endblock %}

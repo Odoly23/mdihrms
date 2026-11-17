@@ -6,7 +6,7 @@ import datetime
 from attendance.models import AttendanceStatus, Month, Year
 from leave.models import LeaveType
 
-GROUPS = ['admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee']
+GROUPS = ['admin', 'staff', 'president', 'hr', 'logistik', 'resepsionis', 'funsionario', 'employee']
 STATUS = [('F', 'Falta'), ('P', 'Presensa'), ('L', 'Lisensa')]
 
 

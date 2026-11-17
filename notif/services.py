@@ -54,11 +54,19 @@ def today():
 	return svc.to_local(timezone.now()).date()
 
 
-def pending_health(exclude_employee_id=None):
+def pending_health(user, exclude_employee_id=None):
 	from health.services import pending_count
-	return pending_count(exclude_employee_id)
+	return pending_count(user, exclude_employee_id)
 
 
 def broken_assets():
 	from assets.models import Asset
 	return Asset.objects.filter(is_active=True, status='broken').count()
+
+
+def kts_tasks(user):
+	"""Jumlah surat masuk yang menunggu tindakan pengguna (verifikasi, disposisi, penanganan, perbaikan)."""
+	from kts import services as ks
+	from main import roles
+	c = ks.counts_for(user, roles.linked_employee(user), roles)
+	return sum(c.values())

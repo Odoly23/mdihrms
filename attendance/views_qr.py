@@ -485,6 +485,38 @@ def report(request):
 		months=_months(lang), today=_local_today(), active='report', wd_short=i18n.weekday_short(lang)))
 
 
+@qr_access('VIEWER_GROUPS')
+def late(request):
+	"""Laporan keterlambatan dan pelanggaran per pegawai (terlambat, pulang cepat, lupa scan pulang, alpa)."""
+	lang = _lang(request)
+	year, month = _period(request)
+	div = _division(request)
+	rows, totals = svc.lateness_rows(_org_report(year, month, div))
+	return render(request, 'attendance/qr/late.html', _page(
+		request, 'late.title', rows=rows, totals=totals, year=year, month=month, monthname=i18n.month_name(month, lang), div=div,
+		div_id=str(div.pk) if div else '', divisions=Division.objects.order_by('name'), years=range(year - 3, year + 2),
+		months=_months(lang), active='late', limit=svc.conf('LATE_AFTER'), end=svc.conf('WORK_END')))
+
+
+@qr_access('VIEWER_GROUPS')
+def late_export(request):
+	lang = _lang(request)
+	year, month = _period(request)
+	rows, totals = svc.lateness_rows(_org_report(year, month, _division(request)))
+	t = lambda k: i18n.tr(lang, k)
+
+	def lines():
+		yield ['NRF', t('th.name'), t('th.division'), t('th.late_days'), t('th.late_min'), t('th.avg_late'), t('th.early_days'),
+			   t('th.early_min'), t('csv.noout'), t('th.absent'), t('csv.flag')]
+		for r in rows:
+			e = r['employee']
+			yield [_safe_cell(e['nrf']), _safe_cell(e['name']), _safe_cell(e['division']), r['late'], r['late_min'], r['avg'], r['early'],
+				   r['early_min'], r['no_out'], r['absent'], r['flagged']]
+	resp = StreamingHttpResponse(_stream_csv(lines()), content_type='text/csv; charset=utf-8')
+	resp['Content-Disposition'] = 'attachment; filename="terlambat_%d_%02d.csv"' % (year, month)
+	return resp
+
+
 def _safe_cell(v):
 	"""Cegah injeksi rumus Excel: teks yang diawali = + - @ dianggap rumus saat file dibuka."""
 	return "'" + v if isinstance(v, str) and v[:1] in ('=', '+', '-', '@', '\t', '\r') else v

@@ -24,6 +24,8 @@ Tambahkan superuser ke grup `admin` lewat `/admin/`. Rahasia hanya di `.env` (di
 Titik masuk Passenger: `passenger_wsgi.py`. Panduan lengkap absensi QR (kiosk, kartu, jaringan Starlink,
 cPanel): [`attendance/QR_INSTALL.md`](attendance/QR_INSTALL.md).
 
+PythonAnywhere: [`deploy/pythonanywhere/PANDUAN.md`](deploy/pythonanywhere/PANDUAN.md) (skrip `setup.sh` + berkas WSGI siap tempel).
+
 ## Tes
 ```bash
 DEBUG=True python manage.py test        # tes: absensi QR + proyek

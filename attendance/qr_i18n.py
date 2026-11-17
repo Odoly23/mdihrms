@@ -453,6 +453,8 @@ from attendance.qr_i18n_hr import KTS as _KTS  # noqa: E402  (surat masuk/keluar
 MESSAGES.update(_KTS)
 from attendance.qr_i18n_hr import BOARD as _BOARD  # noqa: E402  (dasbor hari ini)
 MESSAGES.update(_BOARD)
+from attendance.qr_i18n_hr import CARD as _CARD  # noqa: E402  (label kartu)
+MESSAGES.update(_CARD)
 
 
 def tr(lang, key, **params):

@@ -20,18 +20,26 @@
 	<div class="cs-wrap">
 	{% for c in items %}
 		<div class="mdi-card front">
-			<div class="band"><img src="{% static 'attendance/qr/mdi-logo.jpg' %}" alt=""><div><b>MATA DALAN INSTITUTE</b><small>{% t4 'card.kind' %}</small></div></div>
+			<div class="wm"></div>
+			<div class="hdr"><img src="{% static 'attendance/qr/mdi-logo.jpg' %}" alt=""><div class="ttl"><b>MATA DALAN INSTITUTE</b><small>{% t4 'card.kind' %}</small><em>TIMOR-LESTE</em></div><span class="sp"></span></div>
+			<div class="rule"></div>
 			{% if c.photo %}<img class="photo" src="{{ c.photo }}" alt="">{% else %}<div class="photo"></div>{% endif %}
 			<div class="info">
-				<div class="nm">{{ c.name }}</div>
-				<div class="ps">{{ c.position|default:"-" }}</div>
-				<div class="un">{{ c.division }}</div>
-				<div class="no"><span>{% t4 'card.no' %}</span> {{ c.number }}</div>
-				{% if c.expiry %}<div class="no"><span>{% t4 'card.valid' %}</span> {{ c.expiry|date:"d/m/Y" }}</div>{% endif %}
+				<div class="f nm"><span>{% t4 'card.name' %}</span><b>{{ c.name }}</b></div>
+				<div class="f"><span>{% t4 'card.pos' %}</span><b>{{ c.position|default:"-" }}</b></div>
+				<div class="two">
+					<div class="f"><span>{% t4 'card.div' %}</span><b>{{ c.division|default:"-" }}</b></div>
+					<div class="f"><span>{% t4 'card.no' %}</span><b>{{ c.number }}</b></div>
+				</div>
+				{% if c.expiry %}<div class="f"><span>{% t4 'card.valid' %}</span><b>{{ c.expiry|date:"d/m/Y" }}</b></div>{% endif %}
 			</div>
+			<div class="own">{% t4 'card.own' %}</div>
 			<div class="stripe"><span>M D I</span><span>{{ c.name|truncatechars:26 }}</span></div>
 		</div>
 		<div class="mdi-card back">
+			<div class="wm"></div>
+			<div class="hdr"><img src="{% static 'attendance/qr/mdi-logo.jpg' %}" alt=""><div class="ttl"><b>MATA DALAN INSTITUTE</b><small>{% t4 'card.att' %}</small></div><span class="sp"></span></div>
+			<div class="rule"></div>
 			<div class="txt"><b>{% t4 'card.att' %}</b>
 				{% for n in notes %}<span data-l="{{ n.code }}"{% if n.hidden %} hidden{% endif %}>{{ n.note }}{% if n.contact %}<span class="ct">{{ n.contact }}</span>{% endif %}</span>{% endfor %}
 			</div>

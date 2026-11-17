@@ -156,6 +156,8 @@ MESSAGES = {
 		'Jika layar tidak merespons, klik di mana saja lalu scan ulang.', 'Se o ecrã não responder, clique em qualquer lado e leia novamente.'),
 	'k.cam_on': ('Uza kámera', 'Use camera', 'Pakai kamera', 'Usar câmara'),
 	'k.cam_off': ('Taka kámera', 'Turn camera off', 'Matikan kamera', 'Desligar câmara'),
+	'k.scan_ready': ('Scanner QR prontu', 'QR scanner ready', 'Pemindai QR siap', 'Leitor QR pronto'),
+	'k.scan_cam': ('Kámera ativu: hatudu kartaun iha kuadru', 'Camera on: show the card inside the frame', 'Kamera aktif: tunjukkan kartu di dalam bingkai', 'Câmara ativa: mostre o cartão dentro da moldura'),
 	'k.idle': ('Prontu atu scan kartaun', 'Ready to scan a card', 'Siap memindai kartu', 'Pronto para ler o cartão'),
 	'k.srv_ok': ('Servidór konekta', 'Server connected', 'Server terhubung', 'Servidor ligado'),
 	'k.srv_down': ('Servidór la konekta', 'Server disconnected', 'Server terputus', 'Servidor desligado'),

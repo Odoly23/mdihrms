@@ -160,3 +160,4 @@ MDI_KTS_REQUIRE_PDF = env_bool('KTS_REQUIRE_PDF', True)
 ATTENDANCE_QR_SECRET = env('ATTENDANCE_QR_SECRET')
 ATTENDANCE_NETWORK_MODE = env('ATTENDANCE_NETWORK_MODE', 'device')
 ATTENDANCE_LANG_IN_NAVBAR = True
+ATTENDANCE_ALLOW_CAMERA = env_bool('ALLOW_CAMERA', True)   # kamera di kiosk sebagai pemindai tambahan (alat USB tetap jalan)

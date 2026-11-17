@@ -216,33 +216,48 @@
 	setInterval(check, 30000);
 	document.addEventListener('visibilitychange', function () { if (!document.hidden) { tick(); check(); } });
 
-	/* ---------- kamera: hanya jika server mengizinkan (ATTENDANCE_ALLOW_CAMERA) dan browser mendukung ---------- */
+	/* ---------- kamera: pemindai tambahan di bingkai halaman; hanya jika server mengizinkan (ATTENDANCE_ALLOW_CAMERA).
+	   Memakai BarcodeDetector bila ada, jika tidak jsQR (Firefox/Safari). Alat pembaca USB tetap jalan bersamaan. ---------- */
 	var camBtn = document.getElementById('btn-cam'), video = document.getElementById('cam');
-	if (body.dataset.camera === '1' && window.BarcodeDetector && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-		camBtn.style.display = '';
-		var stream = null, timer = null, last = '', lastAt = 0, detector = new BarcodeDetector({ formats: ['qr_code'] });
-		camBtn.addEventListener('click', function (ev) {
-			ev.stopPropagation();
-			if (stream) {
-				clearInterval(timer); stream.getTracks().forEach(function (tr) { tr.stop(); });
-				stream = null; video.style.display = 'none'; camBtn.dataset.i18n = 'k.cam_on'; camBtn.textContent = t('k.cam_on'); return;
-			}
-			navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (s) {
-				stream = s; video.srcObject = s; video.play(); video.style.display = 'block';
-				camBtn.dataset.i18n = 'k.cam_off'; camBtn.textContent = t('k.cam_off');
-				timer = setInterval(function () {
-					if (video.readyState < 2) return;
-					detector.detect(video).then(function (codes) {
-						if (!codes.length) return;
-						var v = codes[0].rawValue, now = Date.now();
-						if (v === last && now - lastAt < 4000) return;
-						last = v; lastAt = now; send(v);
-					}).catch(function () {});
-				}, 350);
-			}).catch(function () {
-				show({ level: 'error', title: t('k.cam_err_title'), message: t('k.cam_err_msg') });
-			});
-		});
+	var frame = document.getElementById('k-frame'), scanState = document.getElementById('scan-state');
+	function setScanState(key, off) { scanState.dataset.i18n = key; scanState.textContent = t(key); scanState.classList.toggle('off', !!off); }
+	if (body.dataset.camera === '1' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+		var detector = null, canvas = null, g = null;
+		if (window.BarcodeDetector) { try { detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detector = null; } }
+		if (!detector && !window.jsQR) { camBtn.style.display = 'none'; }
+		else {
+			camBtn.style.display = '';
+			var stream = null, timer = null, last = '', lastAt = 0;
+			var stop = function () {
+				clearInterval(timer); if (stream) stream.getTracks().forEach(function (tr) { tr.stop(); });
+				stream = null; frame.classList.remove('live'); camBtn.dataset.i18n = 'k.cam_on'; camBtn.textContent = t('k.cam_on'); setScanState('k.scan_ready');
+			};
+			var found = function (v) {
+				var now = Date.now();
+				if (v === last && now - lastAt < 4000) return;
+				last = v; lastAt = now; send(v);
+			};
+			var read = function () {
+				if (video.readyState < 2 || busy) return;
+				if (detector) { detector.detect(video).then(function (c) { if (c.length) found(c[0].rawValue); }).catch(function () {}); return; }
+				var w = video.videoWidth, h = video.videoHeight; if (!w) return;
+				var k = Math.min(1, 480 / w); canvas = canvas || document.createElement('canvas');
+				canvas.width = Math.round(w * k); canvas.height = Math.round(h * k);
+				g = g || canvas.getContext('2d', { willReadFrequently: true });
+				g.drawImage(video, 0, 0, canvas.width, canvas.height);
+				var im = g.getImageData(0, 0, canvas.width, canvas.height), r = window.jsQR(im.data, im.width, im.height, { inversionAttempts: 'dontInvert' });
+				if (r && r.data) found(r.data);
+			};
+			var start = function (quiet) {
+				navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (s) {
+					stream = s; video.srcObject = s; video.play(); frame.classList.add('live');
+					camBtn.dataset.i18n = 'k.cam_off'; camBtn.textContent = t('k.cam_off'); setScanState('k.scan_cam');
+					timer = setInterval(read, 300);
+				}).catch(function () { if (!quiet) show({ level: 'error', title: t('k.cam_err_title'), message: t('k.cam_err_msg') }); });
+			};
+			camBtn.addEventListener('click', function (ev) { ev.stopPropagation(); if (stream) stop(); else start(false); });
+			start(true);                                                   // nyalakan otomatis; bila izin belum ada, tombol tetap tersedia
+		}
 	}
 
 	applyLang();

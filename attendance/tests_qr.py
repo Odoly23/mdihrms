@@ -327,11 +327,19 @@ class ViewTests(QRBase):
 		self.assertEqual(r['X-Frame-Options'], 'DENY')
 		self.assertEqual(r['Referrer-Policy'], 'same-origin')
 		self.assertNotContains(r, 'type="password"')                       # tidak ada lagi kolom kunci yang diketik
-		self.assertContains(r, 'data-camera=""')                          # kamera mati secara bawaan
+		self.assertContains(r, 'id="k-scan"')                             # panel pemindai QR selalu ada di halaman
+		self.assertContains(r, 'jsqr.min.js')                            # kamera menyala bawaan: pemindai cadangan untuk semua browser
 
 	@override_settings(ATTENDANCE_ALLOW_CAMERA=True)
 	def test_camera_only_when_allowed(self):
 		self.assertContains(self.client.get(reverse('qr-kiosk')), 'data-camera="1"')
+
+	@override_settings(ATTENDANCE_ALLOW_CAMERA=False)
+	def test_camera_can_be_turned_off(self):
+		r = self.client.get(reverse('qr-kiosk'))
+		self.assertContains(r, 'data-camera=""')
+		self.assertContains(r, 'id="k-scan"')                             # panel tetap ada untuk alat USB
+		self.assertNotContains(r, 'jsqr.min.js')
 
 	def test_scan_requires_paired_pc_by_default(self):
 		r = self.api(self.payload)

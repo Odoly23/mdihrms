@@ -411,9 +411,9 @@ def card_print(request):
 		QRCard.objects.bulk_create(missing)
 		cards_by_emp.update({q.employee_id: q for q in missing})
 	items = [_card_context(e, cards_by_emp[e.pk]) for e in emps if cards_by_emp[e.pk].is_active]
-	cur = _lang(request)
+	cur = 'tet'            # teks pada kartu selalu Tetun lebih dulu; bahasa lain bisa dipilih lewat bendera di halaman cetak
 	resp = render(request, 'attendance/qr/card_print.html', {
-		'items': items, 'ids': [i['id'] for i in items], 'lang': cur, 'title': _tr(request, 'cp.title'),
+		'items': items, 'ids': [i['id'] for i in items], 'lang': _lang(request), 'card_lang': cur, 'title': _tr(request, 'cp.title'),
 		'notes': [{'code': c, 'hidden': c != cur, 'note': i18n.note_for(c), 'contact': i18n.contact_for(c)} for c in i18n.LANGS],
 	})
 	resp['Cache-Control'] = 'no-store'      # halaman berisi QR pribadi: jangan disimpan di cache peramban/proxy

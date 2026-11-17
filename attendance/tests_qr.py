@@ -859,7 +859,8 @@ class I18nTests(QRBase):
 		for code in ('tet', 'en', 'id', 'pt'):
 			self.assertIn('data-l="%s"' % code, html)
 			self.assertIn('data-lang="%s"' % code, html)       # bendera di toolbar
-		self.assertIn('<span data-l="en">EMPLOYEE CARD</span>', html)
+		self.assertIn('<span data-l="en" hidden>EMPLOYEE CARD</span>', html)      # kartu selalu mulai dalam Tetun, apa pun bahasa antarmuka
+		self.assertIn('<span data-l="tet">KARTAUN FUNSIONÁRIU</span>', html)
 		self.assertIn('<span data-l="pt" hidden>CARTÃO DE FUNCIONÁRIO</span>', html)
 		self.assertIn('KARTAUN FUNSIONÁRIU', html)
 		self.assertIn('Scan saat masuk &amp; pulang', html)

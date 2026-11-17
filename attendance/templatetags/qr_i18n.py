@@ -46,7 +46,7 @@ def t(context, key, **params):
 @register.simple_tag(takes_context=True)
 def t4(context, key, **params):
 	"""Keempat bahasa sekaligus (span data-l), untuk teks yang bahasanya diganti langsung di browser."""
-	cur = _lang(context)
+	cur = context.get('card_lang') or _lang(context)
 	rows = [(code, '' if code == cur else ' hidden', i18n.tr(code, key, **params)) for code in i18n.LANGS]
 	return format_html_join('', '<span data-l="{}"{}>{}</span>', rows)
 

@@ -57,13 +57,14 @@
 	</form>
 	<script>
 		/* ganti bahasa kartu langsung (hanya teks pada kartu), lalu cetak sesuai bahasa yang tampil */
-		function cardLang(l) {
+		function cardLang(l, quiet) {
 			document.documentElement.lang = l;
 			document.querySelectorAll('[data-l]').forEach(function (s) { s.hidden = s.dataset.l !== l; });
 			document.querySelectorAll('.qr-flag').forEach(function (b) { b.classList.toggle('on', b.dataset.lang === l); });
-			document.cookie = 'mdi_lang=' + l + '; path=/; max-age=31536000; SameSite=Lax';
+			if (!quiet) document.cookie = 'mdi_lang=' + l + '; path=/; max-age=31536000; SameSite=Lax';
 		}
 		document.querySelectorAll('.qr-flag').forEach(function (b) { b.addEventListener('click', function () { cardLang(b.dataset.lang); }); });
+		cardLang('{{ card_lang }}', true);                                 // kartu dimulai dalam Tetun tanpa mengubah bahasa antarmuka
 		document.querySelectorAll('input[name=side]').forEach(function (r) {
 			r.addEventListener('change', function () { document.body.className = 'cardsheet' + (r.value === 'both' ? '' : ' only-' + r.value); });
 		});

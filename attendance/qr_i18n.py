@@ -451,6 +451,8 @@ from attendance.qr_i18n_hr import HEALTH as _HEALTH  # noqa: E402  (health care)
 MESSAGES.update(_HEALTH)
 from attendance.qr_i18n_hr import KTS as _KTS  # noqa: E402  (surat masuk/keluar)
 MESSAGES.update(_KTS)
+from attendance.qr_i18n_hr import BOARD as _BOARD  # noqa: E402  (dasbor hari ini)
+MESSAGES.update(_BOARD)
 
 
 def tr(lang, key, **params):

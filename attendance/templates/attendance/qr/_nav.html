@@ -1,5 +1,6 @@
 {% load qr_i18n %}
 <div class="qr-toolbar">
+	{% if can_board %}<a class="btn btn-sm btn-mdi{% if active == 'board' %} active{% endif %}" href="{% url 'qr-board' %}"><i class="fa fa-pie-chart"></i> {% t 'nav.board' %}</a>{% endif %}
 	{% if can_view %}<a class="btn btn-sm btn-mdi{% if active == 'dash' %} active{% endif %}" href="{% url 'qr-dash' %}"><i class="fa fa-bar-chart"></i> {% t 'nav.dash' %}</a>{% endif %}
 	{% if can_view %}<a class="btn btn-sm btn-mdi{% if active == 'today' %} active{% endif %}" href="{% url 'qr-today' %}">{% t 'nav.today' %}</a>{% endif %}
 	{% if can_view %}<a class="btn btn-sm btn-mdi{% if active == 'report' %} active{% endif %}" href="{% url 'qr-report' %}">{% t 'nav.report' %}</a>{% endif %}

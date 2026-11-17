@@ -73,6 +73,11 @@ Menu **KARTA**: dasbor dengan tombol **KARTA TAMA** (surat masuk) dan **KARTA SA
 surat tidak bisa dihapus, dan PDF hanya bisa dibuka lewat tautan yang memeriksa hak akses. `KTS_REQUIRE_PDF=False` di `.env` melonggarkan syarat PDF sebelum persetujuan.
 Surat keluar didaftarkan admin/resepsionis tanpa alur persetujuan. Lonceng navbar menghitung surat yang menunggu tindakan Anda.
 
+## Dasbor absensi hari ini
+Menu absensi **Dasbor hari ini** (hanya `admin` dan `president`): dua grafik di kiri (perbandingan hari ini dan per divisi) dan kartu `col-md-4` di kanan berisi daftar nama:
+hadir tepat waktu (jam scan), terlambat (menit), izin, cuti, dan belum hadir. Halaman memuat ulang tiap menit. Jenis lisensa dihitung **cuti** bila kodenya ada di
+`ATTENDANCE_CUTI_CODES` (bawaan `AL`, `CT`, `ANUAL`) atau namanya memuat cuti/anual/annual/férias; jenis lain dihitung **izin**. Daftar grup: `ATTENDANCE_BOARD_GROUPS`.
+
 ## Laporan keterlambatan
 Menu absensi **Late**: per bulan, hari terlambat, total/rata-rata menit terlambat dan pulang lebih awal per pegawai (urut terlambat terbanyak), ekspor CSV.
 

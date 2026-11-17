@@ -234,3 +234,21 @@ KTS = {
 						'Nomor surat keluar ini sudah dipakai tahun ini.', 'Este número de saída já foi usado este ano.'),
 	'notif.kts': ('Karta ba ita', 'Letters for you', 'Surat untuk Anda', 'Cartas para si'),
 }
+
+
+BOARD = {
+	'nav.board': ('Dasbór ohin', 'Today board', 'Dasbor hari ini', 'Painel de hoje'),
+	'board.title': ('Dasbór absensia ohin', 'Attendance board today', 'Dasbor absensi hari ini', 'Painel de assiduidade de hoje'),
+	'board.chart_today': ('Komparasaun ohin', 'Today at a glance', 'Perbandingan hari ini', 'Comparação de hoje'),
+	'board.chart_div': ('Ohin tuir diresaun', 'Today by division', 'Hari ini per divisi', 'Hoje por divisão'),
+	'board.who': ('Se mak tama, tardi, lisensa', 'Who is in, late, on permission or leave', 'Siapa masuk, terlambat, izin, cuti', 'Quem entrou, está atrasado, com licença ou férias'),
+	'board.as_of': ('Atualiza dadus iha {time} · tardi depois {late}', 'Updated {time} · late after {late}', 'Diperbarui {time} · terlambat setelah {late}', 'Atualizado às {time} · atraso após {late}'),
+	'board.none': ('Laiha.', 'None.', 'Tidak ada.', 'Nenhum.'),
+	'board.late_min': ('tardi {n} min', '{n} min late', 'terlambat {n} mnt', '{n} min de atraso'),
+	'board.until': ('to\'o {date}', 'until {date}', 'sampai {date}', 'até {date}'),
+	'board.auto': ('Pájina atualiza an kada minutu ida.', 'The page refreshes itself every minute.', 'Halaman diperbarui otomatis tiap menit.', 'A página atualiza-se a cada minuto.'),
+	'board.off': ('Ohin la ho loron servisu: {why}', 'Not a working day today: {why}', 'Hari ini bukan hari kerja: {why}', 'Hoje não é dia útil: {why}'),
+	'legend.izin': ('Lisensa (izin)', 'Permission', 'Izin', 'Dispensa'),
+	'legend.cuti': ('Ferias / cuti', 'Annual leave', 'Cuti', 'Férias'),
+	'legend.waiting': ('Seidauk tama', 'Not in yet', 'Belum hadir', 'Ainda não chegou'),
+}

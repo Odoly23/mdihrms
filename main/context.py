@@ -38,6 +38,7 @@ def nav(request):
 		perms['kts_handler'] = _is_kts_handler(user)
 		perms.update({
 			'qr_view': svc.in_groups(user, svc.conf('VIEWER_GROUPS')),
+			'qr_board': svc.in_groups(user, svc.conf('BOARD_GROUPS')),
 			'qr_manage': svc.in_groups(user, svc.conf('MANAGER_GROUPS')),
 			'qr_device': svc.in_groups(user, svc.conf('DEVICE_GROUPS')),
 			'admin_site': user.is_staff,

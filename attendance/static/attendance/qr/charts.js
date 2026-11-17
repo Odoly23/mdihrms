@@ -4,7 +4,8 @@
 	var root = document.querySelector('.qr-charts');
 	if (!root) return;
 	var blocks = root.querySelectorAll('.qr-chart');
-	var COLORS = { present: '#1f9d55', late: '#d98e04', leave: '#2563eb', absent: '#8b1a1a' };
+	var COLORS = { present: '#1f9d55', late: '#d98e04', leave: '#2563eb', absent: '#8b1a1a',
+		ontime: '#1f9d55', izin: '#7c3aed', cuti: '#2563eb', waiting: '#8b8b8b' };
 
 	function message(el, text) {
 		var p = document.createElement('p');

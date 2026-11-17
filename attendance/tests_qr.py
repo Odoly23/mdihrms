@@ -2403,3 +2403,78 @@ class LatenessReportTests(QRBase):
 		self.login('admin')
 		text = b''.join(self.client.get(reverse('qr-late-export'), {'year': 2026, 'month': 11}).streaming_content).decode('utf-8')
 		self.assertIn("'=HYPERLINK", text)
+
+
+class BoardTests(QRBase):
+	"""Dasbor hari ini untuk direktur dan administrasi: tepat waktu, terlambat, izin, cuti, belum hadir."""
+
+	def login(self, group):
+		u = User.objects.get_or_create(username='board_' + group)[0]
+		u.groups.add(Group.objects.get_or_create(name=group)[0])
+		self.client.force_login(u)
+		self.client.cookies['mdi_lang'] = 'id'
+
+	def setUp(self):
+		super().setUp()
+		self.people = {n: self.make_employee(n, 'T') for n in ('Late', 'Izin', 'Cuti', 'Wait')}
+		self.cards = {n: svc.make_payload(QRCard.objects.create(employee=e)) for n, e in self.people.items()}
+		lt_izin = LeaveType.objects.create(code='SK', name='Sakit')
+		lt_cuti = LeaveType.objects.create(code='AL', name='Cuti Tahunan')
+		for n, lt in (('Izin', lt_izin), ('Cuti', lt_cuti)):
+			Leaves.objects.create(employee=self.people[n], leave_type=lt, start_date=MON, end_date=MON, is_active=True, is_confirm=True)
+		self.scan(MON, 7, 50)                                         # Maria tepat waktu
+		svc.process_scan(self.cards['Late'], now=at(MON, 8, 45))      # terlambat 30 menit
+		self.now = at(MON, 12)
+
+	def get(self, name='qr-board'):
+		with mock.patch.object(timezone, 'now', lambda: self.now):
+			return self.client.get(reverse(name))
+
+	def test_only_director_and_admin(self):
+		for g, code in (('admin', 200), ('president', 200), ('staff', 403), ('hr', 403), ('employee', 403)):
+			self.login(g)
+			self.assertEqual(self.get().status_code, code, g)
+			self.assertEqual(self.get('qr-api-board').status_code, code, g)
+		self.client.logout()
+		self.assertEqual(self.get().status_code, 302)
+
+	def test_groups_are_classified(self):
+		with mock.patch.object(timezone, 'now', lambda: self.now):
+			b = svc.board(MON)
+		names = {k: sorted(c['name'] for c in v) for k, v in b['groups'].items()}
+		self.assertEqual(names['late'], ['Late T'])
+		self.assertEqual(names['izin'], ['Izin T'])
+		self.assertEqual(names['cuti'], ['Cuti T'])
+		self.assertEqual(names['waiting'], ['Wait T'])
+		self.assertEqual(len(names['ontime']), 1)
+		self.assertEqual(b['groups']['late'][0]['late_min'], 30)
+		self.assertEqual(b['total'], 5)
+
+	def test_page_and_api(self):
+		self.login('president')
+		r = self.get()
+		for text in ('Late T', 'Izin T', 'Cuti T', 'Wait T', 'col-md-8', 'col-md-4', 'terlambat 30 mnt'):
+			self.assertContains(r, text)
+		self.assertEqual(r.content.decode().count('data-part='), 2)    # tepat dua grafik
+		j = self.get('qr-api-board').json()
+		self.assertEqual(j['today']['obj'], [1, 1, 1, 1, 1])
+		self.assertEqual(set(j), {'today', 'divisions'})
+
+	def test_weekend_is_not_a_working_day(self):
+		self.login('admin')
+		self.now = at(datetime.date(2026, 11, 14), 12)                # Sabtu
+		r = self.get()
+		self.assertContains(r, 'bukan hari kerja')
+		self.assertEqual(svc.board(datetime.date(2026, 11, 14))['total'], 0)
+
+	def test_cuti_vs_izin_rule(self):
+		self.assertTrue(svc.is_cuti(LeaveType(code='AL', name='x')))
+		self.assertTrue(svc.is_cuti(LeaveType(code='ZZ', name='Férias anuais')))
+		self.assertFalse(svc.is_cuti(LeaveType(code='SK', name='Sakit')))
+		self.assertFalse(svc.is_cuti(None))
+
+	def test_nav_link_only_for_allowed(self):
+		self.login('admin')
+		self.assertContains(self.client.get(reverse('home')), reverse('qr-board'))
+		self.login('staff')
+		self.assertNotContains(self.client.get(reverse('home')), reverse('qr-board'))

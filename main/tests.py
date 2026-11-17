@@ -1033,7 +1033,7 @@ class NoTetunLeftoverTests(HrBase):
 			'qr-kiosk', 'leave-mine', 'leave-new', 'leave-all', 'placement-list', 'staff-list', 'employee-add', 'notif-birthdays',
 			'attendance-custom-dash', 'attendance-custom-holiday-list', 'attendance-custom-tolerance-list', 'attendance-custom-status-add',
 			'attendance-custom-holiday-add', 'attendance-custom-tolerance-add', 'asset-list', 'asset-add', 'asset-mine', 'asset-survey',
-			'health-mine', 'health-new', 'health-all', 'kts-dash', 'kts-tama', 'kts-tama-mine', 'kts-sai', 'kts-sai-add']
+			'health-mine', 'health-new', 'health-all', 'qr-board', 'kts-dash', 'kts-tama', 'kts-tama-mine', 'kts-sai', 'kts-sai-add']
 		return [reverse(n) for n in names] + [reverse('placement-history', args=[e.pk]), reverse('placement-new', args=[e.pk]),
 			reverse('staff-detail', args=[e.pk]), reverse('employee-edit', args=[e.pk]), reverse('employee-address', args=[e.pk])]
 

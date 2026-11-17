@@ -61,6 +61,8 @@ _DEFAULTS = {
 	'CLIENT_IP_HEADER': None,      # mis. 'HTTP_CF_CONNECTING_IP' (Cloudflare) atau 'HTTP_X_REAL_IP'; hanya bila front-end tepercaya
 	'MANAGER_GROUPS': ['admin'],
 	'VIEWER_GROUPS': ['admin', 'staff', 'president', 'hr'],
+	'BOARD_GROUPS': ['admin', 'president'],           # dasbor hari ini: siapa hadir, terlambat, izin, cuti
+	'CUTI_CODES': ['AL', 'CT', 'ANUAL'],             # kode jenis lisensa yang dihitung 'cuti'; lainnya dihitung 'izin' (nama berisi cuti/anual/annual/férias juga cuti)
 	'DEVICE_GROUPS': ['admin'],
 	'SELF_GROUPS': ['admin', 'staff', 'president', 'hr', 'funsionario', 'employee'],
 }
@@ -775,3 +777,71 @@ def overview(rep):
 		daily['absent'].append(sum(1 for c in cs if c['code'] == 'F'))
 	late_top = sorted((r for r in rows if r['totals']['late']), key=lambda r: (-r['totals']['late'], r['employee']['name']))[:10]
 	return {'totals': tot, 'divisions': division_rows, 'daily': daily, 'late_top': late_top}
+
+
+# ---------------------------------------------------------------- dasbor hari ini (direktur dan administrasi)
+
+_CUTI_WORDS = ('cuti', 'anual', 'annual', 'f\u00e9rias', 'ferias')
+
+
+def is_cuti(leave_type):
+	"""True bila jenis lisensa tergolong cuti (tahunan); semua jenis lain tergolong izin."""
+	if leave_type is None:
+		return False
+	if (leave_type.code or '').upper() in [c.upper() for c in conf('CUTI_CODES')]:
+		return True
+	name = (leave_type.name or '').lower()
+	return any(w in name for w in _CUTI_WORDS)
+
+
+def board(d, division_id=None):
+	"""Kondisi pegawai aktif pada tanggal `d`: tepat waktu, terlambat (menit), izin, cuti, dan belum hadir.
+	Hari libur/akhir pekan: semua daftar kosong dan `off` terisi."""
+	from leave.models import Leaves
+	off = day_off_reason(d)
+	groups = {'ontime': [], 'late': [], 'izin': [], 'cuti': [], 'waiting': []}
+	active = Employee.objects.filter(status_id=conf('ACTIVE_STATUS_ID')).order_by('first_name', 'last_name')
+	people = {e.pk: e for e in active}
+	info = {}
+
+	def card(pk):
+		if pk not in info:
+			info[pk] = employee_info(people[pk], photo=False)
+		return dict(info[pk])
+	if not off:
+		limit = conf_time('LATE_AFTER')
+		seen = set()
+		for a in (Attendance.objects.filter(date=d, scantime__isnull=False, employee__in=active)
+				  .select_related('scantime').order_by('scantime__check_in')):
+			if a.employee_id in seen or a.employee_id not in people:
+				continue
+			seen.add(a.employee_id)
+			c = card(a.employee_id)
+			t = to_local(a.scantime.check_in).time()
+			c['time'] = hhmm(a.scantime.check_in)
+			if a.scantime.is_late:
+				c['late_min'] = _minutes_after(t, limit)
+				groups['late'].append(c)
+			else:
+				groups['ontime'].append(c)
+		for l in (Leaves.objects.filter(is_active=True, is_confirm=True, start_date__lte=d, end_date__gte=d, employee__in=active)
+				  .select_related('leave_type')):
+			if l.employee_id in seen or l.employee_id not in people:
+				continue
+			seen.add(l.employee_id)
+			c = card(l.employee_id)
+			c['kind'] = (l.leave_type.name if l.leave_type else '') or ''
+			c['until'] = l.end_date.isoformat()
+			groups['cuti' if is_cuti(l.leave_type) else 'izin'].append(c)
+		for pk in people:
+			if pk not in seen:
+				groups['waiting'].append(card(pk))
+	if division_id:
+		for k in groups:
+			groups[k] = [c for c in groups[k] if c['division_id'] == division_id]
+	by_div = {}
+	for k, rows in groups.items():
+		for c in rows:
+			by_div.setdefault(c['division'] or '-', dict.fromkeys(groups, 0))[k] += 1
+	return {'off': off, 'groups': groups, 'counts': {k: len(v) for k, v in groups.items()},
+			'total': sum(len(v) for v in groups.values()), 'divisions': dict(sorted(by_div.items()))}

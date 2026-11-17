@@ -83,7 +83,7 @@ def _page(request, title_key, **extra):
 	u = request.user
 	title = _tr(request, title_key)
 	ctx = {'group': _group(request), 'title': title, 'legend': title, 'lang': _lang(request),
-		   'can_manage': svc.in_groups(u, svc.conf('MANAGER_GROUPS')), 'can_view': svc.in_groups(u, svc.conf('VIEWER_GROUPS')),
+		   'can_manage': svc.in_groups(u, svc.conf('MANAGER_GROUPS')), 'can_view': svc.in_groups(u, svc.conf('VIEWER_GROUPS')), 'can_board': svc.in_groups(u, svc.conf('BOARD_GROUPS')),
 		   'can_device': svc.in_groups(u, svc.conf('DEVICE_GROUPS')),
 		   'security_open': svc.security_is_open(), 'navbar_lang': bool(getattr(settings, 'ATTENDANCE_LANG_IN_NAVBAR', False))}
 	ctx.update(extra)
@@ -708,4 +708,42 @@ def api_me(request):
 		'year': {'label': i18n.month_short(lang), 'series': _series(lang, ontime, col('late'), col('leave'), col('absent'))},
 		'status': {'label': [i18n.tr(lang, 'legend.' + k) for k in keys], 'keys': keys,
 				   'obj': [cur['present'] - cur['late'], cur['late'], cur['leave'], cur['absent']]},
+	})
+
+
+# ============================================================ dasbor hari ini (direktur dan administrasi)
+
+_BOARD_KEYS = ('ontime', 'late', 'izin', 'cuti', 'waiting')
+_BOARD_LEGEND = {'ontime': 'legend.present', 'late': 'legend.late', 'izin': 'legend.izin', 'cuti': 'legend.cuti', 'waiting': 'legend.waiting'}
+
+
+def _board_data(d, division):
+	return svc.cached(('board', d.isoformat(), division.pk if division else None), lambda: svc.board(d, division.pk if division else None))
+
+
+@qr_access('BOARD_GROUPS')
+def board(request):
+	lang = _lang(request)
+	d = _local_today()
+	div = _division(request)
+	data = _board_data(d, div)
+	off = data['off']
+	sections = [{'key': k, 'title': i18n.tr(lang, _BOARD_LEGEND[k]), 'rows': data['groups'][k], 'count': data['counts'][k]} for k in _BOARD_KEYS]
+	return render(request, 'attendance/qr/board.html', _page(
+		request, 'board.title', date_text=i18n.fmt_date(d, lang), sections=sections, counts=data['counts'], total=data['total'],
+		off_text=i18n.reason_text(off[0], off[1], lang) if off else '', div=div, div_id=str(div.pk) if div else '',
+		divisions=Division.objects.order_by('name'), active='board', now=svc.hhmm(timezone.now()),
+		limit=svc.conf('LATE_AFTER'), api_url=reverse('qr-api-board') + ('?div=%d' % div.pk if div else '')))
+
+
+@_api('BOARD_GROUPS')
+def api_board(request):
+	lang = _lang(request)
+	data = _board_data(_local_today(), _division(request))
+	c = data['counts']
+	divs = data['divisions']
+	name = lambda k: i18n.tr(lang, _BOARD_LEGEND[k])
+	return JsonResponse({
+		'today': {'label': [name(k) for k in _BOARD_KEYS], 'obj': [c[k] for k in _BOARD_KEYS], 'keys': list(_BOARD_KEYS)},
+		'divisions': {'label': list(divs), 'series': [{'key': k, 'name': name(k), 'data': [divs[x][k] for x in divs]} for k in _BOARD_KEYS]},
 	})

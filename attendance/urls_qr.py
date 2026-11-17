@@ -28,6 +28,8 @@ urlpatterns = [
 
 	path('report/', v.report, name="qr-report"),
 	path('report/export/', v.report_export, name="qr-report-export"),
+	path('board/', v.board, name="qr-board"),
+	path('api/board/', v.api_board, name="qr-api-board"),
 	path('late/', v.late, name="qr-late"),
 	path('late/export/', v.late_export, name="qr-late-export"),
 	path('me/', v.my_attendance, name="qr-me"),

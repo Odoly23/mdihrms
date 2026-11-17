@@ -1,0 +1,64 @@
+{% extends 'attendance/qr/base.html' %}
+{% load static qr_i18n %}
+{% block qr_body %}
+<h3 align="center" class="qr-h">{% t 'board.title' %}</h3>
+<p class="text-center text-muted mb-2">{{ date_text }} · {% t 'board.as_of' time=now late=limit %}</p>
+<form method="get" class="form-inline justify-content-center mb-3">
+	<select name="div" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+		<option value="">{% t 'rep.all' %}</option>
+		{% for d in divisions %}<option value="{{ d.pk }}"{% if d.pk|stringformat:"s" == div_id %} selected{% endif %}>{{ d.name }}</option>{% endfor %}
+	</select>
+	<noscript><button class="btn btn-sm btn-mdi">OK</button></noscript>
+</form>
+{% if off_text %}<div class="alert alert-info text-center">{% t 'board.off' why=off_text %}</div>{% endif %}
+<div class="qr-tiles mb-3">
+	<div class="qr-tile ok"><b>{{ counts.ontime }}</b><span>{% t 'legend.present' %}</span></div>
+	<div class="qr-tile warn"><b>{{ counts.late }}</b><span>{% t 'legend.late' %}</span></div>
+	<div class="qr-tile leave"><b>{{ counts.izin }}</b><span>{% t 'legend.izin' %}</span></div>
+	<div class="qr-tile leave"><b>{{ counts.cuti }}</b><span>{% t 'legend.cuti' %}</span></div>
+	<div class="qr-tile bad"><b>{{ counts.waiting }}</b><span>{% t 'legend.waiting' %}</span></div>
+</div>
+<div class="row">
+	<div class="col-md-8">
+		<div class="qr-charts" data-url="{{ api_url }}" data-na="{% t 'dash.chart_na' %}" data-empty="{% t 'grid.empty' %}" data-empty-late="{% t 'dash.no_late' %}">
+			{% t 'board.chart_today' as t1 %}{% include 'attendance/qr/_chart.html' with title=t1 part='today' kind='pie' %}
+			{% t 'board.chart_div' as t2 %}{% include 'attendance/qr/_chart.html' with title=t2 part='divisions' kind='stack' %}
+		</div>
+	</div>
+	<div class="col-md-4">
+		<div class="card mb-3 shadow-sm">
+			<div class="card-header"><i class="fa fa-users"></i> {% t 'board.who' %}</div>
+			<div class="card-body p-2 qr-board-list">
+				{% for sec in sections %}
+				<h6 class="mt-2 mb-1">
+					{% if sec.key == 'ontime' %}<span class="badge badge-success rounded-pill px-3"><i class="fa fa-check"></i> {{ sec.count }}</span>
+					{% elif sec.key == 'late' %}<span class="badge badge-warning rounded-pill px-3"><i class="fa fa-clock-o"></i> {{ sec.count }}</span>
+					{% elif sec.key == 'izin' %}<span class="badge badge-info rounded-pill px-3"><i class="fa fa-file-text-o"></i> {{ sec.count }}</span>
+					{% elif sec.key == 'cuti' %}<span class="badge badge-primary rounded-pill px-3"><i class="fa fa-plane"></i> {{ sec.count }}</span>
+					{% else %}<span class="badge badge-secondary rounded-pill px-3"><i class="fa fa-hourglass-half"></i> {{ sec.count }}</span>{% endif %}
+					{{ sec.title }}
+				</h6>
+				<ul class="list-unstyled small mb-2">
+					{% for r in sec.rows %}
+					<li class="d-flex justify-content-between border-bottom py-1">
+						<span>{{ r.name }}<br/><span class="text-muted">{{ r.division|default:"-" }}{% if r.kind %} · {{ r.kind }}{% endif %}</span></span>
+						<span class="text-right text-nowrap">
+							{% if r.time %}<b>{{ r.time }}</b>{% endif %}
+							{% if sec.key == 'late' %}<br/><span class="text-warning">{% t 'board.late_min' n=r.late_min %}</span>{% endif %}
+							{% if r.until %}<span class="text-muted">{{ r.until }}</span>{% endif %}
+						</span>
+					</li>
+					{% empty %}<li class="text-muted">{% t 'board.none' %}</li>{% endfor %}
+				</ul>
+				{% endfor %}
+			</div>
+		</div>
+		<p class="small text-muted text-center">{% t 'board.auto' %}</p>
+	</div>
+</div>
+{% endblock %}
+{% block qr_scripts %}
+<script defer src="{% static 'main/js_custom/highcharts.js' %}"></script>
+<script defer src="{% qr_static 'attendance/qr/charts.js' %}"></script>
+<script defer src="{% qr_static 'attendance/qr/board.js' %}"></script>
+{% endblock %}

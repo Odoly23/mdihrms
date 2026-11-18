@@ -12,10 +12,10 @@
 		{% if can_edit %}<a class="btn btn-sm btn-mdi" href="{% url 'placement-new' emp.pk %}"><i class="fa fa-exchange"></i> {% t 'place.new_btn' %}</a><hr/>{% endif %}
 		<div class="table-responsive">
 		<table class="table table-sm table-striped">
-			<thead><tr><th>{% t 'th.position' %}</th><th>{% t 'th.division' %}</th><th>{% t 'th.dept' %}</th><th>{% t 'th.start' %}</th><th>{% t 'th.end' %}</th><th>{% t 'th.status' %}</th></tr></thead>
+			<thead><tr><th>{% t 'th.position' %}</th><th>{% t 'th.division' %}</th><th>{% t 'th.start' %}</th><th>{% t 'th.end' %}</th><th>{% t 'th.status' %}</th></tr></thead>
 			<tbody>
 			{% for k in rows %}
-				<tr><td>{{ k.position|default:"-" }}</td><td>{{ k.division|default:"-" }}</td><td>{{ k.department|default:"-" }}</td>
+				<tr><td>{{ k.position|default:"-" }}</td><td>{{ k.division|default:"-" }}</td>
 				<td>{{ k.start_date|date:"d/m/Y" }}</td><td>{{ k.end_date|date:"d/m/Y"|default:"-" }}</td>
 				<td>{% if k.is_active %}<span class="badge badge-success">{% t 'place.active' %}</span>{% else %}<span class="badge badge-secondary">{% t 'place.ended' %}</span>{% endif %}</td></tr>
 			{% empty %}<tr><td colspan="6" class="text-center text-muted">{% t 'place.none' %}</td></tr>{% endfor %}

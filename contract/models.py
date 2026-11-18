@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import User
-from custom.models import Gabinete, Institute, DG, Division, Department, Position, Section,\
+from custom.models import Gabinete, Institute, Division, Position,\
 	ContractType, Category, Grade, Echelon, Status
 from employee.models import Employee
 from settings_app.upload_utils import upload_initial_contract, upload_contract, upload_koloka
@@ -10,10 +10,7 @@ class InitialContract(models.Model):
 	pmis_id = models.CharField(max_length=20, null=True, blank=True, verbose_name="Nu. PMIS")
 	employee = models.OneToOneField(Employee, on_delete=models.CASCADE, related_name="initialcontract", verbose_name="Pessoal")
 	institute = models.ForeignKey(Institute, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Instituisaun")
-	dg = models.ForeignKey(DG, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Diresaun Geral")
 	division = models.ForeignKey(Division, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Diresaun")
-	department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Departamento")
-	section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Seksaun")
 	contract_type = models.ForeignKey(ContractType, on_delete=models.CASCADE, null=True, blank=False, related_name="initialcontract", verbose_name="Tipu Kontratu")
 	category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, related_name="initialcontract", verbose_name="Kategoria")
 	grade = models.ForeignKey(Grade, on_delete=models.CASCADE, null=True, blank=True, related_name="initialcontract", verbose_name="Grau")
@@ -49,10 +46,7 @@ class Contract(models.Model):
 			validators=[FileExtensionValidator(allowed_extensions=['pdf'])], verbose_name="Anexu Despacho")
 	disp_number = models.CharField(max_length=50, null=True, blank=True, verbose_name="Numeru Despacho")
 
-	dg = models.ForeignKey(DG, on_delete=models.CASCADE, null=True, blank=True, related_name="contract", verbose_name="Diresaun Geral")
 	division = models.ForeignKey(Division, on_delete=models.CASCADE, null=True, blank=True, related_name="contract", verbose_name="Diresaun")
-	department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True, blank=True, related_name="contract", verbose_name="Departamento")
-	section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True, related_name="contract", verbose_name="Seksaun")
 	gabinete = models.ForeignKey(Gabinete, on_delete=models.CASCADE, null=True, blank=True, related_name="contract", verbose_name="Gabinete")
 	position = models.ForeignKey(Position, on_delete=models.CASCADE, null=True, blank=True, related_name="contract", verbose_name="Pojisaun")
 
@@ -109,10 +103,7 @@ class EmployeeSalary(models.Model):
 class Kolokasaun(models.Model):
 	employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="kolokasaun")
 	position = models.ForeignKey(Position, on_delete=models.CASCADE, null=True, related_name="kolokasaun")
-	section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True, related_name="kolokasaun", verbose_name="Seksaun")
-	department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True, blank=True, related_name="kolokasaun", verbose_name="Departamento")
 	division = models.ForeignKey(Division, on_delete=models.CASCADE, null=True, blank=True, related_name="kolokasaun", verbose_name="Diresaun")
-	dg = models.ForeignKey(DG, on_delete=models.CASCADE, null=True, blank=True, related_name="kolokasaun", verbose_name="Diresaun Geral")
 	start_date = models.DateField(null=True, blank=True, verbose_name="Data Hahu")
 	end_date = models.DateField(null=True, blank=True, verbose_name="Data Remata")
 	end_reason = models.CharField(max_length=200, null=True, blank=True, verbose_name="Rajaun")

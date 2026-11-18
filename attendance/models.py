@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator
-from custom.models import DG, Division
+from custom.models import Division
 from employee.models import Employee
 from settings_app.upload_utils import upload_attendace, upload_leave
 
@@ -16,7 +16,6 @@ class AttendanceStatus(models.Model):
 		return template.format(self)
 
 class Attendance(models.Model):
-	dg = models.ForeignKey(DG, null=True, on_delete=models.CASCADE, related_name='attendance', verbose_name="Diresaun Geral")
 	div = models.ForeignKey(Division, null=True, on_delete=models.CASCADE, related_name='attendance', verbose_name="Diresaun")
 	employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance', verbose_name="Pessoal")
 	status_am = models.ForeignKey(AttendanceStatus, null=True, on_delete=models.CASCADE, related_name='attendance_am', verbose_name="Dader")
@@ -32,7 +31,6 @@ class Attendance(models.Model):
 		return template.format(self)
 
 class AttendanceDiv(models.Model):
-	dg = models.ForeignKey(DG, null=True, on_delete=models.CASCADE, related_name='attendancediv', verbose_name="Diresaun")
 	div = models.ForeignKey(Division, null=True, on_delete=models.CASCADE, related_name='attendancediv', verbose_name="Diresaun")
 	year = models.IntegerField(null=True)
 	month = models.IntegerField(null=True)

@@ -13,10 +13,7 @@
 		<table class="table table-sm table-borderless mb-0">
 			<tr><th>{% t 'th.nrf' %}</th><td>{{ emp.idfnumber.nrf|default:"-" }}</td></tr>
 			<tr><th>{% t 'th.position' %}</th><td>{{ emp.employeeposition.position|default:"-" }}</td></tr>
-			<tr><th>{% t 'f.dg' %}</th><td>{{ emp.employeedivision.dg|default:"-" }}</td></tr>
 			<tr><th>{% t 'f.division' %}</th><td>{{ emp.employeedivision.division|default:"-" }}</td></tr>
-			<tr><th>{% t 'f.department' %}</th><td>{{ emp.employeedivision.department|default:"-" }}</td></tr>
-			<tr><th>{% t 'f.section' %}</th><td>{{ emp.employeedivision.section|default:"-" }}</td></tr>
 			<tr><th>{% t 'f.phone' %}</th><td>{{ emp.contactinfo.phone|default:"-" }}</td></tr>
 			<tr><th>{% t 'f.email' %}</th><td>{{ emp.contactinfo.email|default:"-" }}</td></tr>
 			<tr><th>{% t 'f.dob' %}</th><td>{{ emp.date_of_birth|date:"d/m/Y"|default:"-" }}</td></tr>

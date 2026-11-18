@@ -358,21 +358,14 @@ def cached(parts, fn):
 
 def division_q(div):
 	"""Filter pegawai per divisi: sama dengan yang dipakai view absensi yang sudah ada."""
-	return (Q(employeedivision__division=div) | Q(employeedivision__department__division=div) |
-			Q(employeedivision__section__department__division=div))
+	return Q(employeedivision__division=div)
 
 
 def employee_division(emp):
 	ed = getattr(emp, 'employeedivision', None)
 	if not ed:
 		return None
-	if ed.division_id:
-		return ed.division
-	if ed.department_id:
-		return ed.department.division
-	if ed.section_id:
-		return ed.section.department.division
-	return None
+	return ed.division if ed.division_id else None
 
 
 def employee_info(emp, photo=True):
@@ -552,7 +545,7 @@ def _first_scan(emp, div, present, device, now, local, today, lang):
 		try:
 			with transaction.atomic():
 				att = Attendance.objects.create(
-					id=newid, dg_id=div.dg_id if div else None, div=div, employee=emp,
+					id=newid, div=div, employee=emp,
 					status_am=None if after_noon else present, status_pm=present if after_noon else None,
 					date=today, desc='Scan QR', datetime=now, hashed=hashed)
 			break
@@ -629,9 +622,7 @@ def month_report(year, month, division=None, employee=None, hol=None):
 			off[d] = ('W' if reason[0] == 'weekend' else 'H', reason)
 
 	emps = (Employee.objects.filter(status_id=conf('ACTIVE_STATUS_ID'))
-			.select_related('employeeposition__position', 'employeedivision__division',
-							'employeedivision__department__division', 'employeedivision__section__department__division',
-							'idfnumber'))
+			.select_related('employeeposition__position', 'employeedivision__division', 'idfnumber'))
 	if employee is not None:
 		emps = emps.filter(pk=employee.pk)
 	elif division is not None:

@@ -14,20 +14,7 @@ class Minister(models.Model):
 		self.hashed = hashlib.md5(str(self.id).encode()).hexdigest()
 		return super(Minister, self).save(*args, **kwargs)
 
-class DG(models.Model):
-	code = models.CharField(max_length=10, null=True, blank=True)
-	name = models.CharField(max_length=100, verbose_name="Naran")
-	hashed = models.CharField(max_length=32, null=True, blank=True)
-
-	def __str__(self):
-		template = '{0.name}'
-		return template.format(self)
-	def save(self, *args, **kwargs):
-		self.hashed = hashlib.md5(str(self.id).encode()).hexdigest()
-		return super(DG, self).save(*args, **kwargs)
-
 class Division(models.Model):
-	dg = models.ForeignKey(DG, on_delete=models.CASCADE, null=True, blank=True)
 	code = models.CharField(max_length=10, null=True, blank=True)
 	name = models.CharField(max_length=100, verbose_name="Naran")
 	hashed = models.CharField(max_length=32, null=True, blank=True)
@@ -37,29 +24,6 @@ class Division(models.Model):
 	def save(self, *args, **kwargs):
 		self.hashed = hashlib.md5(str(self.id).encode()).hexdigest()
 		return super(Division, self).save(*args, **kwargs)
-
-class Department(models.Model):
-	division = models.ForeignKey(Division, on_delete=models.CASCADE, null=True)
-	code = models.CharField(max_length=10, null=True, blank=True)
-	name = models.CharField(max_length=100, verbose_name="Naran")
-	hashed = models.CharField(max_length=32, null=True, blank=True)
-	def __str__(self):
-		template = '{0.name}'
-		return template.format(self)
-	def save(self, *args, **kwargs):
-		self.hashed = hashlib.md5(str(self.id).encode()).hexdigest()
-		return super(Department, self).save(*args, **kwargs)
-
-class Section(models.Model):
-	department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True)
-	name = models.CharField(max_length=100, verbose_name="Naran")
-	hashed = models.CharField(max_length=32, null=True, blank=True)
-	def __str__(self):
-		template = '{0.name}'
-		return template.format(self)
-	def save(self, *args, **kwargs):
-		self.hashed = hashlib.md5(str(self.id).encode()).hexdigest()
-		return super(Section, self).save(*args, **kwargs)
 
 class Gabinete(models.Model):
 	code = models.CharField(max_length=10, null=True, blank=True)

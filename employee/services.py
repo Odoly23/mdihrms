@@ -6,7 +6,9 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from attendance.models_qr import QRCard
+from main import middleware
 from main.groups import group_for_position
+from main.models import MustChangePassword
 
 from .models import (ContactInfo, Employee, EmployeeDivision, EmployeePosition, EmployeeUser, IDFNumber, LocationTL,
 	Photo)
@@ -40,7 +42,7 @@ def save_employee(form, by_user, create_account=False):
 		IDFNumber.objects.update_or_create(employee=e, defaults={'nrf': d['nrf'] or None, 'datetime': now, 'user': by_user})
 	EmployeePosition.objects.update_or_create(employee=e, defaults={'position': d['position']})
 	EmployeeDivision.objects.update_or_create(employee=e, defaults={
-		'dg': d['dg'], 'division': d['division'], 'department': d['department'], 'section': d['section']})
+		'division': d['division']})
 	if d['phone'] or d['email'] or ContactInfo.objects.filter(employee=e).exists():
 		ContactInfo.objects.update_or_create(employee=e, defaults={
 			'phone': d['phone'] or None, 'email': d['email'] or None, 'datetime': now, 'user': by_user})
@@ -57,6 +59,8 @@ def save_employee(form, by_user, create_account=False):
 			u = User.objects.create_user(_unique_username(d['nrf'] or 'emp%d' % e.pk), password=password)
 			u.groups.add(Group.objects.get_or_create(name=group_for_position(getattr(d['position'], 'name', '')))[0])   # grup menurut jabatan; admin sistem diberikan manual
 			EmployeeUser.objects.create(employee=e, user=u)
+			MustChangePassword.objects.update_or_create(user=u, defaults={'by': by_user})     # kata sandi acak hanya untuk masuk pertama kali
+			middleware.set_flag(u.pk, True)
 			account = (u.username, password)
 	return e, account
 

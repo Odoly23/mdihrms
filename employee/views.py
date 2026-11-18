@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from attendance import qr_service as svc
 from contract.models import Kolokasaun
-from custom.models import DG, Division
+from custom.models import Division
 from leave.models import Leaves
 from leave.views import _rows as leave_rows
 from main import groups, roles, ui
@@ -20,16 +20,14 @@ ACTIVE_STATUS = 1
 
 @roles.role_required('DIRECTORY_GROUPS')
 def staff_list(request):
-	"""Daftar funsionariu aktif: cari nama, saring per diresaun geral / diresaun."""
+	"""Daftar funsionariu aktif: cari nama, saring per program (diresaun) dan grup."""
 	qs = (Employee.objects.filter(status_id=ACTIVE_STATUS)
-		.select_related('employeedivision__dg', 'employeedivision__division', 'employeeposition__position', 'idfnumber')
+		.select_related('employeedivision__division', 'employeeposition__position', 'idfnumber')
 		.order_by('first_name', 'last_name', 'id'))
 	q = request.GET.get('q', '').strip()[:50]
 	if q:
 		qs = qs.filter(Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(idfnumber__nrf__icontains=q))
-	dg, div = request.GET.get('dg', ''), request.GET.get('div', '')
-	if dg.isdigit():
-		qs = qs.filter(employeedivision__dg_id=int(dg))
+	div = request.GET.get('div', '')
 	if div.isdigit():
 		qs = qs.filter(employeedivision__division_id=int(div))
 	grp = request.GET.get('grp', '')
@@ -47,15 +45,14 @@ def staff_list(request):
 		e.account_id = accounts.get(e.pk)
 		e.can_reset = bool(e.account_id) and e.account_id != request.user.pk      # akunnya sendiri: pakai Ganti kata sandi
 	return render(request, 'employee/staff_list.html', {
-		'title': ui.tr(request, 'staff.title'), 'page': page, 'q': q, 'dg': dg, 'div': div, 'grp': grp, 'group_choices': groups.GROUPS,
-		'dgs': DG.objects.order_by('name'), 'divisions': Division.objects.order_by('name')})
+		'title': ui.tr(request, 'staff.title'), 'page': page, 'q': q, 'div': div, 'grp': grp, 'group_choices': groups.GROUPS,
+		'divisions': Division.objects.order_by('name')})
 
 
 @roles.role_required('DIRECTORY_GROUPS')
 def staff_detail(request, emp_id):
 	emp = get_object_or_404(
-		Employee.objects.select_related('employeedivision__dg', 'employeedivision__division',
-			'employeedivision__department', 'employeedivision__section', 'employeeposition__position',
+		Employee.objects.select_related('employeedivision__division', 'employeeposition__position',
 			'idfnumber', 'contactinfo'), pk=emp_id)
 	today = svc.to_local(timezone.now()).date()
 	rep = svc.month_report(today.year, today.month, employee=emp)
@@ -77,17 +74,13 @@ def staff_detail(request, emp_id):
 from django.contrib import messages  # noqa: E402
 from django.shortcuts import redirect  # noqa: E402
 
-from custom.models import Department, Section  # noqa: E402
-
 from .forms import AddressForm, EmployeeForm  # noqa: E402
 from .models import LocationTL  # noqa: E402
 from .services import save_address, save_employee  # noqa: E402
 
 
 def _hier():
-	return {'divisions': list(Division.objects.values('id', 'dg_id')),
-		'departments': list(Department.objects.values('id', 'division_id')),
-		'sections': list(Section.objects.values('id', 'department_id'))}
+	return {}
 
 
 @roles.role_required('EMPLOYEE_EDIT_GROUPS')

@@ -50,7 +50,7 @@ import datetime  # noqa: E402
 from django.core.cache import cache  # noqa: E402
 from django.utils import timezone  # noqa: E402
 
-from custom.models import DG, Department, Division, Position, Section, Status  # noqa: E402
+from custom.models import Division, Position, Status  # noqa: E402
 from contract.models import Kolokasaun  # noqa: E402
 from employee.models import Employee, EmployeeDivision, EmployeePosition, EmployeeUser  # noqa: E402
 from leave.models import Leaves, LeaveType  # noqa: E402
@@ -61,17 +61,15 @@ class HrBase(TestCase):
 		cache.clear()
 		call_command('mdi_setup', verbosity=0)
 		Status.objects.create(id=1, name='Ativu')
-		self.dg = DG.objects.create(code='DG1', name='DG Satu')
-		self.div = Division.objects.create(dg=self.dg, code='D1', name='Divisi Satu')
-		self.div2 = Division.objects.create(dg=self.dg, code='D2', name='Divisi Dua')
-		self.dep = Department.objects.create(division=self.div, code='P1', name='Dep Satu')
+		self.div = Division.objects.create(code='D1', name='Divisi Satu')
+		self.div2 = Division.objects.create(code='D2', name='Divisi Dua')
 		self.pos1 = Position.objects.create(name='Staf')
 		self.pos2 = Position.objects.create(name='Xefe')
 		self.lt = LeaveType.objects.create(code='AL', name='Cuti')
 
 	def emp(self, first, last='X', dob=None):
 		e = Employee.objects.create(first_name=first, last_name=last, status_id=1, hashed='h' + first, date_of_birth=dob)
-		EmployeeDivision.objects.create(employee=e, dg=self.dg, division=self.div)
+		EmployeeDivision.objects.create(employee=e, division=self.div)
 		EmployeePosition.objects.create(employee=e, position=self.pos1)
 		return e
 
@@ -211,7 +209,7 @@ class LeaveFlowTests(HrBase):
 
 class PlacementTests(HrBase):
 	def post(self, e, **kw):
-		d = {'position': self.pos2.pk, 'dg': self.dg.pk, 'division': self.div2.pk, 'start_date': timezone.localdate()}
+		d = {'position': self.pos2.pk, 'division': self.div2.pk, 'start_date': timezone.localdate()}
 		d.update(kw)
 		return self.client.post(reverse('placement-new', args=[e.pk]), d)
 
@@ -235,14 +233,13 @@ class PlacementTests(HrBase):
 		self.assertEqual(old.end_date, d0 + datetime.timedelta(days=9))
 		self.assertTrue(new.is_active)
 
-	def test_rejects_start_before_last_and_mismatched_hierarchy(self):
+	def test_rejects_start_before_last_and_unknown_division(self):
 		e = self.emp('Maria')
 		self.login('admin')
 		d0 = timezone.localdate()
 		self.post(e, start_date=d0)
 		self.post(e, start_date=d0 - datetime.timedelta(days=5))                    # sebelum penempatan terakhir
-		other_dg = DG.objects.create(code='X', name='Lain')
-		self.post(e, dg=other_dg.pk, start_date=d0 + datetime.timedelta(days=1))   # diresaun bukan milik dg
+		self.post(e, division=99999, start_date=d0 + datetime.timedelta(days=1))   # program tidak ada
 		self.assertEqual(Kolokasaun.objects.count(), 1)
 
 	def test_staff_and_hr_only_view(self):
@@ -377,7 +374,7 @@ class NavbarRoleTests(HrBase):
 class EmployeeCrudTests(HrBase):
 	def data(self, **kw):
 		d = {'first_name': 'Maria', 'last_name': 'Silva', 'date_of_birth': '1990-05-17', 'sex': 'Feto', 'status': 1,
-			'nrf': 'NRF-001', 'position': self.pos1.pk, 'dg': self.dg.pk, 'division': self.div.pk,
+			'nrf': 'NRF-001', 'position': self.pos1.pk, 'division': self.div.pk,
 			'phone': '+670 7712 3456', 'email': 'maria@contoh.org', 'create_account': 'on'}
 		d.update(kw)
 		return d
@@ -421,7 +418,7 @@ class EmployeeCrudTests(HrBase):
 			self.data(nrf='N3', phone='abc'),
 			self.data(nrf='N4', email='bukan-email'),
 			self.data(nrf='N5', first_name=''),
-			self.data(nrf='N6', division=self.div2.pk, dg=DG.objects.create(code='X', name='Lain').pk)]
+			self.data(nrf='N6', division=99999)]                                 # program tidak ada
 		for b in bad:
 			self.assertEqual(self.client.post(reverse('employee-add'), b).status_code, 200, b)
 		self.assertEqual(Employee.objects.count(), 1)
@@ -1164,7 +1161,7 @@ class FourGroupTests(HrBase):
 		self.login('admin')
 		pos = Position.objects.create(name='Official Logistik')
 		d = {'first_name': 'Lia', 'last_name': 'Costa', 'date_of_birth': '1990-05-17', 'sex': 'Feto', 'status': 1, 'nrf': 'NRF-9',
-			'position': pos.pk, 'dg': self.dg.pk, 'division': self.div.pk, 'phone': '', 'email': '', 'create_account': 'on'}
+			'position': pos.pk, 'division': self.div.pk, 'phone': '', 'email': '', 'create_account': 'on'}
 		self.client.post(reverse('employee-add'), d)
 		u = EmployeeUser.objects.get(employee__first_name='Lia').user
 		self.assertEqual(list(u.groups.values_list('name', flat=True)), ['administrasaun'])
@@ -1315,3 +1312,40 @@ class AdminResetPasswordTests(HrBase):
 		self.assertEqual(LogEntry.objects.filter(object_id=str(self.tu.pk), change_message='password reset to default').count(), 1)
 		h = self.client.get(reverse('staff-list')).content.decode()
 		self.assertNotIn('container-fluid', h[h.index('role="main"'):])
+
+
+class SimplifiedOrganisationTests(HrBase):
+	def test_only_division_remains_as_the_single_unit(self):
+		from django.apps import apps
+		for gone in ('DG', 'Department', 'Section'):
+			with self.assertRaises(LookupError):
+				apps.get_model('custom', gone)
+		self.assertFalse(any(f.name in ('dg', 'department', 'section') for f in apps.get_model('employee', 'EmployeeDivision')._meta.get_fields()))
+
+	def test_setup_seeds_the_two_programs_once(self):
+		from custom.models import Division
+		call_command('mdi_setup', verbosity=0)
+		call_command('mdi_setup', verbosity=0)
+		names = set(Division.objects.values_list('name', flat=True))
+		self.assertTrue({'Program Nasional', 'ISIS - Programs ASEAN Think Tank'} <= names)
+		self.assertEqual(Division.objects.filter(name='Program Nasional').count(), 1)
+
+	def test_new_employee_form_has_program_but_no_dg_department_section(self):
+		self.login('admin')
+		h = self.client.get(reverse('employee-add')).content.decode()
+		self.assertIn('name="division"', h)
+		for gone in ('name="dg"', 'name="department"', 'name="section"', 'hierarchy.js'):
+			self.assertNotIn(gone, h)
+
+	def test_new_account_must_change_password_at_first_login(self):
+		from django.test import Client
+		self.login('admin')
+		d = {'first_name': 'Baru', 'last_name': 'Sekali', 'date_of_birth': '1990-05-17', 'sex': 'Feto', 'status': 1, 'nrf': 'NRF-77',
+			'position': self.pos1.pk, 'division': self.div.pk, 'phone': '', 'email': '', 'create_account': 'on'}
+		r = self.client.post(reverse('employee-add'), d, follow=True)
+		pw = [m for m in r.context['messages']] if r.context else []
+		u = EmployeeUser.objects.get(employee__first_name='Baru').user
+		self.assertTrue(u.must_change.__class__.objects.filter(user=u).exists())
+		c = Client()
+		c.force_login(u)
+		self.assertRedirects(c.get(reverse('home')), reverse('password-change'), fetch_redirect_response=False)

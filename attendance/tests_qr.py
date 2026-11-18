@@ -13,7 +13,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
 
-from custom.models import DG, Division
+from custom.models import Division
 from employee.models import Employee, EmployeeCard, EmployeeDivision, EmployeePosition, IDFNumber
 from custom.models import Position, Status
 from leave.models import LeaveType, Leaves
@@ -47,8 +47,7 @@ class QRBase(TestCase):
 		AttendanceStatus.objects.create(code='F', name='Falta')
 		AttendanceStatus.objects.create(code='L', name='Lisensa')
 		Status.objects.create(id=1, name='Ativu')
-		dg = DG.objects.create(code='DG1', name='DG Satu')
-		self.div = Division.objects.create(dg=dg, code='D1', name='Divisi Satu')
+		self.div = Division.objects.create(code='D1', name='Divisi Satu')
 		self.emp = self.make_employee('Maria', 'Silva')
 		self.card = QRCard.objects.create(employee=self.emp)
 		self.payload = svc.make_payload(self.card)
@@ -89,7 +88,7 @@ class ScanFlowTests(QRBase):
 		res = self.scan(MON, 8, 10)
 		self.assertEqual((res['ok'], res['code'], res['level']), (True, 'in', 'success'))
 		a = Attendance.objects.get()
-		self.assertEqual((a.status_am, a.status_pm, a.date, a.div, a.dg), (self.P, None, MON, self.div, self.div.dg))
+		self.assertEqual((a.status_am, a.status_pm, a.date, a.div), (self.P, None, MON, self.div))
 		self.assertEqual(len(a.hashed), 32)
 		self.assertFalse(a.scantime.is_late)
 		self.assertEqual(res['employee']['name'], 'Maria Silva')
@@ -569,7 +568,7 @@ class ViewTests(QRBase):
 		self.assertTrue(r.streaming)
 		text = b''.join(r.streaming_content).decode('utf-8-sig')
 		lines = text.strip().splitlines()
-		self.assertTrue(lines[0].startswith('NRF,Nama,Jabatan,Divisi,1,2,3'))
+		self.assertTrue(lines[0].startswith('NRF,Nama,Jabatan,Program,1,2,3'))
 		self.assertIn('Maria Silva', lines[1])
 		self.assertIn('P (T)', lines[1])               # 9 Nov, terlambat
 		r = self.client.get(reverse('qr-report-export'), {'year': 2026, 'month': 11, 'fmt': 'xlsx'})
@@ -877,7 +876,7 @@ class I18nTests(QRBase):
 		self.login_admin()
 		self.client.cookies['mdi_lang'] = 'en'
 		text = b''.join(self.client.get(reverse('qr-report-export'), {'year': 2026, 'month': 11}).streaming_content).decode('utf-8-sig')
-		self.assertTrue(text.startswith('NRF,Name,Position,Division,1,2'))
+		self.assertTrue(text.startswith('NRF,Name,Position,Program,1,2'))
 		self.assertIn('Work days,Present,Late,Leave,Absent', text)
 
 

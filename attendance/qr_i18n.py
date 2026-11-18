@@ -173,7 +173,7 @@ MESSAGES = {
 
 	# ---------------------------------------------------------------- umum
 	'th.name': ('Naran', 'Name', 'Nama', 'Nome'),
-	'th.division': ('Diresaun', 'Division', 'Divisi', 'Direção'),
+	'th.division': ('Programa', 'Program', 'Program', 'Programa'),
 	'th.position': ('Pojisaun', 'Position', 'Jabatan', 'Cargo'),
 	'th.in': ('Tama', 'In', 'Masuk', 'Entrada'),
 	'th.out': ('Sai', 'Out', 'Pulang', 'Saída'),
@@ -196,8 +196,8 @@ MESSAGES = {
 	'st.active': ('Ativu', 'Active', 'Aktif', 'Ativo'),
 	'st.inactive': ('La ativu', 'Inactive', 'Nonaktif', 'Inativo'),
 	'none': ('La iha.', 'None.', 'Tidak ada.', 'Nenhum.'),
-	'f.division': ('Diresaun', 'Division', 'Divisi', 'Direção'),
-	'f.all_div': ('Diresaun hotu', 'All divisions', 'Semua divisi', 'Todas as direções'),
+	'f.division': ('Programa', 'Program', 'Program', 'Programa'),
+	'f.all_div': ('Programa hotu', 'All programs', 'Semua program', 'Todos os programas'),
 	'f.month': ('Fulan', 'Month', 'Bulan', 'Mês'),
 	'f.year': ('Tinan', 'Year', 'Tahun', 'Ano'),
 	'f.search': ('Buka naran ka NRF', 'Search name or NRF', 'Cari nama atau NRF', 'Pesquisar nome ou NRF'),

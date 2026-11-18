@@ -1,4 +1,4 @@
-"""Impor daftar staf dari CSV (kolom: nama, posisi, diresaun). Aman dijalankan berulang kali: staf yang sudah ada
+"""Impor daftar staf dari CSV (kolom: nama, posisi, diresaun = program/unit). Aman dijalankan berulang kali: staf yang sudah ada
 (dicocokkan dari nama) hanya diperbarui posisinya/diresaun-nya, tidak digandakan.
 
     python manage.py import_staff data/staff_mdi.csv --dry-run     # lihat rencana dulu
@@ -15,7 +15,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from attendance.models_qr import QRCard
-from custom.models import DG, Division, Position, Status
+from custom.models import Division, Position, Status
 from employee.models import Employee, EmployeeDivision, EmployeePosition
 
 ACTIVE_STATUS = 1
@@ -33,7 +33,6 @@ class Command(BaseCommand):
 
 	def add_arguments(self, parser):
 		parser.add_argument('csv_file')
-		parser.add_argument('--dg', default='Mata Dalan Institute (MDI)', help='Nama Diresaun Geral induk semua diresaun di CSV')
 		parser.add_argument('--dry-run', action='store_true', help='Hanya tampilkan rencana, tidak menyimpan apa pun')
 
 	def handle(self, *args, **o):
@@ -42,13 +41,12 @@ class Command(BaseCommand):
 		stats = {'new': 0, 'updated': 0, 'same': 0}
 		with transaction.atomic():
 			status = Status.objects.filter(pk=ACTIVE_STATUS).first() or Status.objects.create(pk=ACTIVE_STATUS, name='Ativu')
-			dg, _ = DG.objects.get_or_create(name=o['dg'])
 			for n, (name, pos_name, div_name) in enumerate(rows, 1):
 				first, last = split_name(name)
 				emp = Employee.objects.filter(first_name__iexact=first, last_name__iexact=last).first() if last else \
 					Employee.objects.filter(first_name__iexact=first).filter(Q(last_name__isnull=True) | Q(last_name='')).first()
 				position, _ = Position.objects.get_or_create(name=pos_name)
-				division, _ = Division.objects.get_or_create(dg=dg, name=div_name)
+				division, _ = Division.objects.get_or_create(name=div_name)
 				if emp is None:
 					emp = Employee.objects.create(first_name=first, last_name=last, status=status,
 						datetime=timezone.now())
@@ -63,7 +61,7 @@ class Command(BaseCommand):
 					stats['same' if same else 'updated'] += 1
 					verb = 'SAMA ' if same else 'UBAH '
 				EmployeePosition.objects.update_or_create(employee=emp, defaults={'position': position})
-				EmployeeDivision.objects.update_or_create(employee=emp, defaults={'dg': dg, 'division': division})
+				EmployeeDivision.objects.update_or_create(employee=emp, defaults={'division': division})
 				QRCard.objects.get_or_create(employee=emp, defaults={'datetime': timezone.now()})
 				self.stdout.write('%2d. %s %s %s — %s (%s)' % (n, verb, first, last, pos_name, div_name))
 			if dry:

@@ -11,10 +11,6 @@
 	<div class="card-body">
 		<form class="form-inline mb-2" method="get">
 			<input name="q" value="{{ q }}" class="form-control form-control-sm mr-2 mb-1" placeholder="{% t 'staff.search_ph' %}" maxlength="50">
-			<select name="dg" class="form-control form-control-sm mr-2 mb-1" aria-label="{% t 'f.dg' %}">
-				<option value="">{% t 'staff.all_dg' %}</option>
-				{% for d in dgs %}<option value="{{ d.pk }}" {% if dg == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
-			</select>
 			<select name="div" class="form-control form-control-sm mr-2 mb-1" aria-label="{% t 'f.division' %}">
 				<option value="">{% t 'staff.all_div' %}</option>
 				{% for d in divisions %}<option value="{{ d.pk }}" {% if div == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
@@ -43,9 +39,9 @@
 		</div>
 		{% if page.has_other_pages %}
 		<nav><ul class="pagination pagination-sm">
-			{% if page.has_previous %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&dg={{ dg }}&div={{ div }}&grp={{ grp }}&page={{ page.previous_page_number }}">&laquo;</a></li>{% endif %}
+			{% if page.has_previous %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&div={{ div }}&grp={{ grp }}&page={{ page.previous_page_number }}">&laquo;</a></li>{% endif %}
 			<li class="page-item disabled"><span class="page-link">{{ page.number }} / {{ page.paginator.num_pages }}</span></li>
-			{% if page.has_next %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&dg={{ dg }}&div={{ div }}&grp={{ grp }}&page={{ page.next_page_number }}">&raquo;</a></li>{% endif %}
+			{% if page.has_next %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&div={{ div }}&grp={{ grp }}&page={{ page.next_page_number }}">&raquo;</a></li>{% endif %}
 		</ul></nav>
 		{% endif %}
 	</div>

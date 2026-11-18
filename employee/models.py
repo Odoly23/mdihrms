@@ -3,8 +3,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator
 from django.db.models import base
-from custom.models import DG, Division, Department, Gabinete, Position, Country, Municipality, AdministrativePost,\
-	Section, Status, Village, EducationLevel, University, Faculty, StudyProgram, Area, Language, ContractType
+from custom.models import Division, Gabinete, Position, Country, Municipality, AdministrativePost,\
+	Status, Village, EducationLevel, University, Faculty, StudyProgram, Area, Language, ContractType
 from settings_app.upload_utils import upload_photo, upload_formal, upload_nonformal, upload_id_card,\
 	upload_depend, upload_estado
 
@@ -301,10 +301,7 @@ class EmployeePosition(models.Model):
 
 class EmployeeDivision(models.Model):
 	employee = models.OneToOneField(Employee, on_delete=models.CASCADE, related_name="employeedivision", verbose_name="Pessoal")
-	dg = models.ForeignKey(DG, on_delete=models.CASCADE, null=True, blank=True, related_name="employeedivision", verbose_name="Diresaun Geral")
 	division = models.ForeignKey(Division, on_delete=models.CASCADE, null=True, blank=True, related_name="employeedivision", verbose_name="Diresaun")
-	department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True, blank=True, related_name="employeedivision", verbose_name="Departamento")
-	section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True, related_name="employeedivision", verbose_name="Seksaun")
 	gabinete = models.ForeignKey(Gabinete, on_delete=models.CASCADE, null=True, blank=True, related_name="employeedivision", verbose_name="Gabinete")
 	def __str__(self):
 		template = '{0.employee}'

@@ -31,6 +31,13 @@ PythonAnywhere: [`deploy/pythonanywhere/PANDUAN.md`](deploy/pythonanywhere/PANDU
 DEBUG=True python manage.py test        # tes: absensi QR + proyek
 ```
 
+## Struktur organisasi (disederhanakan)
+Hanya satu tingkat: **Program** (model `Division`), sesuai daftar staf MDI. `python manage.py mdi_setup` membuat dua program bawaan: *Program Nasional* dan
+*ISIS - Programs ASEAN Think Tank*; program lain bisa ditambah lewat admin Django. Model DG (Diresaun Geral), Department, dan Section **dihapus** (beserta kolomnya di
+absensi, kolokasaun, kontrak, dan data pegawai), sehingga formulir pegawai/kolokasaun hanya punya satu pilihan program dan halaman lebih cepat dimuat.
+Migrasi `migrate` menghapus kolom lama tersebut (datanya hilang; **cadangkan database sebelum migrasi** bila ada data DG/Departemen yang masih dibutuhkan).
+Akun baru yang dibuat dari form pegawai juga **wajib mengganti kata sandi** saat login pertama.
+
 ## Peran (empat grup)
 | Grup | Bisa |
 |---|---|
@@ -104,7 +111,7 @@ Daftar disusun dari kalender sekunder, bukan teks hukum: cocokkan dengan keputus
 python manage.py import_staff data/staff_mdi.csv --dry-run     # simulasi: tidak menyimpan apa pun
 python manage.py import_staff data/staff_mdi.csv               # impor; aman diulang (tidak menggandakan)
 ```
-CSV berkolom `nama,posisi,diresaun` (contoh: `employee/data/staff_example.csv`). Membuat funsionariu aktif, posisi, diresaun, dan
+CSV berkolom `nama,posisi,diresaun` (kolom `diresaun` = program/unit) (contoh: `employee/data/staff_example.csv`). Membuat funsionariu aktif, posisi, diresaun, dan
 kartu QR; tidak membuat akun login, NRF, tanggal lahir, atau kontak. Daftar asli berisi data pribadi: simpan di server,
 jangan di git (pola `employee/data/staff_*.csv` sudah diabaikan).
 
@@ -119,7 +126,7 @@ jangan di git (pola `employee/data/staff_*.csv` sudah diabaikan).
 ## Struktur
 | App | Isi |
 |---|---|
-| `custom` | DG, Division, Department, Position, wilayah, dll. |
+| `custom` | Division (satu-satunya unit organisasi, tampil sebagai **Program**), Position, wilayah, dll. |
 | `employee` | Employee dan data pendukung + daftar staf untuk HR |
 | `attendance` | Attendance, hari libur, **absensi QR** (`*_qr.py`, `templates/attendance/qr`) |
 | `contract` | InitialContract, Contract, gaji, Kolokasaun + alokasi posisi |

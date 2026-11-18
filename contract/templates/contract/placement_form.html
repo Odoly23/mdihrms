@@ -25,6 +25,4 @@
 </div>
 {% endblock %}
 {% block scripts %}
-{{ divisions|json_script:"j-div" }}{{ departments|json_script:"j-dep" }}{{ sections|json_script:"j-sec" }}
-<script src="{% static 'main/js/hierarchy.js' %}"></script>
 {% endblock %}

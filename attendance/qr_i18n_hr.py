@@ -261,7 +261,7 @@ BOARD = {
 CARD = {
 	'card.name': ('Naran', 'Name', 'Nama', 'Nome'),
 	'card.pos': ('Pozisaun', 'Position', 'Jabatan', 'Cargo'),
-	'card.div': ('Divizaun', 'Division', 'Divisi', 'Divisão'),
+	'card.div': ('Programa', 'Program', 'Program', 'Programa'),
 	'card.own': ('Kartaun ne\'e propriedade Mata Dalan Institute.', 'This card is the property of Mata Dalan Institute.',
 				 'Kartu ini milik Mata Dalan Institute.', 'Este cartão é propriedade do Mata Dalan Institute.'),
 }

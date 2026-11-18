@@ -4,7 +4,7 @@ import re
 from django import forms
 from django.core.validators import validate_email
 
-from custom.models import (AdministrativePost, Country, DG, Department, Division, Municipality, Position, Section,
+from custom.models import (AdministrativePost, Country, Division, Municipality, Position,
 	Status, Village)
 
 from main import ui
@@ -37,7 +37,7 @@ def _style(form):
 _EMP_LABELS = {'first_name': 'f.first_name', 'last_name': 'f.last_name', 'place_of_birth': 'f.pob',
 	'date_of_birth': 'f.dob', 'sex': 'f.sex', 'marital': 'f.marital', 'ran': 'f.ran', 'country': 'f.country',
 	'father': 'f.father', 'mother': 'f.mother', 'status': 'f.status', 'nrf': 'f.nrf', 'position': 'f.position',
-	'dg': 'f.dg', 'division': 'f.division', 'department': 'f.department', 'section': 'f.section',
+	'division': 'f.division',
 	'phone': 'f.phone', 'email': 'f.email', 'image': 'f.image', 'create_account': 'f.account'}
 
 
@@ -46,10 +46,7 @@ class EmployeeForm(forms.ModelForm):
 	date_of_birth = forms.DateField(label="Data Moris", widget=DateInput())
 	nrf = forms.CharField(label="Nu. PMIS/NRF", max_length=30, required=False)
 	position = forms.ModelChoiceField(Position.objects.order_by('name'), label="Pojisaun", required=False, empty_label="--")
-	dg = forms.ModelChoiceField(DG.objects.order_by('name'), label="Diresaun Geral", required=False, empty_label="--")
 	division = forms.ModelChoiceField(Division.objects.order_by('name'), label="Diresaun", required=False, empty_label="--")
-	department = forms.ModelChoiceField(Department.objects.order_by('name'), label="Departamento", required=False, empty_label="--")
-	section = forms.ModelChoiceField(Section.objects.order_by('name'), label="Seksaun", required=False, empty_label="--")
 	phone = forms.CharField(label="Nu. Telemovel", max_length=20, required=False)
 	email = forms.CharField(label="Email", max_length=50, required=False)
 	image = forms.ImageField(label="Foto (JPG/PNG, max 2 MB)", required=False)
@@ -66,7 +63,7 @@ class EmployeeForm(forms.ModelForm):
 		ui.set_labels(self, lang, _EMP_LABELS)
 		ui.choice_labels(self.fields['sex'], lang, ['Mane', 'Feto'])
 		ui.choice_labels(self.fields['marital'], lang, ['Solteiro/a', 'Casado/a', 'Divorciado/a', 'Viuvo/a'])
-		for n in ('position', 'dg', 'division', 'department', 'section'):
+		for n in ('position', 'division'):
 			self.fields[n].empty_label = ui.tr(lang, 'form.blank')
 		self.fields['first_name'].required = True
 		self.fields['country'].queryset = Country.objects.order_by('name')
@@ -94,7 +91,7 @@ class EmployeeForm(forms.ModelForm):
 		if pos:
 			self.initial['position'] = pos.position_id
 		if div:
-			self.initial.update(dg=div.dg_id, division=div.division_id, department=div.department_id, section=div.section_id)
+			self.initial['division'] = div.division_id
 		if contact:
 			self.initial.update(phone=contact.phone, email=contact.email)
 
@@ -134,19 +131,7 @@ class EmployeeForm(forms.ModelForm):
 		return f
 
 	def clean(self):
-		d = super().clean()
-		dg, div, dep, sec = d.get('dg'), d.get('division'), d.get('department'), d.get('section')
-		if div and dg and div.dg_id != dg.pk:
-			raise self._err('place.err.div_dg')
-		if dep and div and dep.division_id != div.pk:
-			raise self._err('place.err.dep_div')
-		if sec and dep and sec.department_id != dep.pk:
-			raise self._err('place.err.sec_dep')
-		if (dep or sec) and not div:
-			raise self._err('place.err.need_div')
-		if div and not dg:
-			d['dg'] = div.dg
-		return d
+		return super().clean()
 
 
 class AddressForm(forms.Form):

@@ -28,12 +28,20 @@ class Command(BaseCommand):
 				AttendanceStatus.objects.create(code=code, name=name)
 			if opts.get('verbosity', 1) > 0:
 				self.stdout.write('Buat status absensi F, P, L')
+		self._seed_programs()
 		self._seed_calendar(opts)
 		self._seed_categories()
 		if not LeaveType.objects.exists():
 			LeaveType.objects.create(code='L', name='Lisensa')
 		if opts.get('verbosity', 1) > 0:
 			self.stdout.write(self.style.SUCCESS('Selesai. Buat superuser: python manage.py createsuperuser'))
+
+	def _seed_programs(self):
+		"""Unit organisasi tunggal ('Program', model Division) sesuai daftar staf MDI. Aman dijalankan berulang."""
+		from custom.models import Division
+		for code, name in (('PN', 'Program Nasional'), ('ISIS', 'ISIS - Programs ASEAN Think Tank')):
+			if not Division.objects.filter(name=name).exists():
+				Division.objects.create(code=code, name=name)
 
 	def _seed_calendar(self, opts):
 		"""12 bulan (nama Tetun) dan tahun berjalan -1..+1; yang berjalan diaktifkan bila belum ada yang aktif."""

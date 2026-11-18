@@ -3,11 +3,13 @@ from django import forms
 from django.contrib import messages
 from django.contrib.auth import password_validation, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
-from . import groups, roles, ui
+from . import groups, middleware, roles, ui
+from .models import MustChangePassword
 
 
 class PasswordForm(forms.Form):
@@ -31,7 +33,7 @@ class PasswordForm(forms.Form):
 			self.add_error('old', ui.tr(self.lang, 'acc.err.old'))
 		elif d['new1'] != d['new2']:
 			self.add_error('new2', ui.tr(self.lang, 'acc.err.mismatch'))
-		elif d['new1'] == d['old']:
+		elif d['new1'] == d['old'] or d['new1'] == settings.MDI_DEFAULT_PASSWORD:
 			self.add_error('new1', ui.tr(self.lang, 'acc.err.same'))
 		else:
 			try:
@@ -64,6 +66,9 @@ def password_change(request):
 		request.user.set_password(form.cleaned_data['new1'])
 		request.user.save(update_fields=['password'])
 		update_session_auth_hash(request, request.user)          # tetap masuk di perangkat ini; sesi lain keluar
+		MustChangePassword.objects.filter(user=request.user).delete()
+		middleware.set_flag(request.user.pk, False)
 		messages.success(request, ui.tr(lang, 'acc.pwd.done'))
 		return redirect('account')
-	return render(request, 'main/password.html', {'title': ui.tr(lang, 'acc.pwd'), 'form': form})
+	forced = MustChangePassword.objects.filter(user=request.user).exists()
+	return render(request, 'main/password.html', {'title': ui.tr(lang, 'acc.pwd'), 'form': form, 'forced': forced})

@@ -44,7 +44,8 @@ Grup lama (`president`, `hr`, `logistik`, `resepsionis`, `funsionario`, `employe
 absensinya sendiri**; beri grup `administrasaun` bila perlu melihat semua. Penetapan grup dari jabatan:
 `python manage.py mdi_assign_groups` (hanya menampilkan rencana) lalu `--apply`. Aturannya di `main/groups.py` (jabatan memuat *director* → director;
 *adm*, *finans*, *logistik* → administrasaun; selainnya staff; admin sistem hanya diberikan manual). Akun baru untuk pegawai dibuat dengan grup menurut jabatannya.
-Daftar staf (`Pegawai`) menampilkan dan menyaring berdasarkan grup.
+Daftar staf (`Pegawai`) menampilkan dan menyaring berdasarkan grup. **Reset password** (hanya admin, tombol di baris pegawai yang punya akun): kata sandi menjadi kata sandi awal
+(`mdi@#2026`, ganti lewat `DEFAULT_PASSWORD` di `.env`), sesi lama akun itu berakhir, dan saat login berikutnya pengguna **wajib langsung menggantinya** (halaman lain dialihkan; kata sandi awal tidak boleh dipakai lagi). Tindakan reset tercatat di log admin Django.
 
 Lisensa yang disetujui otomatis dibaca oleh scan (status tetap *lisensa*). Penyetuju tidak bisa menyetujui lisensanya
 sendiri. Ulang tahun hari ini muncul di Varanda dan di lonceng navbar (angka dicek tiap 60 detik, hanya saat tab

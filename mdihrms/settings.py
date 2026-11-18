@@ -26,6 +26,9 @@ def env_list(name, default=''):
 	return [x.strip() for x in str(os.environ.get(name, default)).split(',') if x.strip()]
 
 
+# kata sandi awal saat admin mereset akun; sebaiknya ganti lewat .env (DEFAULT_PASSWORD). Pengguna wajib mengganti saat login.
+MDI_DEFAULT_PASSWORD = os.environ.get('DEFAULT_PASSWORD') or 'mdi@#2026'
+
 DEBUG = env_bool('DEBUG', False)
 SECRET_KEY = env('SECRET_KEY', 'dev-only-insecure-key' if DEBUG else None, required=True)
 ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1')
@@ -58,6 +61,7 @@ MIDDLEWARE = [
 	'django.middleware.common.CommonMiddleware',
 	'django.middleware.csrf.CsrfViewMiddleware',
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
+	'main.middleware.ForcePasswordChange',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

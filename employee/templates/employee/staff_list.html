@@ -1,10 +1,10 @@
 {% extends "main/layout.html" %}
 {% load qr_i18n %}
 {% block content %}
-<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+<div class="breadcrumb-holder"><div class="container"><ul class="breadcrumb">
 	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
 	<li class="breadcrumb-item active">{% t 'ui.nav.staff' %}</li></ul></div></div>
-<div class="container-fluid"><br/>
+<div class="container"><br/>
 <div class="card shadow-lg pt-1 qr-border rounded">
 	<div class="card-header"><i class="fa fa-users"></i> {{ title|upper }} ({{ page.paginator.count }})
 		{% if can.employee_edit %}<a class="btn btn-sm btn-mdi float-right" href="{% url 'employee-add' %}"><i class="fa fa-user-plus"></i> {% t 'btn.new' %}</a>{% endif %}</div>
@@ -34,7 +34,9 @@
 				<tr><td>{{ e }}</td><td>{{ e.idfnumber.nrf|default:"-" }}</td>
 				<td>{{ e.employeeposition.position|default:"-" }}</td><td>{{ e.employeedivision.division|default:"-" }}</td>
 				<td>{% for g in e.group_names %}<span class="badge badge-{% if g == 'admin' %}dark{% elif g == 'director' %}danger{% elif g == 'administrasaun' %}info{% else %}secondary{% endif %} rounded-pill px-2">{{ g }}</span> {% empty %}<span class="text-muted">-</span>{% endfor %}</td>
-				<td><a class="btn btn-sm btn-mdi" href="{% url 'staff-detail' e.pk %}"><i class="fa fa-id-badge"></i> {% t 'btn.detail' %}</a></td></tr>
+				<td class="text-nowrap"><a class="btn btn-sm btn-mdi" href="{% url 'staff-detail' e.pk %}"><i class="fa fa-id-badge"></i> {% t 'btn.detail' %}</a>
+				{% if can.employee_edit and e.can_reset %}<form method="post" action="{% url 'staff-reset-password' e.pk %}" class="d-inline" data-confirm="{% t 'rst.confirm' %}">{% csrf_token %}
+					<button type="submit" class="btn btn-sm btn-outline-danger" title="{% t 'rst.btn' %}"><i class="fa fa-key"></i> {% t 'rst.btn' %}</button></form>{% endif %}</td></tr>
 			{% empty %}<tr><td colspan="6" class="text-center text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
 			</tbody>
 		</table>
@@ -48,4 +50,9 @@
 		{% endif %}
 	</div>
 </div></div>
+<script>
+	document.querySelectorAll('form[data-confirm]').forEach(function (f) {
+		f.addEventListener('submit', function (ev) { if (!window.confirm(f.dataset.confirm)) ev.preventDefault(); });
+	});
+</script>
 {% endblock %}

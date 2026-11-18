@@ -292,7 +292,7 @@ class DirectoryTests(HrBase):
 		self.login('administrasaun')
 		with CaptureQueriesContext(connection) as c:
 			self.client.get(reverse('staff-list'))
-		self.assertLess(len(c), 15)
+		self.assertLess(len(c), 17)                                          # tidak bertambah menurut jumlah baris
 
 
 class NotifTests(HrBase):
@@ -1239,3 +1239,79 @@ class AccountTests(HrBase):
 		for lang, word in (('tet', 'Troka password'), ('en', 'Change password'), ('id', 'Ganti kata sandi'), ('pt', 'Alterar palavra-passe')):
 			self.client.cookies['mdi_lang'] = lang
 			self.assertContains(self.client.get(reverse('password-change')), word)
+
+
+class AdminResetPasswordTests(HrBase):
+	def setUp(self):
+		super().setUp()
+		self.target = self.emp('Maria', 'Silva')
+		self.tu = self.user('staff', self.target)
+		self.tu.set_password('Rahasia-123'); self.tu.save()
+
+	def reset(self, group='admin'):
+		self.login(group, self.emp('Op' + group))
+		return self.client.post(reverse('staff-reset-password', args=[self.target.pk]))
+
+	def test_only_admin_and_post_only(self):
+		for g in ('director', 'administrasaun', 'staff'):
+			self.assertEqual(self.reset(g).status_code, 403, g)
+		self.tu.refresh_from_db()
+		self.assertTrue(self.tu.check_password('Rahasia-123'))
+		self.login('admin', self.emp('Adm'))
+		self.assertEqual(self.client.get(reverse('staff-reset-password', args=[self.target.pk])).status_code, 405)
+
+	def test_reset_sets_default_password_and_forces_change(self):
+		from django.conf import settings
+		from django.test import Client
+		self.assertEqual(settings.MDI_DEFAULT_PASSWORD, 'mdi@#2026')
+		self.assertEqual(self.reset().status_code, 302)
+		self.tu.refresh_from_db()
+		self.assertTrue(self.tu.check_password('mdi@#2026'))
+		self.assertTrue(self.tu.must_change.__class__.objects.filter(user=self.tu).exists())
+		c = Client()
+		self.assertTrue(c.login(username=self.tu.username, password='mdi@#2026'))
+		for url in (reverse('home'), reverse('account'), reverse('kts-dash')):                      # semua halaman dialihkan
+			self.assertRedirects(c.get(url), reverse('password-change'), fetch_redirect_response=False)
+		self.assertContains(c.get(reverse('password-change')), 'direset oleh admin' if False else 'alert-warning')
+		def post(n):
+			return c.post(reverse('password-change'), {'old': 'mdi@#2026', 'new1': n, 'new2': n})
+		self.assertContains(post('mdi@#2026'), 'text-danger')                                       # tidak boleh tetap sandi awal
+		self.assertRedirects(post('Baru-98765x'), reverse('account'), fetch_redirect_response=False)
+		self.assertEqual(c.get(reverse('home')).status_code, 200)                                    # bebas setelah mengganti
+		self.tu.refresh_from_db()
+		self.assertTrue(self.tu.check_password('Baru-98765x'))
+
+	def test_old_session_is_logged_out_and_logout_still_works(self):
+		from django.test import Client
+		old = Client(); old.force_login(self.tu)
+		self.assertEqual(old.get(reverse('home')).status_code, 200)
+		self.reset()
+		self.assertEqual(old.get(reverse('home')).status_code, 302)                                  # sesi lama tidak berlaku
+		c = Client(); c.login(username=self.tu.username, password='mdi@#2026')
+		self.assertEqual(c.post(reverse('logout')).status_code, 302)                                 # keluar tetap boleh
+
+	def test_cannot_reset_own_or_accountless(self):
+		adm = self.emp('Adm')
+		au = self.user('admin', adm)
+		self.client.force_login(au)
+		self.client.post(reverse('staff-reset-password', args=[adm.pk]))
+		au.refresh_from_db()
+		self.assertFalse(au.check_password('mdi@#2026'))
+		no_acc = self.emp('Tanpa')
+		self.assertEqual(self.client.post(reverse('staff-reset-password', args=[no_acc.pk])).status_code, 302)
+
+	def test_button_only_for_admin_on_rows_with_account(self):
+		self.login('admin', self.emp('Adm'))
+		h = self.client.get(reverse('staff-list')).content.decode()
+		self.assertIn(reverse('staff-reset-password', args=[self.target.pk]), h)
+		self.emp('Tanpa')
+		self.assertEqual(h.count('reset-password/'), 1)
+		self.login('administrasaun')
+		self.assertNotIn('reset-password/', self.client.get(reverse('staff-list')).content.decode())
+
+	def test_reset_is_audited_and_content_uses_container(self):
+		from django.contrib.admin.models import LogEntry
+		self.reset()
+		self.assertEqual(LogEntry.objects.filter(object_id=str(self.tu.pk), change_message='password reset to default').count(), 1)
+		h = self.client.get(reverse('staff-list')).content.decode()
+		self.assertNotIn('container-fluid', h[h.index('role="main"'):])

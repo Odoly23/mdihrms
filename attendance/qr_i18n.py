@@ -461,6 +461,8 @@ from attendance.qr_i18n_hr import GROUPS_UI as _GROUPS_UI  # noqa: E402
 MESSAGES.update(_GROUPS_UI)
 from attendance.qr_i18n_hr import ACCOUNT as _ACCOUNT  # noqa: E402  (akun saya, ganti kata sandi)
 MESSAGES.update(_ACCOUNT)
+from attendance.qr_i18n_hr import RESET as _RESET  # noqa: E402  (reset kata sandi oleh admin)
+MESSAGES.update(_RESET)
 
 
 def tr(lang, key, **params):

@@ -3,6 +3,7 @@ import datetime
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 
 from attendance import qr_service as svc
@@ -37,11 +38,14 @@ def staff_list(request):
 	elif grp == 'none':
 		qs = qs.exclude(employeeuser__user__groups__name__in=groups.GROUPS)           # belum punya akun/grup
 	page = Paginator(qs, 50).get_page(request.GET.get('page'))
-	gmap = {}
+	gmap, accounts = {}, {}
 	for eu in EmployeeUser.objects.filter(employee__in=list(page)).prefetch_related('user__groups'):
 		gmap[eu.employee_id] = [g.name for g in eu.user.groups.all() if g.name in groups.GROUPS]
+		accounts[eu.employee_id] = eu.user_id
 	for e in page:
 		e.group_names = gmap.get(e.pk, [])
+		e.account_id = accounts.get(e.pk)
+		e.can_reset = bool(e.account_id) and e.account_id != request.user.pk      # akunnya sendiri: pakai Ganti kata sandi
 	return render(request, 'employee/staff_list.html', {
 		'title': ui.tr(request, 'staff.title'), 'page': page, 'q': q, 'dg': dg, 'div': div, 'grp': grp, 'group_choices': groups.GROUPS,
 		'dgs': DG.objects.order_by('name'), 'divisions': Division.objects.order_by('name')})
@@ -121,3 +125,38 @@ def employee_address(request, emp_id):
 		messages.success(request, ui.tr(request, 'emp.msg.addr'))
 		return redirect('staff-detail', emp_id=emp.pk)
 	return render(request, 'employee/form.html', {'title': ui.tr(request, 'emp.address'), 'form': form, 'mode': 'address', 'emp': emp})
+
+
+@roles.role_required('EMPLOYEE_EDIT_GROUPS')
+@require_POST
+def staff_reset_password(request, emp_id):
+	"""Admin sistem mereset kata sandi akun pegawai ke kata sandi awal; pengguna wajib menggantinya saat login berikutnya."""
+	from django.conf import settings
+	from django.contrib.admin.models import CHANGE, LogEntry
+	from django.contrib.auth.models import User
+	from django.contrib.contenttypes.models import ContentType
+	from django.db import transaction
+	from main import middleware
+	from main.models import MustChangePassword
+	lang = ui.lang(request)
+	link = EmployeeUser.objects.select_related('user', 'employee').filter(employee_id=emp_id).first()
+	if link is None:
+		messages.error(request, ui.tr(lang, 'rst.none'))
+	elif link.user_id == request.user.pk:
+		messages.error(request, ui.tr(lang, 'rst.self'))
+	else:
+		with transaction.atomic():
+			u = link.user
+			u.set_password(settings.MDI_DEFAULT_PASSWORD)                  # sesi lama akun itu otomatis tidak berlaku lagi
+			u.save(update_fields=['password'])
+			MustChangePassword.objects.update_or_create(user=u, defaults={'by': request.user})
+			middleware.set_flag(u.pk, True)
+			LogEntry.objects.log_action(request.user.pk, ContentType.objects.get_for_model(User).pk, u.pk, str(u), CHANGE, 'password reset to default')
+		messages.success(request, ui.tr(lang, 'rst.done', name=str(link.employee), user=link.user.username))
+	return redirect(request.META.get('HTTP_REFERER') if _same_site(request) else 'staff-list')
+
+
+def _same_site(request):
+	from django.utils.http import url_has_allowed_host_and_scheme
+	ref = request.META.get('HTTP_REFERER')
+	return bool(ref) and url_has_allowed_host_and_scheme(ref, {request.get_host()}, require_https=request.is_secure())

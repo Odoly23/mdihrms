@@ -319,3 +319,16 @@ ACCOUNT = {
 	'acc.no_emp': ('Konta ne\'e seidauk liga ba funsionáriu ida.', 'This account is not linked to an employee yet.', 'Akun ini belum terhubung ke pegawai.', 'Esta conta ainda não está associada a um funcionário.'),
 	'acc.last_login': ('Tama ikus', 'Last sign-in', 'Masuk terakhir', 'Último acesso'),
 }
+
+
+RESET = {
+	'rst.btn': ('Reset password', 'Reset password', 'Reset password', 'Repor palavra-passe'),
+	'rst.confirm': ('Reset password ba password inísiu? Utilizadór tenke troka bainhira tama.', 'Reset the password to the default one? The user must change it at the next sign-in.',
+					'Reset kata sandi ke kata sandi awal? Pengguna wajib menggantinya saat login.', 'Repor a palavra-passe inicial? O utilizador terá de a alterar no próximo acesso.'),
+	'rst.done': ('Password {name} ({user}) reset ona ba password inísiu. Utilizadór tenke troka bainhira tama.', 'Password of {name} ({user}) was reset to the default. The user must change it at sign-in.',
+				 'Kata sandi {name} ({user}) direset ke kata sandi awal. Pengguna wajib menggantinya saat login.', 'A palavra-passe de {name} ({user}) foi reposta. O utilizador terá de a alterar no acesso.'),
+	'rst.none': ('Funsionáriu ne\'e seidauk iha konta.', 'This employee has no account yet.', 'Pegawai ini belum punya akun.', 'Este funcionário ainda não tem conta.'),
+	'rst.self': ('Ba ita-nia konta rasik uza Troka password.', 'For your own account use Change password.', 'Untuk akun sendiri gunakan Ganti kata sandi.', 'Para a sua própria conta use Alterar palavra-passe.'),
+	'rst.forced': ('Password ne\'e hetan reset husi admin. Troka password foun molok uza aplikasaun.', 'Your password was reset by an administrator. Choose a new password before using the application.',
+				   'Kata sandi Anda direset oleh admin. Ganti dengan kata sandi baru sebelum memakai aplikasi.', 'A sua palavra-passe foi reposta por um administrador. Escolha uma nova antes de usar a aplicação.'),
+}

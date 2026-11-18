@@ -1,8 +1,8 @@
 {% extends "main/layout.html" %}
 {% load qr_i18n %}
 {% block content %}
-<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb"><li class="breadcrumb-item active">{% t 'ui.nav.home' %}</li></ul></div></div>
-<div class="container-fluid"><br/>
+<div class="breadcrumb-holder"><div class="container"><ul class="breadcrumb"><li class="breadcrumb-item active">{% t 'ui.nav.home' %}</li></ul></div></div>
+<div class="container"><br/>
 	<div class="row"><div class="col-sm-12 col-md-8 col-lg-6">
 		<div class="card shadow-lg pt-1 qr-border rounded">
 			<div class="card-header">{{ user.get_full_name|default:user.username|upper }}</div>

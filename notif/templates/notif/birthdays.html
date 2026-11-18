@@ -1,10 +1,10 @@
 {% extends "main/layout.html" %}
 {% load qr_i18n %}
 {% block content %}
-<div class="breadcrumb-holder"><div class="container-fluid"><ul class="breadcrumb">
+<div class="breadcrumb-holder"><div class="container"><ul class="breadcrumb">
 	<li class="breadcrumb-item"><a href="{% url 'home' %}">{% t 'ui.nav.home' %}</a></li>
 	<li class="breadcrumb-item active">{% t 'ui.nav.bday' %}</li></ul></div></div>
-<div class="container-fluid"><br/>
+<div class="container"><br/>
 <div class="row"><div class="col-12 col-lg-8">
 <div class="card shadow-lg pt-1 qr-border rounded">
 	<div class="card-header"><i class="fa fa-birthday-cake"></i> {{ title|upper }} · {{ monthname|upper }}</div>

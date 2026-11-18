@@ -2478,3 +2478,32 @@ class BoardTests(QRBase):
 		self.assertContains(self.client.get(reverse('home')), reverse('qr-board'))
 		self.login('staff')
 		self.assertNotContains(self.client.get(reverse('home')), reverse('qr-board'))
+
+
+class IndexUsageTests(QRBase):
+	"""Pelajaran 'index gabungan': kolom '=' di depan, rentang di belakang, dan tanpa fungsi di kolom (DATE(kolom))."""
+
+	def plan(self, qs):
+		from django.db import connection
+		sql, params = qs.query.sql_with_params()
+		with connection.cursor() as c:
+			c.execute('EXPLAIN QUERY PLAN ' + sql, params)
+			return ' '.join(str(r[-1]) for r in c.fetchall())
+
+	def test_hot_queries_use_an_index(self):
+		from django.utils import timezone
+		ids = [self.emp.pk]
+		month = Attendance.objects.filter(employee_id__in=ids, date__gte=MON, date__lte=MON + datetime.timedelta(days=30))
+		today_scan = Attendance.objects.filter(employee=self.emp, date=MON)
+		board = Attendance.objects.filter(date=MON)
+		log = ScanLog.objects.filter(code='device_reuse', scanned_at__gte=timezone.now())
+		for name, qs in (('month', month), ('scan', today_scan), ('board', board), ('log', log)):
+			self.assertIn('INDEX', self.plan(qs).upper(), name)
+			self.assertNotIn('SCAN attendance_attendance', self.plan(qs).replace('SCAN TABLE', 'SCAN'), name)
+
+	def test_health_year_filter_is_a_range_not_a_function(self):
+		from health import services
+		import inspect
+		src = inspect.getsource(services.used_in_year)
+		self.assertNotIn('__year', src)
+		self.assertIn('claim_date__gte', src)

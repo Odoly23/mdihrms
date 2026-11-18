@@ -34,6 +34,9 @@ class Leaves(models.Model):
 	user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 	hashed = models.CharField(max_length=32, null=True)
 
+	class Meta:
+		indexes = [models.Index(fields=['employee', 'start_date', 'end_date'], name='leaves_emp_range_idx')]
+
 class LeavesFormat(models.Model):
 	employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leavesformat', verbose_name="Pessoal")
 	leaves = models.ForeignKey(Leaves, on_delete=models.CASCADE, related_name='leavesformat', verbose_name="Licenca")

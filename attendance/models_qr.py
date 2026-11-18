@@ -64,7 +64,8 @@ class ScanLog(models.Model):
 
 	class Meta:
 		ordering = ['-scanned_at']
-		indexes = [models.Index(fields=['scanned_at'])]
+		indexes = [models.Index(fields=['scanned_at']), models.Index(fields=['employee', 'scanned_at'], name='scanlog_emp_at_idx'),
+				   models.Index(fields=['code', 'scanned_at'], name='scanlog_code_at_idx')]
 
 
 

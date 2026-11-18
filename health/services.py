@@ -36,7 +36,8 @@ def annual_limit():
 
 
 def used_in_year(employee, year, exclude_pk=None):
-	qs = HealthClaim.objects.filter(employee=employee, status__in=('approved', 'paid'), claim_date__year=year)
+	qs = HealthClaim.objects.filter(employee=employee, status__in=('approved', 'paid'),
+								  claim_date__gte=datetime.date(year, 1, 1), claim_date__lt=datetime.date(year + 1, 1, 1))     # rentang tanggal (memakai indeks), bukan fungsi pada kolom
 	if exclude_pk:
 		qs = qs.exclude(pk=exclude_pk)
 	return qs.aggregate(t=Sum('approved_amount'))['t'] or Decimal('0')

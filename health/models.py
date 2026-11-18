@@ -37,7 +37,7 @@ class HealthClaim(models.Model):
 
 	class Meta:
 		ordering = ['-claim_date', '-id']
-		indexes = [models.Index(fields=['status', 'claim_date'])]
+		indexes = [models.Index(fields=['status', 'claim_date']), models.Index(fields=['employee', 'claim_date'], name='hc_emp_date_idx')]
 
 	def __str__(self):
 		return '%s %s US$%s' % (self.employee, self.claim_date, self.amount)

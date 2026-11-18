@@ -38,6 +38,12 @@ absensi, kolokasaun, kontrak, dan data pegawai), sehingga formulir pegawai/kolok
 Migrasi `migrate` menghapus kolom lama tersebut (datanya hilang; **cadangkan database sebelum migrasi** bila ada data DG/Departemen yang masih dibutuhkan).
 Akun baru yang dibuat dari form pegawai juga **wajib mengganti kata sandi** saat login pertama.
 
+## Kecepatan database (indeks)
+Mengikuti pelajaran "index gabungan": kolom yang dicari dengan `=` ditaruh **di depan**, kolom rentang di belakang, dan kolom tidak dibungkus fungsi (`DATE(kolom)`, `__year`).
+Indeks gabungan: `Attendance(employee, date)` dan `(date)`, `ScanLog(employee, scanned_at)` dan `(code, scanned_at)`, `Leaves(employee, start_date, end_date)`,
+`HealthClaim(employee, claim_date)`. Total klaim tahunan memakai rentang tanggal, bukan `claim_date__year`. Tes `IndexUsageTests` memeriksa rencana kueri memakai indeks.
+Jalankan `python manage.py migrate` untuk membuatnya.
+
 ## Peran (empat grup)
 | Grup | Bisa |
 |---|---|

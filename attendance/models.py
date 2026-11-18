@@ -26,6 +26,10 @@ class Attendance(models.Model):
 	user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 	hashed = models.CharField(max_length=32, null=True)
 
+	class Meta:
+		# kolom yang dicari dengan '=' di depan, rentang tanggal di belakang (jalur scan, rekap bulanan per pegawai); 'date' sendiri untuk papan hari ini
+		indexes = [models.Index(fields=['employee', 'date'], name='att_emp_date_idx'), models.Index(fields=['date'], name='att_date_idx')]
+
 	def __str__(self):
 		template = '{0.employee} {0.date}'
 		return template.format(self)

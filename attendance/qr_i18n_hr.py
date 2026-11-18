@@ -164,10 +164,14 @@ KTS = {
 	'kts.out.add': ('Rejistu karta sai', 'Register outgoing letter', 'Daftarkan surat keluar', 'Registar carta enviada'),
 	'kts.out.edit': ('Hadia karta sai', 'Edit outgoing letter', 'Ubah surat keluar', 'Editar carta enviada'),
 	'kts.mine': ('Karta ba ha\'u trata', 'Letters assigned to me', 'Surat untuk saya tangani', 'Cartas atribuídas a mim'),
-	'kts.flow': ('Alur karta tama: resepsionista rejistu → administrasaun verifika no aprova → diretór halo dispozisaun ba ema responsavel ho despacho → responsavel hala\'o no marka remata.',
-				 'Incoming letter flow: the receptionist registers → administration verifies and approves → the director disposes it to the person in charge with a despacho → the handler acts and marks it done.',
-				 'Alur surat masuk: resepsionis mendaftarkan → administrasi memverifikasi dan menyetujui → direktur mendisposisi ke penanggung jawab dengan despacho → penanggung jawab menindaklanjuti dan menyelesaikan.',
-				 'Fluxo da carta recebida: a rececionista regista → a administração verifica e aprova → o diretor despacha para o responsável → o responsável trata e conclui.'),
+	'kts.flow': ('Karta tama: funsionáriu (inklui resepsionista) rejistu → administrasaun verifika no aprova → diretór halo dispozisaun ho despacho → responsavel hala\'o no marka remata. '
+				 'Karta sai: ema hotu bele halo → administrasaun verifika → diretór aprova.',
+				 'Incoming: staff (including the receptionist) register → administration verifies and approves → the director disposes with a despacho → the handler acts and marks it done. '
+				 'Outgoing: anyone can create → administration verifies → the director approves.',
+				 'Surat masuk: staf (termasuk resepsionis) mendaftarkan → administrasi memverifikasi dan menyetujui → direktur mendisposisi dengan despacho → penanggung jawab menindaklanjuti dan menyelesaikan. '
+				 'Surat keluar: siapa saja boleh membuat → administrasi memverifikasi → direktur menyetujui.',
+				 'Entrada: o pessoal (incluindo a rececionista) regista → a administração verifica e aprova → o diretor despacha → o responsável trata e conclui. '
+				 'Saída: qualquer pessoa pode criar → a administração verifica → o diretor aprova.'),
 	'kts.c.verify': ('Hein verifikasaun', 'Awaiting verification', 'Menunggu verifikasi', 'A aguardar verificação'),
 	'kts.c.dispose': ('Hein dispozisaun', 'Awaiting disposition', 'Menunggu disposisi', 'A aguardar despacho'),
 	'kts.c.handle': ('Ba ha\'u trata', 'For me to handle', 'Untuk saya tangani', 'Para eu tratar'),
@@ -291,4 +295,27 @@ GROUPS_UI = {
 	'th.group': ('Grupu', 'Group', 'Grup', 'Grupo'),
 	'staff.all_grp': ('Grupu hotu', 'All groups', 'Semua grup', 'Todos os grupos'),
 	'staff.no_grp': ('Seidauk iha grupu', 'No group yet', 'Belum punya grup', 'Sem grupo'),
+}
+
+
+ACCOUNT = {
+	'acc.title': ('Ha\'u-nia konta', 'My account', 'Akun saya', 'A minha conta'),
+	'acc.pwd': ('Troka password', 'Change password', 'Ganti kata sandi', 'Alterar palavra-passe'),
+	'acc.pwd.old': ('Password atuál', 'Current password', 'Kata sandi saat ini', 'Palavra-passe atual'),
+	'acc.pwd.new1': ('Password foun', 'New password', 'Kata sandi baru', 'Nova palavra-passe'),
+	'acc.pwd.new2': ('Hakerek fali password foun', 'Repeat new password', 'Ulangi kata sandi baru', 'Repita a nova palavra-passe'),
+	'acc.pwd.hint': ('Uza liu karakter 8, la bele fásil atu hatene, la bele numeru deit.', 'Use at least 8 characters; avoid common passwords and digits only.',
+					 'Minimal 8 karakter; hindari kata sandi umum dan angka saja.', 'Use pelo menos 8 caracteres; evite palavras-passe comuns e só números.'),
+	'acc.pwd.done': ('Password troka ona. Ita sei kontinua tama iha ekipamentu ne\'e.', 'Password changed. You stay signed in on this device.',
+					 'Kata sandi diganti. Anda tetap masuk di perangkat ini.', 'Palavra-passe alterada. Mantém a sessão neste dispositivo.'),
+	'acc.err.old': ('Password atuál la loos.', 'The current password is not correct.', 'Kata sandi saat ini salah.', 'A palavra-passe atual não está correta.'),
+	'acc.err.mismatch': ('Password foun rua la hanesan.', 'The two new passwords do not match.', 'Kedua kata sandi baru tidak sama.', 'As duas palavras-passe novas não coincidem.'),
+	'acc.err.same': ('Password foun tenke diferente husi atuál.', 'The new password must differ from the current one.', 'Kata sandi baru harus berbeda dari yang lama.', 'A nova palavra-passe deve ser diferente da atual.'),
+	'acc.err.weak': ('Password fraku liu: uza liu karakter 8, la bele komún no la bele numeru deit.', 'Password too weak: at least 8 characters, not common, not digits only.',
+					 'Kata sandi terlalu lemah: minimal 8 karakter, bukan yang umum, dan bukan angka saja.', 'Palavra-passe demasiado fraca: pelo menos 8 caracteres, não comum e não só números.'),
+	'acc.username': ('Naran uza', 'Username', 'Nama pengguna', 'Nome de utilizador'),
+	'acc.groups': ('Grupu', 'Group', 'Grup', 'Grupo'),
+	'acc.employee': ('Funsionáriu ligadu', 'Linked employee', 'Pegawai terkait', 'Funcionário associado'),
+	'acc.no_emp': ('Konta ne\'e seidauk liga ba funsionáriu ida.', 'This account is not linked to an employee yet.', 'Akun ini belum terhubung ke pegawai.', 'Esta conta ainda não está associada a um funcionário.'),
+	'acc.last_login': ('Tama ikus', 'Last sign-in', 'Masuk terakhir', 'Último acesso'),
 }

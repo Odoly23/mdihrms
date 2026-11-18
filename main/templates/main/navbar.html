@@ -92,6 +92,10 @@
 					<span class="av">{{ request.user.username|slice:":2"|upper }}</span><span class="nb-user">{{ request.user.username|upper }}</span>
 				</a>
 				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="profile">
+					<div class="dropdown-header">{{ request.user.username }}</div>
+					<a class="dropdown-item" href="{% url 'account' %}"><i class="fa fa-user-circle" aria-hidden="true"></i> {% t 'acc.title' %}</a>
+					<a class="dropdown-item" href="{% url 'password-change' %}"><i class="fa fa-key" aria-hidden="true"></i> {% t 'acc.pwd' %}</a>
+					<div class="dropdown-divider"></div>
 					<form method="post" action="{% url 'logout' %}">{% csrf_token %}
 						<button type="submit" class="dropdown-item"><i class="fa fa-sign-out" aria-hidden="true"></i> {% t 'ui.nav.logout' %}</button>
 					</form>
@@ -141,6 +145,8 @@
 		<hr/>
 		<ul>
 			{% if can.admin_site %}<li><a href="{% url 'admin:index' %}"><i class="fa fa-cogs" aria-hidden="true"></i>{% t 'sb.admin' %}</a></li>{% endif %}
+			<li><a href="{% url 'account' %}"><i class="fa fa-user-circle" aria-hidden="true"></i>{% t 'acc.title' %}</a></li>
+			<li><a href="{% url 'password-change' %}"><i class="fa fa-key" aria-hidden="true"></i>{% t 'acc.pwd' %}</a></li>
 			<li><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"><i class="fa fa-sign-out" aria-hidden="true"></i>{% t 'sb.out' %}</button></form></li>
 		</ul>
 	</div>

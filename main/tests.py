@@ -1193,3 +1193,49 @@ class FourGroupTests(HrBase):
 				self.assertEqual(roles.has_role(u, key.upper() + '_GROUPS'), bool(ok), (g, key))
 			self.assertTrue(roles.has_role(u, 'LEAVE_REQUEST_GROUPS'), g)        # semua grup boleh mengajukan lisensa
 			self.assertTrue(roles.has_role(u, 'KTS_OUT_GROUPS'), g)              # semua grup boleh membuat surat keluar
+
+
+class AccountTests(HrBase):
+	def test_requires_login(self):
+		for n in ('account', 'password-change'):
+			self.assertEqual(self.client.get(reverse(n)).status_code, 302, n)
+
+	def test_menu_has_account_password_and_logout_for_every_group(self):
+		for g in ('admin', 'director', 'administrasaun', 'staff'):
+			self.login(g, self.emp('M' + g))
+			h = self.client.get(reverse('home')).content.decode()
+			self.assertIn('href="%s"' % reverse('account'), h, g)
+			self.assertIn('href="%s"' % reverse('password-change'), h, g)
+			self.assertIn('action="%s"' % reverse('logout'), h, g)
+
+	def test_account_page_shows_group_and_employee(self):
+		e = self.emp('Maria', 'Silva')
+		self.login('director', e)
+		r = self.client.get(reverse('account'))
+		self.assertContains(r, 'Maria')
+		self.assertContains(r, 'director')
+
+	def test_change_password_rules_and_keeps_session(self):
+		u = self.login('staff', self.emp('Ana'))
+		u.set_password('Lama-12345'); u.save()
+		self.client.force_login(u)
+		url = reverse('password-change')
+		def post(old, n1, n2):
+			return self.client.post(url, {'old': old, 'new1': n1, 'new2': n2})
+		self.assertContains(post('salah', 'Baru-98765x', 'Baru-98765x'), 'tidak benar' if False else 'text-danger')       # sandi lama salah
+		self.assertContains(post('Lama-12345', 'Baru-98765x', 'beda-98765x'), 'text-danger')
+		self.assertContains(post('Lama-12345', '12345678', '12345678'), 'text-danger')                                    # terlalu lemah
+		self.assertContains(post('Lama-12345', 'Lama-12345', 'Lama-12345'), 'text-danger')                                # sama dengan lama
+		u.refresh_from_db()
+		self.assertTrue(u.check_password('Lama-12345'))
+		r = post('Lama-12345', 'Baru-98765x', 'Baru-98765x')
+		self.assertRedirects(r, reverse('account'), fetch_redirect_response=False)
+		u.refresh_from_db()
+		self.assertTrue(u.check_password('Baru-98765x'))
+		self.assertEqual(self.client.get(reverse('home')).status_code, 200)       # sesi tetap berlaku
+
+	def test_password_pages_in_four_languages(self):
+		self.login('staff', self.emp('Ana'))
+		for lang, word in (('tet', 'Troka password'), ('en', 'Change password'), ('id', 'Ganti kata sandi'), ('pt', 'Alterar palavra-passe')):
+			self.client.cookies['mdi_lang'] = lang
+			self.assertContains(self.client.get(reverse('password-change')), word)

@@ -459,6 +459,8 @@ from attendance.qr_i18n_hr import KTS_OUT as _KTS_OUT  # noqa: E402  (alur surat
 MESSAGES.update(_KTS_OUT)
 from attendance.qr_i18n_hr import GROUPS_UI as _GROUPS_UI  # noqa: E402
 MESSAGES.update(_GROUPS_UI)
+from attendance.qr_i18n_hr import ACCOUNT as _ACCOUNT  # noqa: E402  (akun saya, ganti kata sandi)
+MESSAGES.update(_ACCOUNT)
 
 
 def tr(lang, key, **params):

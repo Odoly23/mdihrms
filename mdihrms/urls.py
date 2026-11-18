@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
-from main import views as main_views
+from main import account as main_account, views as main_views
 
 admin.site.site_header = 'MDI-HRMS SUPER USER'
 
@@ -14,6 +14,8 @@ urlpatterns = [
 	path('login/', auth_views.LoginView.as_view(template_name='home/login.html', redirect_authenticated_user=True), name='login'),
 	path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 	path('home/', main_views.home, name='home'),
+	path('account/', main_account.account, name='account'),
+	path('account/password/', main_account.password_change, name='password-change'),
 	path('attendance/', include('attendance.urls')),
 	path('leave/', include('leave.urls')),
 	path('kolokasaun/', include('contract.urls')),

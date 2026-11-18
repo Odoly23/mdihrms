@@ -60,7 +60,7 @@ class RequestTests(HealthBase):
 		self.assertContains(self.client.get(reverse('health-mine')), 'Hein')
 
 	def test_all_groups_can_open_the_form_but_need_a_linked_employee(self):
-		for g in ('admin', 'staff', 'president', 'hr', 'logistik', 'funsionario', 'employee'):
+		for g in ('admin', 'staff', 'director', 'administrasaun', 'administrasaun', 'staff', 'staff'):
 			self.login(g, self.emp('P' + g))
 			self.assertEqual(self.client.get(reverse('health-new')).status_code, 200, g)
 		self.login('staff')                                                       # akun tanpa pegawai tertaut
@@ -158,10 +158,10 @@ class PrivacyAndReceiptTests(HealthBase):
 		self.assertEqual(r['X-Content-Type-Options'], 'nosniff')
 		self.assertIn('no-store', r['Cache-Control'])
 		self.assertEqual(b''.join(r.streaming_content), PDF)
-		for g in ('hr', 'president', 'admin'):
+		for g in ('administrasaun', 'director', 'admin'):
 			self.login(g, self.emp('Z' + g))
 			self.assertEqual(self.client.get(url).status_code, 200, g)
-		for g in ('staff', 'funsionario', 'logistik', 'employee'):
+		for g in ('staff',):
 			self.login(g, self.emp('Y' + g))
 			self.assertEqual(self.client.get(url).status_code, 403, g)
 		self.client.logout()
@@ -170,7 +170,7 @@ class PrivacyAndReceiptTests(HealthBase):
 	def test_missing_file_gives_404_not_500(self):
 		c = self.claim()
 		os.remove(c.receipt.path)
-		self.login('hr', self.emp('H'))
+		self.login('administrasaun', self.emp('H'))
 		self.assertEqual(self.client.get(reverse('health-receipt', args=[c.pk])).status_code, 404)
 
 	def test_lists_are_private(self):
@@ -181,7 +181,7 @@ class PrivacyAndReceiptTests(HealthBase):
 		self.assertIn('US$ 10', h)
 		self.assertNotIn('US$ 20', h)
 		self.assertEqual(self.client.get(reverse('health-all')).status_code, 403)
-		for g in ('hr', 'president', 'admin'):
+		for g in ('administrasaun', 'director', 'admin'):
 			self.login(g, self.emp('A' + g))
 			h = self.client.get(reverse('health-all'), {'status': 'all'}).content.decode()
 			self.assertIn('US$ 10', h)
@@ -196,11 +196,15 @@ class PrivacyAndReceiptTests(HealthBase):
 class DecisionTests(HealthBase):
 	def test_president_approves_and_marks_paid(self):
 		c = self.claim()
-		self.login('president', self.boss)
+		self.login('director', self.boss)
 		self.client.post(reverse('health-decide', args=[c.pk, 'approve']), {})
 		c.refresh_from_db()
-		self.assertEqual((c.status, c.approved_amount, c.decided_by.username.startswith('u_president')), ('approved', Decimal('50.00'), True))
+		self.assertEqual((c.status, c.approved_amount, c.decided_by.username.startswith('u_director')), ('approved', Decimal('50.00'), True))
 		self.assertIsNotNone(c.decided_at)
+		self.client.post(reverse('health-pay', args=[c.pk]))
+		c.refresh_from_db()
+		self.assertEqual(c.status, 'approved')                                     # direktur memutuskan; administrasi yang membayar
+		self.login('administrasaun', self.emp('Kasir'))
 		self.client.post(reverse('health-pay', args=[c.pk]))
 		c.refresh_from_db()
 		self.assertEqual(c.status, 'paid')
@@ -208,7 +212,7 @@ class DecisionTests(HealthBase):
 
 	def test_the_director_decides_not_the_admin(self):
 		c = self.claim()
-		for g in ('admin', 'hr', 'staff', 'logistik', 'funsionario'):
+		for g in ('admin', 'administrasaun', 'staff', 'administrasaun', 'staff'):
 			self.login(g, self.emp('Q' + g))
 			self.assertEqual(self.client.post(reverse('health-decide', args=[c.pk, 'approve']), {}).status_code, 403, g)
 			self.assertEqual(self.client.post(reverse('health-decide', args=[c.pk, 'reject']), {}).status_code, 403, g)
@@ -228,7 +232,7 @@ class DecisionTests(HealthBase):
 
 	def test_admin_and_director_can_mark_an_approved_claim_as_paid_others_cannot(self):
 		c = self.claim(status='approved', approved_amount=Decimal('50'))
-		for g in ('hr', 'staff', 'logistik', 'funsionario'):
+		for g in ('director', 'staff'):                                   # administrasi dan admin yang membayar; direktur hanya memutuskan
 			self.login(g, self.emp('P' + g))
 			self.assertEqual(self.client.post(reverse('health-pay', args=[c.pk])).status_code, 403, g)
 		self.login('admin', self.emp('Adm2'))
@@ -242,13 +246,13 @@ class DecisionTests(HealthBase):
 
 	def test_decisions_are_post_only(self):
 		c = self.claim()
-		self.login('president', self.boss)
+		self.login('director', self.boss)
 		self.assertEqual(self.client.get(reverse('health-decide', args=[c.pk, 'approve'])).status_code, 405)
 		self.assertEqual(self.client.get(reverse('health-pay', args=[c.pk])).status_code, 405)
 
 	def test_cannot_approve_own_claim_or_decide_twice(self):
 		own = self.claim(self.boss)
-		self.login('president', self.boss)
+		self.login('director', self.boss)
 		self.assertEqual(self.client.post(reverse('health-decide', args=[own.pk, 'approve']), {}).status_code, 403)
 		own.refresh_from_db()
 		self.assertEqual(own.status, 'pending')
@@ -263,14 +267,14 @@ class DecisionTests(HealthBase):
 
 	def test_a_posted_amount_cannot_change_the_fixed_bonus(self):
 		c = self.claim()
-		self.login('president', self.boss)
+		self.login('director', self.boss)
 		self.client.post(reverse('health-decide', args=[c.pk, 'approve']), {'approved_amount': '999'})
 		c.refresh_from_db()
 		self.assertEqual(c.approved_amount, Decimal('50.00'))
 
 	@override_settings(MDI_HEALTH_BONUS=100, MDI_HEALTH_ANNUAL_LIMIT=150)
 	def test_annual_limit_still_applies_per_employee_and_year(self):
-		self.login('president', self.boss)
+		self.login('director', self.boss)
 		a = self.claim(amount='100', claim_date=datetime.date(2026, 3, 1))
 		b = self.claim(amount='100', claim_date=datetime.date(2026, 6, 1))
 		c27 = self.claim(amount='100', claim_date=datetime.date(2027, 2, 1))
@@ -300,7 +304,7 @@ class DecisionTests(HealthBase):
 	def test_approve_button_only_for_director_pending_not_own(self):
 		c = self.claim(self.boss)
 		other = self.claim(self.maria)
-		self.login('president', self.boss)
+		self.login('director', self.boss)
 		h = self.client.get(reverse('health-all')).content.decode()
 		self.assertIn(reverse('health-decide', args=[other.pk, 'approve']), h)
 		self.assertNotIn(reverse('health-decide', args=[c.pk, 'approve']), h)
@@ -313,15 +317,15 @@ class NotifAndI18nTests(HealthBase):
 		self.claim(self.maria)
 		self.claim(self.boss)
 		Asset.objects.create(code='B1', name='Rusak', category=AssetCategory.objects.first(), status='broken')
-		self.login('president', self.boss)
+		self.login('director', self.boss)
 		d = self.client.get(reverse('notif-badge')).json()
 		self.assertEqual((d['health'], d['assets']), (1, 0))                        # klaim sendiri tidak dihitung; bukan pengelola aset
 		self.login('admin', self.emp('Adm3'))
 		self.assertEqual(self.client.get(reverse('notif-badge')).json()['health'], 1)       # admin hanya melihat klaim direktur (klaim Bos)
-		self.login('logistik', self.emp('Log'))
+		self.login('administrasaun', self.emp('Log'))
 		d = self.client.get(reverse('notif-badge')).json()
 		self.assertEqual((d['health'], d['assets']), (0, 1))
-		self.login('hr', self.emp('H2'))
+		self.login('staff', self.emp('H2'))
 		d = self.client.get(reverse('notif-badge')).json()
 		self.assertEqual((d['health'], d['assets']), (0, 0))
 
@@ -342,7 +346,7 @@ class NotifAndI18nTests(HealthBase):
 		h = self.client.get(reverse('home')).content.decode()
 		self.assertIn(reverse('health-new'), h)
 		self.assertNotIn(reverse('health-all'), h)
-		self.login('hr', self.emp('H3'))
+		self.login('administrasaun', self.emp('H3'))
 		self.assertIn(reverse('health-all'), self.client.get(reverse('home')).content.decode())
 
 
@@ -352,9 +356,9 @@ class DirectorClaimTests(HealthBase):
 	def setUp(self):
 		super().setUp()
 		self.director_emp = self.emp('Direktur', 'Utama')
-		self.director = self.login('president', self.director_emp)
+		self.director = self.login('director', self.director_emp)
 		self.other_director_emp = self.emp('Direktur', 'Dua')
-		self.other_director = self.user('president', self.other_director_emp)
+		self.other_director = self.user('director', self.other_director_emp)
 		self.admin_emp = self.emp('Admin', 'Satu')
 		self.admin_user = self.user('admin', self.admin_emp)
 		self.dclaim = self.claim(self.director_emp)

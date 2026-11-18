@@ -13,7 +13,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env            # isi SECRET_KEY, ATTENDANCE_QR_SECRET; untuk percobaan: DEBUG=True
 python manage.py migrate
-python manage.py mdi_setup      # grup admin/staff/president/funsionario/employee + status F/P/L
+python manage.py mdi_setup      # empat grup (admin/director/administrasaun/staff) + status F/P/L
 python manage.py createsuperuser
 python manage.py runserver
 ```
@@ -31,16 +31,20 @@ PythonAnywhere: [`deploy/pythonanywhere/PANDUAN.md`](deploy/pythonanywhere/PANDU
 DEBUG=True python manage.py test        # tes: absensi QR + proyek
 ```
 
-## Peran (grup)
+## Peran (empat grup)
 | Grup | Bisa |
 |---|---|
-| `admin` | Semuanya. **Satu-satunya** yang membuka PC kiosk, mengelola kartu QR, dan menambah/mengubah funsionariu (akun login dibuat otomatis dengan kata sandi acak yang tampil sekali). Admin juga wajib scan kartunya sendiri. |
-| `president` (direktur) | Melihat rekap bulanan dan dashboard, **menyetujui/menolak lisensa dan klaim health care staf**, mendisposisi surat masuk, **mengalokasikan staf ke posisi** (Kolokasaun). |
-| `resepsionis` | **Satu-satunya yang mendaftarkan surat masuk (Karta tama)**; juga mendaftarkan surat keluar. Memperbaiki surat yang dikembalikan. |
-| `logistik` | Mengelola **aset**: mendaftarkan barang, menyerahkan ke staf, menerima kembali, menaruh di rak, mengubah status, dan survei. |
-| `hr` | **Melihat semua** (absensi, lisensa, kolokasaun) dan daftar staf beserta detail masing-masing. Hanya baca. |
-| `staff` | Melihat data absensi (hanya baca), melihat kolokasaun, **mengajukan lisensa** sendiri. |
-| `funsionario`, `employee` | Laporan absensi sendiri dan mengajukan lisensa sendiri. |
+| `admin` (admin sistem) | **Kontrol penuh**: satu-satunya yang membuka PC kiosk, mengelola kartu QR, pengaturan absensi, menambah/mengubah funsionariu dan akun. Menyetujui klaim health care **milik direktur**. Boleh menggantikan administrasi/direktur pada alur surat. |
+| `director` | **Melihat semua data** (absensi, dasbor hari ini, lisensa, daftar staf, aset, health care, surat). Menyetujui/menolak lisensa dan klaim health care staf, mengalokasikan staf ke posisi, **mendisposisi surat masuk (despacho)** dan **menyetujui surat keluar**. |
+| `administrasaun` | **Membagi aset** (daftar, serah-terima, survei) dan **mengurus health care** (menandai dibayar). **Memverifikasi surat masuk dan surat keluar.** Melihat semua data (hanya baca). |
+| `staff` (termasuk resepsionis) | Melihat data **sendiri** (absensi, lisensa, aset, klaim), **mengajukan lisensa dan klaim health care**, **mendaftarkan surat masuk**, membuat surat keluar. |
+
+Grup lama (`president`, `hr`, `logistik`, `resepsionis`, `funsionario`, `employee`) dipindahkan otomatis oleh `python manage.py mdi_setup`
+(president→director, hr/logistik→administrasaun, sisanya→staff). **Staf yang sebelumnya `staff` (bisa melihat absensi semua orang) kini hanya melihat
+absensinya sendiri**; beri grup `administrasaun` bila perlu melihat semua. Penetapan grup dari jabatan:
+`python manage.py mdi_assign_groups` (hanya menampilkan rencana) lalu `--apply`. Aturannya di `main/groups.py` (jabatan memuat *director* → director;
+*adm*, *finans*, *logistik* → administrasaun; selainnya staff; admin sistem hanya diberikan manual). Akun baru untuk pegawai dibuat dengan grup menurut jabatannya.
+Daftar staf (`Pegawai`) menampilkan dan menyaring berdasarkan grup.
 
 Lisensa yang disetujui otomatis dibaca oleh scan (status tetap *lisensa*). Penyetuju tidak bisa menyetujui lisensanya
 sendiri. Ulang tahun hari ini muncul di Varanda dan di lonceng navbar (angka dicek tiap 60 detik, hanya saat tab
@@ -62,21 +66,23 @@ yang lama tidak dicek, dan ekspor CSV. HR dan direktur hanya melihat. Kategori b
 ## Health care (bonus saat sakit)
 Menu **HEALTH CARE**: bonus **tetap US$ 50 per sakit** (ubah lewat `HEALTH_BONUS` di `.env`). Staf yang sakit mengajukan klaim dengan tanggal sakit dan dokumen
 pendukung (surat dokter atau kuitansi, PDF/JPG/PNG maks. 5 MB; cuti sakit terkait opsional). Jumlah tidak diisi pengguna. Satu bonus per sakit: tanggal sakit atau
-cuti sakit yang sama tidak bisa diklaim dua kali. **Klaim staf hanya disetujui/ditolak direktur (grup `president`)**; HR tidak bisa, dan halaman admin Django
+cuti sakit yang sama tidak bisa diklaim dua kali. **Klaim staf hanya disetujui/ditolak direktur (grup `director`); administrasi yang menandai dibayar**; HR tidak bisa, dan halaman admin Django
 untuk klaim hanya-baca sehingga keputusan tidak bisa diubah dari sana. Admin dan direktur boleh menandai klaim yang sudah disetujui sebagai sudah dibayar; HR hanya melihat.
 **Diagnosis tidak disimpan.** Bukti tidak punya URL publik: hanya pemilik klaim, HR, direktur, dan admin yang bisa mengunduhnya lewat tautan yang memeriksa hak akses.
 **Klaim milik direktur sendiri hanya disetujui oleh admin** (direktur tidak bisa menyetujui klaimnya sendiri; admin tidak menyetujui klaim staf biasa).
 Batas tahunan per pegawai (opsional): `HEALTH_ANNUAL_LIMIT=150` di `.env`.
 
 ## Surat masuk dan keluar (app `kts`)
-Menu **KARTA**: dasbor dengan tombol **KARTA TAMA** (surat masuk) dan **KARTA SAI** (surat keluar). Alur surat masuk: **resepsionis** mendaftarkan (dengan PDF) →
-**admin** memverifikasi dan menyetujui (atau mengembalikan dengan catatan, lalu resepsionis memperbaiki) → **direktur** mendisposisi ke satu penanggung jawab dengan
-*despacho* dan batas waktu opsional → penanggung jawab menindaklanjuti dan menandai **selesai** dengan catatan hasil. Setiap langkah tercatat (riwayat tidak bisa diubah),
-surat tidak bisa dihapus, dan PDF hanya bisa dibuka lewat tautan yang memeriksa hak akses. `KTS_REQUIRE_PDF=False` di `.env` melonggarkan syarat PDF sebelum persetujuan.
-Surat keluar didaftarkan admin/resepsionis tanpa alur persetujuan. Lonceng navbar menghitung surat yang menunggu tindakan Anda.
+Menu **KARTA**: dasbor dengan tombol **KARTA TAMA** (surat masuk) dan **KARTA SAI** (surat keluar).
+**Surat masuk:** staf (termasuk resepsionis) mendaftarkan dengan PDF → **administrasi** memverifikasi dan menyetujui (atau mengembalikan dengan catatan) → **direktur**
+mendisposisi ke satu penanggung jawab dengan *despacho* dan batas waktu opsional → penanggung jawab menyelesaikan dengan catatan hasil.
+**Surat keluar:** **semua grup** boleh membuat → **administrasi** memverifikasi (tidak boleh surat buatannya sendiri) → **direktur** menyetujui; keduanya bisa mengembalikan
+ke pembuat dengan catatan. Surat yang sudah disetujui terkunci. Staf biasa hanya melihat surat yang ia buat/daftarkan atau tangani; admin, direktur, dan administrasi melihat semuanya.
+Setiap langkah tercatat (riwayat tidak bisa diubah), surat tidak bisa dihapus, PDF hanya lewat tautan yang memeriksa hak akses. `KTS_REQUIRE_PDF=False` di `.env` melonggarkan syarat PDF.
+Lonceng navbar menghitung surat yang menunggu tindakan Anda.
 
 ## Dasbor absensi hari ini
-Menu absensi **Dasbor hari ini** (hanya `admin` dan `president`): dua grafik di kiri (perbandingan hari ini dan per divisi) dan kartu `col-md-4` di kanan berisi daftar nama:
+Menu absensi **Dasbor hari ini** (`admin`, `director`, dan `administrasaun`): dua grafik di kiri (perbandingan hari ini dan per divisi) dan kartu `col-md-4` di kanan berisi daftar nama:
 hadir tepat waktu (jam scan), terlambat (menit), izin, cuti, dan belum hadir. Halaman memuat ulang tiap menit. Jenis lisensa dihitung **cuti** bila kodenya ada di
 `ATTENDANCE_CUTI_CODES` (bawaan `AL`, `CT`, `ANUAL`) atau namanya memuat cuti/anual/annual/férias; jenis lain dihitung **izin**. Daftar grup: `ATTENDANCE_BOARD_GROUPS`.
 

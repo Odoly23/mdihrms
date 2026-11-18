@@ -13,10 +13,10 @@ from main import roles, ui
 
 from . import services
 from .forms import DisposeForm, DoneForm, SaiForm, TamaForm
-from .models import STATUSES, Sai, Tama, TamaEvent
+from .models import SAI_STATUSES, STATUSES, Sai, SaiEvent, Tama, TamaEvent
 
 REGISTER, VERIFY, DISPOSE, VIEW_ALL, OUT = ('KTS_REGISTER_GROUPS', 'KTS_VERIFY_GROUPS', 'KTS_DISPOSE_GROUPS', 'KTS_VIEW_ALL_GROUPS', 'KTS_OUT_GROUPS')
-BADGE = {'registered': 'warning', 'returned': 'danger', 'approved': 'info', 'disposed': 'primary', 'done': 'success'}
+BADGE = {'registered': 'warning', 'returned': 'danger', 'approved': 'info', 'disposed': 'primary', 'done': 'success', 'verified': 'info'}
 
 
 def _today():
@@ -62,15 +62,22 @@ def dash(request):
 	counts = services.counts_for(request.user, mine, roles)
 	return render(request, 'kts/dash.html', {
 		'title': ui.tr(lang, 'kts.title'), 'counts': counts,
-		'can_all': roles.has_role(request.user, VIEW_ALL), 'can_out': roles.has_role(request.user, OUT),
+		'can_all': roles.has_role(request.user, VIEW_ALL) or roles.has_role(request.user, REGISTER), 'can_out': roles.has_role(request.user, OUT),
 		'can_register': roles.has_role(request.user, REGISTER), 'has_handled': mine is not None and Tama.objects.filter(handler=mine).exists()})
 
 
 # ------------------------------------------------------------------ surat masuk
-@roles.role_required(VIEW_ALL)
 def tama_list(request):
+	r = _guard(request)
+	if r:
+		return r
+	see_all = roles.has_role(request.user, VIEW_ALL)
+	if not (see_all or roles.has_role(request.user, REGISTER)):
+		return render(request, 'home/403.html', status=403)
 	lang = ui.lang(request)
 	qs = Tama.objects.select_related('handler', 'institutu')
+	if not see_all:
+		qs = qs.filter(user=request.user)              # staf hanya melihat surat yang ia daftarkan
 	status = request.GET.get('status', '')
 	if status in STATUSES:
 		qs = qs.filter(status=status)
@@ -102,6 +109,8 @@ def tama_add(request):
 def tama_edit(request, pk):
 	lang = ui.lang(request)
 	letter = get_object_or_404(Tama, pk=pk)
+	if letter.user_id != request.user.pk and not roles.has_role(request.user, 'EMPLOYEE_EDIT_GROUPS'):
+		return render(request, 'home/403.html', status=403)       # hanya pendaftarnya (atau admin sistem) yang memperbaiki
 	if letter.status not in ('registered', 'returned'):
 		messages.error(request, ui.tr(lang, 'kts.err.locked'))
 		return redirect('kts-tama-detail', pk=pk)
@@ -118,7 +127,7 @@ def tama_edit(request, pk):
 
 
 def _can_view(request, letter):
-	if roles.has_role(request.user, VIEW_ALL):
+	if roles.has_role(request.user, VIEW_ALL) or (letter.user_id and letter.user_id == request.user.pk):
 		return True
 	mine = _mine(request)
 	return bool(mine and letter.handler_id == mine.pk)
@@ -141,7 +150,7 @@ def tama_detail(request, pk):
 	is_handler = bool(mine and letter.handler_id == mine.pk)
 	can_done = letter.status == 'disposed' and (is_handler or roles.has_role(request.user, DISPOSE))
 	ctx = {'title': letter.nu_ref or '', 'letter': letter, 'events': events,
-		'can_edit': roles.has_role(request.user, REGISTER) and letter.status in ('registered', 'returned'),
+		'can_edit': roles.has_role(request.user, REGISTER) and letter.status in ('registered', 'returned') and (letter.user_id == request.user.pk or roles.has_role(request.user, 'EMPLOYEE_EDIT_GROUPS')),
 		'can_verify': roles.has_role(request.user, VERIFY) and letter.status == 'registered',
 		'can_dispose': roles.has_role(request.user, DISPOSE) and letter.status in ('approved', 'disposed'),
 		'can_done': can_done, 'overdue': bool(letter.due_date and letter.status == 'disposed' and letter.due_date < _today())}
@@ -256,10 +265,26 @@ def tama_file(request, pk, which='file'):
 
 
 # ------------------------------------------------------------------ surat keluar
-@roles.role_required(VIEW_ALL)
+# semua grup boleh membuat; dibuat -> diverifikasi administrasi -> disetujui direktur.
+
+def _sai_can_view(request, s):
+	return roles.has_role(request.user, VIEW_ALL) or (s.user_id and s.user_id == request.user.pk)
+
+
+def _sai_can_edit(request, s):
+	return s.status in ('registered', 'returned') and (s.user_id == request.user.pk or roles.has_role(request.user, 'EMPLOYEE_EDIT_GROUPS'))
+
+
+@roles.role_required(OUT)
 def sai_list(request):
 	lang = ui.lang(request)
+	see_all = roles.has_role(request.user, VIEW_ALL)
 	qs = Sai.objects.select_related('institutus')
+	if not see_all:
+		qs = qs.filter(user=request.user)                      # selain admin/direktur/administrasi: hanya surat buatan sendiri
+	status = request.GET.get('status', '')
+	if status in SAI_STATUSES:
+		qs = qs.filter(status=status)
 	year = request.GET.get('year', '')
 	if year.isdigit() and len(year) == 4:
 		qs = qs.filter(anu_letivu=year)
@@ -267,9 +292,12 @@ def sai_list(request):
 	if q:
 		qs = qs.filter(Q(nu_ref__icontains=q) | Q(de__icontains=q) | Q(para__icontains=q) | Q(asuntu__icontains=q))
 	page = Paginator(qs, 50).get_page(request.GET.get('page'))
-	years = list(Sai.objects.exclude(anu_letivu__isnull=True).values_list('anu_letivu', flat=True).distinct().order_by('-anu_letivu'))
-	return render(request, 'kts/sai_list.html', {'title': ui.tr(lang, 'kts.out'), 'page': page, 'year': year, 'q': q, 'years': years,
-		'can_out': roles.has_role(request.user, OUT)})
+	rows = list(page.object_list)
+	for r in rows:
+		r.status_text, r.badge = ui.tr(lang, 'kts.sst.' + r.status), BADGE.get(r.status, 'secondary')
+	years = list(qs.model.objects.exclude(anu_letivu__isnull=True).values_list('anu_letivu', flat=True).distinct().order_by('-anu_letivu'))
+	return render(request, 'kts/sai_list.html', {'title': ui.tr(lang, 'kts.out'), 'page': page, 'rows': rows, 'year': year, 'q': q, 'years': years,
+		'status': status, 'status_choices': [(x, 'kts.sst.' + x) for x in SAI_STATUSES], 'can_out': True})
 
 
 @roles.role_required(OUT)
@@ -277,12 +305,7 @@ def sai_add(request):
 	lang = ui.lang(request)
 	form = SaiForm(request.POST or None, request.FILES or None, lang=lang, today=_today())
 	if request.method == 'POST' and form.is_valid():
-		s = form.save(commit=False)
-		import hashlib
-		s.user, s.datetime, s.anu_letivu = request.user, timezone.now(), str(s.data_kartasai.year)
-		s.save()
-		s.hashed = hashlib.md5(str(s.pk).encode()).hexdigest()
-		s.save(update_fields=['hashed'])
+		s = services.sai_register(form.save(commit=False), request.user)
 		messages.success(request, ui.tr(lang, 'kts.msg.registered'))
 		return redirect('kts-sai-detail', pk=s.pk)
 	return render(request, 'kts/form.html', {'title': ui.tr(lang, 'kts.out.add'), 'form': form, 'back': 'kts-sai'})
@@ -292,23 +315,90 @@ def sai_add(request):
 def sai_edit(request, pk):
 	lang = ui.lang(request)
 	s = get_object_or_404(Sai, pk=pk)
+	if s.user_id != request.user.pk and not roles.has_role(request.user, 'EMPLOYEE_EDIT_GROUPS'):
+		return render(request, 'home/403.html', status=403)
+	if s.status not in ('registered', 'returned'):
+		messages.error(request, ui.tr(lang, 'kts.err.locked'))
+		return redirect('kts-sai-detail', pk=pk)
 	form = SaiForm(request.POST or None, request.FILES or None, instance=s, lang=lang, today=_today())
 	if request.method == 'POST' and form.is_valid():
-		obj = form.save(commit=False)
-		obj.anu_letivu = str(obj.data_kartasai.year)
-		obj.save()
-		messages.success(request, ui.tr(lang, 'kts.msg.saved'))
-		return redirect('kts-sai-detail', pk=pk)
+		try:
+			form.save()
+			services.sai_edited(pk, request.user)
+			messages.success(request, ui.tr(lang, 'kts.msg.saved'))
+			return redirect('kts-sai-detail', pk=pk)
+		except services.LetterError as e:
+			_fail(request, e)
 	return render(request, 'kts/form.html', {'title': ui.tr(lang, 'kts.out.edit'), 'form': form, 'back': 'kts-sai', 'letter': s})
 
 
-@roles.role_required(VIEW_ALL)
+@roles.role_required(OUT)
 def sai_detail(request, pk):
-	s = get_object_or_404(Sai.objects.select_related('institutus', 'user'), pk=pk)
-	return render(request, 'kts/sai_detail.html', {'title': s.nu_ref or '', 's': s, 'can_out': roles.has_role(request.user, OUT)})
+	s = get_object_or_404(Sai.objects.select_related('institutus', 'user', 'verified_by', 'approved_by'), pk=pk)
+	if not _sai_can_view(request, s):
+		return render(request, 'home/403.html', status=403)
+	lang = ui.lang(request)
+	s.status_text, s.badge = ui.tr(lang, 'kts.sst.' + s.status), BADGE.get(s.status, 'secondary')
+	events = list(s.events.select_related('user')[:60])
+	for ev in events:
+		ev.text = ui.tr(lang, 'kts.sev.' + ev.action)
+		ev.to_text = ui.tr(lang, 'kts.sst.' + ev.to_status) if ev.to_status else ''
+	me = request.user
+	can_verify = roles.has_role(me, VERIFY) and s.status == 'registered' and s.user_id != me.pk
+	can_approve = roles.has_role(me, DISPOSE) and s.status == 'verified'
+	return render(request, 'kts/sai_detail.html', {'title': s.nu_ref or '', 's': s, 'events': events, 'can_edit': _sai_can_edit(request, s),
+		'can_verify': can_verify, 'can_approve': can_approve, 'can_return': can_verify or can_approve})
+
+
+def _sai_step(role_or_roles, need_status=None):
+	"""POST-only; peran diperiksa di sini, aturan keadaan di services."""
+	def deco(view):
+		@require_POST
+		def inner(request, pk):
+			r = _guard(request)
+			if r:
+				return r
+			roles_list = (role_or_roles,) if isinstance(role_or_roles, str) else role_or_roles
+			if not any(roles.has_role(request.user, x) for x in roles_list):
+				return render(request, 'home/403.html', status=403)
+			get_object_or_404(Sai, pk=pk)
+			try:
+				view(request, pk)
+			except services.LetterError as e:
+				_fail(request, e)
+			return redirect('kts-sai-detail', pk=pk)
+		inner.__name__ = view.__name__
+		return inner
+	return deco
+
+
+@_sai_step(VERIFY)
+def sai_verify(request, pk):
+	services.sai_verify(pk, request.user, request.POST.get('note', ''))
+	messages.success(request, ui.tr(request, 'kts.msg.verified'))
+
+
+@_sai_step((VERIFY, DISPOSE))
+def sai_return(request, pk):
+	s = Sai.objects.get(pk=pk)
+	# administrasi hanya mengembalikan surat yang menunggu verifikasi; direktur yang menunggu persetujuan
+	need = VERIFY if s.status == 'registered' else DISPOSE
+	if not roles.has_role(request.user, need):
+		raise services.LetterError('kts.err.state')
+	services.sai_return(pk, request.user, request.POST.get('note', ''))
+	messages.success(request, ui.tr(request, 'kts.msg.returned_out'))
+
+
+@_sai_step(DISPOSE)
+def sai_approve(request, pk):
+	services.sai_approve(pk, request.user, request.POST.get('note', ''))
+	messages.success(request, ui.tr(request, 'kts.msg.sai_approved'))
 
 
 @require_GET
-@roles.role_required(VIEW_ALL)
+@roles.role_required(OUT)
 def sai_file(request, pk):
-	return _serve(request, get_object_or_404(Sai, pk=pk), 'file_pdf')
+	s = get_object_or_404(Sai, pk=pk)
+	if not _sai_can_view(request, s):
+		return render(request, 'home/403.html', status=403)
+	return _serve(request, s, 'file_pdf')

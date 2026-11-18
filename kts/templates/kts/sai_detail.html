@@ -6,8 +6,9 @@
 	<li class="breadcrumb-item"><a href="{% url 'kts-sai' %}">{% t 'kts.out' %}</a></li>
 	<li class="breadcrumb-item active">{{ s.nu_ref }}</li></ul></div></div>
 <div class="container-fluid"><br/>
-<div class="row"><div class="col-12 col-lg-7"><div class="card shadow-lg pt-1 qr-border rounded">
-	<div class="card-header"><i class="fa fa-envelope-open"></i> {{ s.nu_ref }}</div>
+<div class="row">
+<div class="col-12 col-lg-6 mb-3"><div class="card shadow-lg pt-1 qr-border rounded">
+	<div class="card-header"><i class="fa fa-envelope-open"></i> {{ s.nu_ref }} <span class="badge badge-{{ s.badge }} ml-2">{{ s.status_text }}</span></div>
 	<div class="card-body"><table class="table table-sm table-borderless mb-0">
 		<tr><th>{% t 'kts.f.date_out' %}</th><td>{{ s.data_kartasai|date:"d/m/Y" }}</td></tr>
 		<tr><th>{% t 'kts.f.from' %}</th><td>{{ s.de }}</td></tr>
@@ -18,7 +19,25 @@
 		<tr><th>PDF</th><td>{% if s.file_pdf %}<a href="{% url 'kts-sai-file' s.pk %}" target="_blank" rel="noopener"><i class="fa fa-file-pdf-o"></i> {% t 'kts.file' %}</a>{% else %}-{% endif %}</td></tr>
 		<tr><th>{% t 'kts.registered_by' %}</th><td>{{ s.user.username|default:"-" }} · {{ s.datetime|date:"d/m/Y H:i" }}</td></tr>
 	</table>
-	{% if can_out %}<hr/><a class="btn btn-sm btn-mdi" href="{% url 'kts-sai-edit' s.pk %}"><i class="fa fa-pencil"></i> {% t 'btn.edit' %}</a>{% endif %}</div>
-</div></div></div>
+	{% if can_edit %}<hr/><a class="btn btn-sm btn-mdi" href="{% url 'kts-sai-edit' s.pk %}"><i class="fa fa-pencil"></i> {% t 'btn.edit' %}</a>{% endif %}</div>
+</div></div>
+<div class="col-12 col-lg-6 mb-3">
+	{% if s.verified_at %}<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-check-square-o"></i> {% t 'kts.verification' %}</div>
+		<div class="card-body small">{{ s.verified_by.username }} · {{ s.verified_at|date:"d/m/Y H:i" }}{% if s.verify_note %}<br/>{{ s.verify_note }}{% endif %}</div></div>{% endif %}
+	{% if s.approved_at %}<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-thumbs-o-up"></i> {% t 'kts.approval' %}</div>
+		<div class="card-body small">{{ s.approved_by.username }} · {{ s.approved_at|date:"d/m/Y H:i" }}{% if s.approve_note %}<br/>{{ s.approve_note }}{% endif %}</div></div>{% endif %}
+	{% if can_verify or can_approve %}<div class="card shadow-lg pt-1 qr-border rounded mb-3"><div class="card-header"><i class="fa fa-check"></i> {% if can_verify %}{% t 'kts.verification' %}{% else %}{% t 'kts.approval' %}{% endif %}</div>
+		<div class="card-body">
+			<form method="post" action="{% if can_verify %}{% url 'kts-sai-verify' s.pk %}{% else %}{% url 'kts-sai-approve' s.pk %}{% endif %}" class="mb-2">{% csrf_token %}
+				<input name="note" class="form-control mb-2" maxlength="300" placeholder="{% t 'th.note' %}">
+				<button class="btn btn-success btn-sm" type="submit"><i class="fa fa-check"></i> {% if can_verify %}{% t 'kts.btn.verify' %}{% else %}{% t 'kts.btn.sai_approve' %}{% endif %}</button></form>
+			<form method="post" action="{% url 'kts-sai-return' s.pk %}">{% csrf_token %}
+				<input name="note" class="form-control mb-2" maxlength="300" required placeholder="{% t 'kts.return_ph' %}">
+				<button class="btn btn-danger btn-sm" type="submit"><i class="fa fa-undo"></i> {% t 'kts.btn.return_out' %}</button></form>
+		</div></div>{% endif %}
+	<div class="card shadow-lg pt-1 qr-border rounded"><div class="card-header"><i class="fa fa-history"></i> {% t 'as.history' %}</div>
+		<ul class="list-group list-group-flush small">{% for ev in events %}<li class="list-group-item"><b>{{ ev.text }}</b>{% if ev.to_text %} → {{ ev.to_text }}{% endif %}<br/>
+			<span class="text-muted">{{ ev.user.username|default:"-" }} · {{ ev.at|date:"d/m/Y H:i" }}</span>{% if ev.note %}<br/>{{ ev.note }}{% endif %}</li>{% endfor %}</ul></div>
+</div></div>
 </div>
 {% endblock %}

@@ -22,7 +22,8 @@ Skrip membuat virtualenv, memasang paket, membuat `.env` berisi `SECRET_KEY` dan
 6. **Force HTTPS**: Enabled. Klik **Reload**.
 
 ## 3. Setelah hidup
-- Buka `https://USER.pythonanywhere.com/`, masuk sebagai superuser, tambahkan akun ke grup (`admin`, `president`, `resepsionis`, dst.).
+- Buka `https://USER.pythonanywhere.com/`, masuk sebagai superuser, tambahkan akun ke grup (`admin`, `director`, `administrasaun`, `staff`).
+- Setelah memperbarui dari versi lama: `python manage.py migrate && python manage.py mdi_setup` (memindahkan grup lama ke empat grup), lalu `python manage.py mdi_assign_groups` untuk melihat rencana grup dari jabatan dan `--apply` untuk menerapkan.
 - Di PC kiosk, login sebagai admin → **Perangkat kiosk** → pasangkan PC (mode `device` cocok untuk IP Starlink yang berganti-ganti).
 - Setiap kali kode diperbarui: `bash ~/mdihrms/deploy/pythonanywhere/setup.sh`, lalu **Reload** di tab Web.
 

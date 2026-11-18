@@ -10,9 +10,9 @@ from contract.models import Kolokasaun
 from custom.models import DG, Division
 from leave.models import Leaves
 from leave.views import _rows as leave_rows
-from main import roles, ui
+from main import groups, roles, ui
 
-from .models import Employee
+from .models import Employee, EmployeeUser
 
 ACTIVE_STATUS = 1
 
@@ -31,9 +31,19 @@ def staff_list(request):
 		qs = qs.filter(employeedivision__dg_id=int(dg))
 	if div.isdigit():
 		qs = qs.filter(employeedivision__division_id=int(div))
+	grp = request.GET.get('grp', '')
+	if grp in groups.GROUPS:
+		qs = qs.filter(employeeuser__user__groups__name=grp)
+	elif grp == 'none':
+		qs = qs.exclude(employeeuser__user__groups__name__in=groups.GROUPS)           # belum punya akun/grup
 	page = Paginator(qs, 50).get_page(request.GET.get('page'))
+	gmap = {}
+	for eu in EmployeeUser.objects.filter(employee__in=list(page)).prefetch_related('user__groups'):
+		gmap[eu.employee_id] = [g.name for g in eu.user.groups.all() if g.name in groups.GROUPS]
+	for e in page:
+		e.group_names = gmap.get(e.pk, [])
 	return render(request, 'employee/staff_list.html', {
-		'title': ui.tr(request, 'staff.title'), 'page': page, 'q': q, 'dg': dg, 'div': div,
+		'title': ui.tr(request, 'staff.title'), 'page': page, 'q': q, 'dg': dg, 'div': div, 'grp': grp, 'group_choices': groups.GROUPS,
 		'dgs': DG.objects.order_by('name'), 'divisions': Division.objects.order_by('name')})
 
 

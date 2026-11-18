@@ -450,25 +450,25 @@ class ViewTests(QRBase):
 		self.assertContains(r, 'rp-P')
 
 	def test_group_permissions(self):
-		self.login('president')
+		self.login('director')
 		self.assertContains(self.client.get(reverse('qr-report')), 'Rekap absensi')
 		self.assertContains(self.client.get(reverse('qr-cards')), '403', status_code=403)
 		self.assertContains(self.client.get(reverse('qr-devices')), '403', status_code=403)
 		self.client.logout()
-		self.login('staff')                                                  # staff hanya melihat data
+		self.login('administrasaun')                                         # administrasi hanya melihat data
 		self.assertContains(self.client.get(reverse('qr-report')), 'Rekap absensi')
 		self.assertContains(self.client.get(reverse('qr-today')), 'Hari ini')
 		self.assertContains(self.client.get(reverse('qr-cards')), '403', status_code=403)
 		self.assertContains(self.client.get(reverse('qr-devices')), '403', status_code=403)
 		self.client.logout()
-		self.login('funsionario')
+		self.login('staff')                                                  # staf hanya absensinya sendiri
 		self.assertContains(self.client.get(reverse('qr-report')), '403', status_code=403)
 		self.assertContains(self.client.get(reverse('qr-today')), '403', status_code=403)
 		self.assertContains(self.client.get(reverse('qr-me')), 'Absensi saya')
 
 	def test_me_shows_only_own_rows(self):
 		from employee.models import EmployeeUser
-		u = self.login('funsionario')
+		u = self.login('staff')
 		EmployeeUser.objects.create(employee=self.emp, user=u)
 		other = self.make_employee('Jose', 'Costa')
 		r = self.client.get(reverse('qr-me'), {'year': 2026, 'month': 11})
@@ -972,7 +972,7 @@ class ReportPageTests(QRBase):
 		return u
 
 	def test_dash_pages_for_viewers_only(self):
-		for group, ok in [('admin', True), ('staff', True), ('president', True), ('funsionario', False), ('employee', False)]:
+		for group, ok in [('admin', True), ('administrasaun', True), ('director', True), ('staff', False)]:
 			self.client.logout()
 			self.login(group)
 			for name in ('qr-dash', 'qr-dash-chart'):
@@ -1007,13 +1007,13 @@ class ReportPageTests(QRBase):
 		url = reverse('qr-api-dash')
 		r = self.client.get(url)
 		self.assertEqual((r.status_code, r.json()['error']), (401, 'login'))
-		self.login('funsionario')
+		self.login('staff')
 		r = self.client.get(url)
 		self.assertEqual((r.status_code, r.json()['error']), (403, 'forbidden'))
 		self.assertEqual(self.client.post(url).status_code, 405)
 
 	def test_api_dash_data_shape_and_language(self):
-		self.login('president')
+		self.login('director')
 		self.scan(MON, 9, 0)
 		with mock.patch.object(timezone, 'now', lambda: at(datetime.date(2026, 11, 13), 12)):
 			r = self.client.get(reverse('qr-api-dash'), {'year': 2026, 'month': 11})
@@ -1031,7 +1031,7 @@ class ReportPageTests(QRBase):
 		self.assertEqual(d['divisions']['series'][2]['name'], 'Licença')
 
 	def test_me_tabular_requires_own_link_and_shows_tiles_and_days(self):
-		self.login('funsionario', link=True)
+		self.login('staff', link=True)
 		self.scan(MON, 9, 0)
 		self.scan(MON + datetime.timedelta(days=1), 8, 0)
 		self.scan(MON + datetime.timedelta(days=1), 15, 0)
@@ -1046,7 +1046,7 @@ class ReportPageTests(QRBase):
 		self.assertContains(r, 'Sen 09/11')
 
 	def test_me_status_filter(self):
-		self.login('employee', link=True)
+		self.login('staff', link=True)
 		self.scan(MON, 9, 0)                                 # terlambat
 		self.scan(MON + datetime.timedelta(days=1), 8, 0)    # tepat waktu
 		with mock.patch.object(timezone, 'now', lambda: at(datetime.date(2026, 11, 13), 12)):
@@ -1062,12 +1062,12 @@ class ReportPageTests(QRBase):
 
 	def test_me_shows_holiday_row_with_name(self):
 		NacionalHoliday.objects.create(name='Hari Test', date=datetime.date(2020, 11, 12))
-		self.login('funsionario', link=True)
+		self.login('staff', link=True)
 		with mock.patch.object(timezone, 'now', lambda: at(datetime.date(2026, 11, 13), 12)):
 			self.assertContains(self.client.get(reverse('qr-me'), {'year': 2026, 'month': 11}), 'Hari Test')
 
 	def test_me_list_hides_future_days_but_keeps_today(self):
-		self.login('funsionario', link=True)
+		self.login('staff', link=True)
 		with mock.patch.object(timezone, 'now', lambda: at(datetime.date(2026, 11, 11), 10)):     # Rabu 11 Nov
 			html = self.client.get(reverse('qr-me'), {'year': 2026, 'month': 11}).content.decode()
 		self.assertIn('Rab 11/11', html)                  # hari ini, belum ada scan
@@ -1076,12 +1076,12 @@ class ReportPageTests(QRBase):
 		self.assertIn('qr-cal', html)                     # kalender mini tetap memuat seluruh bulan
 
 	def test_me_unlinked_account(self):
-		self.login('funsionario')
+		self.login('staff')
 		self.assertContains(self.client.get(reverse('qr-me')), 'belum dihubungkan')
 		self.assertContains(self.client.get(reverse('qr-me-chart')), 'belum dihubungkan')
 
 	def test_me_chart_page_and_api(self):
-		self.login('funsionario', link=True)
+		self.login('staff', link=True)
 		self.scan(MON, 9, 0)
 		r = self.client.get(reverse('qr-me-chart'), {'year': 2026, 'month': 11})
 		self.assertContains(r, 'class="qr-charts"')
@@ -1100,7 +1100,7 @@ class ReportPageTests(QRBase):
 		oc = QRCard.objects.create(employee=other)
 		self.scan(MON, 8, 0, payload=svc.make_payload(oc))
 		self.scan(MON + datetime.timedelta(days=1), 8, 0, payload=svc.make_payload(oc))
-		self.login('funsionario', link=True)
+		self.login('staff', link=True)
 		self.scan(MON, 8, 0)
 		d = self.client.get(reverse('qr-api-me'), {'year': 2026, 'month': 11, 'employee': other.pk, 'id': other.pk}).json()
 		self.assertEqual(d['year']['series'][0]['data'][10], 1)             # hanya milik sendiri, bukan 2
@@ -1108,7 +1108,7 @@ class ReportPageTests(QRBase):
 	def test_api_me_errors_are_json(self):
 		url = reverse('qr-api-me')
 		self.assertEqual(self.client.get(url).status_code, 401)
-		self.login('funsionario')
+		self.login('staff')
 		r = self.client.get(url)
 		self.assertEqual((r.status_code, r.json()['error']), (404, 'unlinked'))
 		self.client.logout()
@@ -1116,12 +1116,12 @@ class ReportPageTests(QRBase):
 		self.assertEqual(self.client.get(url).status_code, 403)
 
 	def test_employee_group_is_allowed_by_default(self):
-		self.login('employee', link=True)
+		self.login('staff', link=True)
 		for name in ('qr-me', 'qr-me-chart', 'qr-api-me'):
 			self.assertEqual(self.client.get(reverse(name)).status_code, 200, name)
 
 	def test_subtabs_switch_between_tabular_and_charts(self):
-		self.login('funsionario', link=True)
+		self.login('staff', link=True)
 		html = self.client.get(reverse('qr-me'), {'year': 2026, 'month': 11}).content.decode()
 		self.assertIn('href="%s?year=2026&amp;month=11"' % reverse('qr-me-chart'), html)
 		self.assertIn('<a role="tab" class="on" href="%s' % reverse('qr-me'), html)
@@ -1132,7 +1132,7 @@ class ReportPageTests(QRBase):
 	def test_menu_snippets_point_to_right_pages_per_group(self):
 		from django.template.loader import render_to_string
 		from django.test import RequestFactory
-		for group, tab, chart in [('admin', 'qr-dash', 'qr-dash-chart'), ('president', 'qr-dash', 'qr-dash-chart'),
+		for group, tab, chart in [('admin', 'qr-dash', 'qr-dash-chart'), ('director', 'qr-dash', 'qr-dash-chart'),
 								  ('funsionario', 'qr-me', 'qr-me-chart'), ('employee', 'qr-me', 'qr-me-chart')]:
 			u = User.objects.create_user('m_' + group, password='x')
 			u.groups.add(Group.objects.get_or_create(name=group)[0])
@@ -1314,13 +1314,13 @@ class SecurityTests(QRBase):
 
 	# ---------- akses
 	def test_group_membership_is_not_limited_to_first_group(self):
-		self.login('funsionario', 'admin')                                    # grup yang berhak bukan yang pertama
+		self.login('staff', 'admin')                                    # grup yang berhak bukan yang pertama
 		self.assertEqual(self.client.get(reverse('qr-dash')).status_code, 200)
 		self.assertEqual(self.client.get(reverse('qr-cards')).status_code, 200)
 		self.assertEqual(self.client.get(reverse('qr-api-dash')).status_code, 200)
 
 	def test_forbidden_is_http_403_and_anonymous_is_redirected_to_login(self):
-		self.login('funsionario')
+		self.login('staff')
 		for name in ('qr-dash', 'qr-today', 'qr-report', 'qr-cards', 'qr-devices', 'qr-dash-chart'):
 			self.assertEqual(self.client.get(reverse(name)).status_code, 403, name)
 		self.client.logout()
@@ -2043,7 +2043,7 @@ class BurstTests(QRBase):
 
 	def test_viewers_see_flags_but_cannot_clear_them(self):
 		self.make_burst()
-		self.login('president')
+		self.login('director')
 		with mock.patch.object(timezone, 'now', lambda: at(MON, 12)):
 			html = self.client.get(reverse('qr-today')).content.decode()
 		self.assertIn('Perlu dicek</span>', html)
@@ -2063,7 +2063,7 @@ class BurstTests(QRBase):
 		self.assertEqual(self.client.get(reverse('qr-scan-review', args=[st.pk])).status_code, 405)
 		self.assertEqual(self.client.post(reverse('qr-scan-review', args=[99999])).status_code, 404)
 		self.client.logout()
-		self.login('funsionario', name='emp1')
+		self.login('staff', name='emp1')
 		self.assertEqual(self.client.post(reverse('qr-scan-review', args=[st.pk])).status_code, 403)
 
 	def test_report_counts_and_marks_flagged_days_and_csv_has_a_column(self):
@@ -2085,7 +2085,7 @@ class BurstTests(QRBase):
 	def test_employees_never_see_flags_about_themselves(self):
 		from employee.models import EmployeeUser
 		self.make_burst()
-		u = self.login('funsionario')
+		u = self.login('staff')
 		EmployeeUser.objects.create(employee=self.emp, user=u)
 		with mock.patch.object(timezone, 'now', lambda: at(MON, 12)):
 			html = self.client.get(reverse('qr-me'), {'year': 2026, 'month': 11}).content.decode()
@@ -2105,14 +2105,14 @@ class ProjectCompatibilityTests(QRBase):
 
 	def test_403_falls_back_to_builtin_page_when_project_has_none(self):
 		from attendance import views_qr
-		self.login('funsionario')
+		self.login('staff')
 		with mock.patch.object(views_qr, 'FORBIDDEN_TEMPLATES', ('tidak/ada.html', 'attendance/qr/403.html')):
 			r = self.client.get(reverse('qr-cards'))
 		self.assertEqual(r.status_code, 403)
 		self.assertContains(r, 'Anda tidak berhak membuka halaman ini', status_code=403)
 
 	def test_403_prefers_the_project_template(self):
-		self.login('funsionario')
+		self.login('staff')
 		r = self.client.get(reverse('qr-cards'))                                # harness memiliki home/403.html
 		self.assertContains(r, '403</h1>', status_code=403)
 		self.assertContains(r, 'site-footer', status_code=403)                # memakai kerangka proyek, bukan halaman cadangan mandiri
@@ -2121,7 +2121,7 @@ class ProjectCompatibilityTests(QRBase):
 	def test_items_snippet_fits_inside_an_existing_relatoriu_dropdown(self):
 		from django.template.loader import render_to_string
 		from django.test import RequestFactory
-		for group, tab in [('admin', 'qr-dash'), ('funsionario', 'qr-me')]:
+		for group, tab in [('admin', 'qr-dash'), ('staff', 'qr-me')]:
 			u = User.objects.create_user('it_' + group, password='x')
 			u.groups.add(Group.objects.get_or_create(name=group)[0])
 			req = RequestFactory().get('/')
@@ -2172,7 +2172,7 @@ class RoleRuleTests(QRBase):
 		return u
 
 	def test_only_admin_opens_the_kiosk_and_manages_cards(self):
-		for group in ('staff', 'president', 'hr', 'funsionario', 'employee'):
+		for group in ('staff', 'director', 'administrasaun'):
 			self.client.force_login(self.user(group))
 			self.assertEqual(self.client.post(reverse('qr-device-pair'), {}).status_code, 403, group)
 			self.assertEqual(self.client.get(reverse('qr-devices')).status_code, 403, group)
@@ -2185,7 +2185,7 @@ class RoleRuleTests(QRBase):
 		self.assertEqual(ScanDevice.objects.count(), 1)
 
 	def test_viewers_read_data_but_cannot_change_it(self):
-		for group in ('staff', 'president', 'hr'):
+		for group in ('director', 'administrasaun'):
 			self.client.force_login(self.user(group))
 			for name in ('qr-today', 'qr-report', 'qr-dash'):
 				self.assertEqual(self.client.get(reverse(name)).status_code, 200, (group, name))
@@ -2206,8 +2206,8 @@ class RoleRuleTests(QRBase):
 		self.assertTrue(Attendance.objects.filter(employee=adm_emp, date=MON).exists())
 
 	def test_hr_and_president_get_group_in_defaults(self):
-		self.assertIn('hr', svc.conf('VIEWER_GROUPS'))
-		self.assertNotIn('hr', svc.conf('MANAGER_GROUPS'))
+		self.assertIn('administrasaun', svc.conf('VIEWER_GROUPS'))
+		self.assertNotIn('administrasaun', svc.conf('MANAGER_GROUPS'))
 		self.assertEqual(svc.conf('DEVICE_GROUPS'), ['admin'])
 		self.assertEqual(svc.conf('MANAGER_GROUPS'), ['admin'])
 
@@ -2383,11 +2383,11 @@ class LatenessReportTests(QRBase):
 
 	def test_page_roles_csv_and_translations(self):
 		self.seed()
-		for g, code in (('admin', 200), ('staff', 200), ('president', 200), ('hr', 200), ('funsionario', 403), ('employee', 403)):
+		for g, code in (('admin', 200), ('director', 200), ('administrasaun', 200), ('staff', 403)):
 			self.client.logout()
 			self.login(g)
 			self.assertEqual(self.client.get(reverse('qr-late'), {'year': 2026, 'month': 11}).status_code, code, g)
-		self.login('hr')
+		self.login('administrasaun')
 		r = self.client.get(reverse('qr-late'), {'year': 2026, 'month': 11})
 		self.assertContains(r, 'Menit terlambat')
 		self.client.cookies['mdi_lang'] = 'en'
@@ -2432,7 +2432,7 @@ class BoardTests(QRBase):
 			return self.client.get(reverse(name))
 
 	def test_only_director_and_admin(self):
-		for g, code in (('admin', 200), ('president', 200), ('staff', 403), ('hr', 403), ('employee', 403)):
+		for g, code in (('admin', 200), ('director', 200), ('administrasaun', 200), ('staff', 403)):
 			self.login(g)
 			self.assertEqual(self.get().status_code, code, g)
 			self.assertEqual(self.get('qr-api-board').status_code, code, g)
@@ -2452,7 +2452,7 @@ class BoardTests(QRBase):
 		self.assertEqual(b['total'], 5)
 
 	def test_page_and_api(self):
-		self.login('president')
+		self.login('director')
 		r = self.get()
 		for text in ('Late T', 'Izin T', 'Cuti T', 'Wait T', 'col-md-8', 'col-md-4', 'terlambat 30 mnt'):
 			self.assertContains(r, text)

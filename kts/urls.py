@@ -19,5 +19,8 @@ urlpatterns = [
 	path('sai/new/', views.sai_add, name='kts-sai-add'),
 	path('sai/<int:pk>/', views.sai_detail, name='kts-sai-detail'),
 	path('sai/<int:pk>/edit/', views.sai_edit, name='kts-sai-edit'),
+	path('sai/<int:pk>/verify/', views.sai_verify, name='kts-sai-verify'),
+	path('sai/<int:pk>/return/', views.sai_return, name='kts-sai-return'),
+	path('sai/<int:pk>/approve/', views.sai_approve, name='kts-sai-approve'),
 	path('sai/<int:pk>/file/', views.sai_file, name='kts-sai-file'),
 ]

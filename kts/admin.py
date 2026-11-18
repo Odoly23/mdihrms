@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Sai, Tama, TamaEvent
+from .models import Sai, SaiEvent, Tama, TamaEvent
 
 
 class ReadOnly(admin.ModelAdmin):
@@ -26,10 +26,16 @@ class TamaAdmin(ReadOnly):
 
 @admin.register(Sai)
 class SaiAdmin(ReadOnly):
-	list_display = ('nu_ref', 'para', 'asuntu', 'data_kartasai')
+	list_display = ('nu_ref', 'para', 'asuntu', 'data_kartasai', 'status')
+	list_filter = ('status', 'anu_letivu')
 	search_fields = ('nu_ref', 'para', 'asuntu')
 
 
 @admin.register(TamaEvent)
 class TamaEventAdmin(ReadOnly):
+	list_display = ('at', 'letter', 'action', 'user')
+
+
+@admin.register(SaiEvent)
+class SaiEventAdmin(ReadOnly):
 	list_display = ('at', 'letter', 'action', 'user')

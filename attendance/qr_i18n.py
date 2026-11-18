@@ -455,6 +455,10 @@ from attendance.qr_i18n_hr import BOARD as _BOARD  # noqa: E402  (dasbor hari in
 MESSAGES.update(_BOARD)
 from attendance.qr_i18n_hr import CARD as _CARD  # noqa: E402  (label kartu)
 MESSAGES.update(_CARD)
+from attendance.qr_i18n_hr import KTS_OUT as _KTS_OUT  # noqa: E402  (alur surat keluar)
+MESSAGES.update(_KTS_OUT)
+from attendance.qr_i18n_hr import GROUPS_UI as _GROUPS_UI  # noqa: E402
+MESSAGES.update(_GROUPS_UI)
 
 
 def tr(lang, key, **params):

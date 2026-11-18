@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from attendance.models_qr import QRCard
+from main.groups import group_for_position
 
 from .models import (ContactInfo, Employee, EmployeeDivision, EmployeePosition, EmployeeUser, IDFNumber, LocationTL,
 	Photo)
@@ -54,7 +55,7 @@ def save_employee(form, by_user, create_account=False):
 		if create_account:
 			password = get_random_string(10, _PASSWORD_CHARS)
 			u = User.objects.create_user(_unique_username(d['nrf'] or 'emp%d' % e.pk), password=password)
-			u.groups.add(Group.objects.get_or_create(name='funsionario')[0])
+			u.groups.add(Group.objects.get_or_create(name=group_for_position(getattr(d['position'], 'name', '')))[0])   # grup menurut jabatan; admin sistem diberikan manual
 			EmployeeUser.objects.create(employee=e, user=u)
 			account = (u.username, password)
 	return e, account

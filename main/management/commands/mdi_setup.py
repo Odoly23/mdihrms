@@ -6,7 +6,8 @@ import datetime
 from attendance.models import AttendanceStatus, Month, Year
 from leave.models import LeaveType
 
-GROUPS = ['admin', 'staff', 'president', 'hr', 'logistik', 'resepsionis', 'funsionario', 'employee']
+from main import groups as grp
+
 STATUS = [('F', 'Falta'), ('P', 'Presensa'), ('L', 'Lisensa')]
 
 
@@ -14,10 +15,13 @@ class Command(BaseCommand):
 	help = 'Siapkan data awal: grup pengguna dan status absensi (F/P/L). Aman dijalankan berulang kali.'
 
 	def handle(self, *args, **opts):
-		for name in GROUPS:
+		for name in grp.GROUPS:
 			_, new = Group.objects.get_or_create(name=name)
 			if opts.get('verbosity', 1) > 0:
 				self.stdout.write('%s grup %s' % ('Buat' if new else 'Ada ', name))
+		moved = grp.migrate_legacy()          # president/hr/logistik/resepsionis/funsionario/employee -> 4 grup baru
+		if moved and opts.get('verbosity', 1) > 0:
+			self.stdout.write('Pindahkan %d keanggotaan grup lama ke grup baru' % moved)
 		# urutan ID 1,2,3 = F,P,L seperti database lama (ATTENDANCE_ACTIVE_STATUS_ID dipakai oleh modul QR)
 		if not AttendanceStatus.objects.exists():
 			for code, name in STATUS:

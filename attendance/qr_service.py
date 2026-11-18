@@ -60,11 +60,11 @@ _DEFAULTS = {
 	'DEVICE_GRACE_HOURS': 24,      # token lama masih diterima sekian jam setelah diputar (bila Set-Cookie tidak sampai)
 	'CLIENT_IP_HEADER': None,      # mis. 'HTTP_CF_CONNECTING_IP' (Cloudflare) atau 'HTTP_X_REAL_IP'; hanya bila front-end tepercaya
 	'MANAGER_GROUPS': ['admin'],
-	'VIEWER_GROUPS': ['admin', 'staff', 'president', 'hr'],
-	'BOARD_GROUPS': ['admin', 'president'],           # dasbor hari ini: siapa hadir, terlambat, izin, cuti
+	'VIEWER_GROUPS': ['admin', 'director', 'administrasaun'],   # staf hanya melihat absensinya sendiri
+	'BOARD_GROUPS': ['admin', 'director', 'administrasaun'],           # dasbor hari ini: siapa hadir, terlambat, izin, cuti
 	'CUTI_CODES': ['AL', 'CT', 'ANUAL'],             # kode jenis lisensa yang dihitung 'cuti'; lainnya dihitung 'izin' (nama berisi cuti/anual/annual/férias juga cuti)
 	'DEVICE_GROUPS': ['admin'],
-	'SELF_GROUPS': ['admin', 'staff', 'president', 'hr', 'funsionario', 'employee'],
+	'SELF_GROUPS': ['admin', 'director', 'administrasaun', 'staff'],
 }
 
 

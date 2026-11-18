@@ -19,25 +19,31 @@
 				<option value="">{% t 'staff.all_div' %}</option>
 				{% for d in divisions %}<option value="{{ d.pk }}" {% if div == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
 			</select>
+			<select name="grp" class="form-control form-control-sm mr-2 mb-1" aria-label="{% t 'th.group' %}">
+				<option value="">{% t 'staff.all_grp' %}</option>
+				{% for g in group_choices %}<option value="{{ g }}" {% if grp == g %}selected{% endif %}>{{ g }}</option>{% endfor %}
+				<option value="none" {% if grp == 'none' %}selected{% endif %}>{% t 'staff.no_grp' %}</option>
+			</select>
 			<button class="btn btn-sm btn-mdi mb-1"><i class="fa fa-search"></i> {% t 'btn.search' %}</button>
 		</form>
 		<div class="table-responsive">
 		<table class="table table-sm table-striped">
-			<thead><tr><th>{% t 'th.name' %}</th><th>{% t 'th.nrf' %}</th><th>{% t 'th.position' %}</th><th>{% t 'th.division' %}</th><th></th></tr></thead>
+			<thead><tr><th>{% t 'th.name' %}</th><th>{% t 'th.nrf' %}</th><th>{% t 'th.position' %}</th><th>{% t 'th.division' %}</th><th>{% t 'th.group' %}</th><th></th></tr></thead>
 			<tbody>
 			{% for e in page %}
 				<tr><td>{{ e }}</td><td>{{ e.idfnumber.nrf|default:"-" }}</td>
 				<td>{{ e.employeeposition.position|default:"-" }}</td><td>{{ e.employeedivision.division|default:"-" }}</td>
+				<td>{% for g in e.group_names %}<span class="badge badge-{% if g == 'admin' %}dark{% elif g == 'director' %}danger{% elif g == 'administrasaun' %}info{% else %}secondary{% endif %} rounded-pill px-2">{{ g }}</span> {% empty %}<span class="text-muted">-</span>{% endfor %}</td>
 				<td><a class="btn btn-sm btn-mdi" href="{% url 'staff-detail' e.pk %}"><i class="fa fa-id-badge"></i> {% t 'btn.detail' %}</a></td></tr>
-			{% empty %}<tr><td colspan="5" class="text-center text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
+			{% empty %}<tr><td colspan="6" class="text-center text-muted">{% t 'none.data' %}</td></tr>{% endfor %}
 			</tbody>
 		</table>
 		</div>
 		{% if page.has_other_pages %}
 		<nav><ul class="pagination pagination-sm">
-			{% if page.has_previous %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&dg={{ dg }}&div={{ div }}&page={{ page.previous_page_number }}">&laquo;</a></li>{% endif %}
+			{% if page.has_previous %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&dg={{ dg }}&div={{ div }}&grp={{ grp }}&page={{ page.previous_page_number }}">&laquo;</a></li>{% endif %}
 			<li class="page-item disabled"><span class="page-link">{{ page.number }} / {{ page.paginator.num_pages }}</span></li>
-			{% if page.has_next %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&dg={{ dg }}&div={{ div }}&page={{ page.next_page_number }}">&raquo;</a></li>{% endif %}
+			{% if page.has_next %}<li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&dg={{ dg }}&div={{ div }}&grp={{ grp }}&page={{ page.next_page_number }}">&raquo;</a></li>{% endif %}
 		</ul></nav>
 		{% endif %}
 	</div>

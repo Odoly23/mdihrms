@@ -37,8 +37,8 @@
 				<a class="nl dropdown-toggle" href="#" id="ddKts" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-envelope" aria-hidden="true"></i> {% t 'ui.nav.kts' %}</a>
 				<div class="dropdown-menu" aria-labelledby="ddKts">
 					<a class="dropdown-item" href="{% url 'kts-dash' %}"><i class="fa fa-dashboard" aria-hidden="true"></i> {% t 'kts.title' %}</a>
-					{% if can.kts_view_all %}<a class="dropdown-item" href="{% url 'kts-tama' %}"><i class="fa fa-envelope" aria-hidden="true"></i> KARTA TAMA</a>
-					<a class="dropdown-item" href="{% url 'kts-sai' %}"><i class="fa fa-envelope-open" aria-hidden="true"></i> KARTA SAI</a>{% endif %}
+					{% if can.kts_view_all or can.kts_register %}<a class="dropdown-item" href="{% url 'kts-tama' %}"><i class="fa fa-envelope" aria-hidden="true"></i> KARTA TAMA</a>{% endif %}
+					{% if can.kts_out %}<a class="dropdown-item" href="{% url 'kts-sai' %}"><i class="fa fa-envelope-open" aria-hidden="true"></i> KARTA SAI</a>{% endif %}
 					<a class="dropdown-item" href="{% url 'kts-tama-mine' %}"><i class="fa fa-tasks" aria-hidden="true"></i> {% t 'kts.mine' %}</a>
 				</div>
 			</li>

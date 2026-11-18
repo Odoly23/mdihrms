@@ -10,7 +10,7 @@ class ProjectTests(TestCase):
 	def test_setup_command_is_idempotent(self):
 		call_command('mdi_setup', verbosity=0)
 		call_command('mdi_setup', verbosity=0)
-		self.assertEqual(Group.objects.count(), 8)
+		self.assertEqual(Group.objects.count(), 4)
 		self.assertEqual(list(AttendanceStatus.objects.order_by('id').values_list('code', flat=True)), ['F', 'P', 'L'])
 
 	def test_login_required_and_login_page(self):
@@ -19,7 +19,7 @@ class ProjectTests(TestCase):
 
 	def test_home_for_each_group_and_without_group(self):
 		call_command('mdi_setup', verbosity=0)
-		for name in ('admin', 'staff', 'president', 'hr', 'logistik', 'resepsionis', 'funsionario', 'employee', None):
+		for name in ('admin', 'director', 'administrasaun', 'staff', None):
 			u = User.objects.create_user('u_%s' % name, password='x')
 			if name:
 				u.groups.add(Group.objects.get(name=name))
@@ -37,7 +37,7 @@ class ProjectTests(TestCase):
 	def test_admin_menu_only_for_admin(self):
 		call_command('mdi_setup', verbosity=0)
 		a = User.objects.create_user('a', password='x'); a.groups.add(Group.objects.get(name='admin'))
-		f = User.objects.create_user('f', password='x'); f.groups.add(Group.objects.get(name='funsionario'))
+		f = User.objects.create_user('f', password='x'); f.groups.add(Group.objects.get(name='staff'))
 		self.client.force_login(a)
 		self.assertContains(self.client.get(reverse('home')), reverse('qr-devices'))
 		self.client.force_login(f)
@@ -108,7 +108,7 @@ class LeaveFlowTests(HrBase):
 		self.assertContains(self.client.get(reverse('leave-mine')), 'Hein')
 
 	def test_all_request_groups_can_open_the_form(self):
-		for g in ('admin', 'staff', 'president', 'hr', 'funsionario', 'employee'):
+		for g in ('admin', 'staff', 'director', 'administrasaun', 'staff', 'staff'):
 			self.login(g, self.emp('P' + g))
 			self.assertEqual(self.client.get(reverse('leave-new')).status_code, 200, g)
 
@@ -147,10 +147,10 @@ class LeaveFlowTests(HrBase):
 		lv = Leaves.objects.get()
 		self.assertEqual(self.client.post(reverse('leave-decide', args=[lv.pk, 'approve'])).status_code, 403)
 		self.assertEqual(self.client.get(reverse('leave-all')).status_code, 403)
-		self.login('hr')                                                   # hr melihat semua tetapi tidak menyetujui
+		self.login('administrasaun')                                                   # hr melihat semua tetapi tidak menyetujui
 		self.assertContains(self.client.get(reverse('leave-all')), 'Maria')
 		self.assertEqual(self.client.post(reverse('leave-decide', args=[lv.pk, 'approve'])).status_code, 403)
-		self.login('president')
+		self.login('director')
 		self.assertContains(self.client.get(reverse('leave-all')), 'Aprova')
 		self.client.post(reverse('leave-decide', args=[lv.pk, 'approve']))
 		lv.refresh_from_db()
@@ -167,7 +167,7 @@ class LeaveFlowTests(HrBase):
 
 	def test_cannot_approve_own_leave_and_decide_requires_post(self):
 		e = self.emp('Bos')
-		self.login('president', e)
+		self.login('director', e)
 		self.client.post(reverse('leave-new'), {'leave_type': self.lt.pk, 'start_date': self.future(1), 'end_date': self.future(2)})
 		lv = Leaves.objects.get()
 		self.client.post(reverse('leave-decide', args=[lv.pk, 'approve']))
@@ -217,7 +217,7 @@ class PlacementTests(HrBase):
 
 	def test_president_allocates_and_report_data_follows(self):
 		e = self.emp('Maria')
-		self.login('president')
+		self.login('director')
 		r = self.post(e)
 		self.assertRedirects(r, reverse('placement-history', args=[e.pk]))
 		self.assertEqual(EmployeePosition.objects.get(employee=e).position, self.pos2)
@@ -247,15 +247,12 @@ class PlacementTests(HrBase):
 
 	def test_staff_and_hr_only_view(self):
 		e = self.emp('Maria')
-		for g in ('staff', 'hr'):
+		for g in ('staff', 'administrasaun'):
 			self.login(g)
 			self.assertEqual(self.client.get(reverse('placement-list')).status_code, 200, g)
 			self.assertEqual(self.client.get(reverse('placement-history', args=[e.pk])).status_code, 200, g)
 			self.assertEqual(self.client.get(reverse('placement-new', args=[e.pk])).status_code, 403, g)
 			self.assertEqual(self.post(e).status_code, 403, g)
-		for g in ('funsionario', 'employee'):
-			self.login(g)
-			self.assertEqual(self.client.get(reverse('placement-list')).status_code, 403, g)
 		self.assertEqual(Kolokasaun.objects.count(), 0)
 
 
@@ -263,7 +260,7 @@ class DirectoryTests(HrBase):
 	def test_hr_president_admin_see_staff_list_and_detail(self):
 		e = self.emp('Maria', 'Silva')
 		self.emp('Jose', 'Costa')
-		for g in ('hr', 'president', 'admin'):
+		for g in ('administrasaun', 'director', 'admin'):
 			self.login(g)
 			r = self.client.get(reverse('staff-list'))
 			self.assertContains(r, 'Maria')
@@ -274,7 +271,7 @@ class DirectoryTests(HrBase):
 		self.emp('Maria', 'Silva')
 		j = self.emp('Jose', 'Costa')
 		EmployeeDivision.objects.filter(employee=j).update(division=self.div2)
-		self.login('hr')
+		self.login('administrasaun')
 		self.assertNotContains(self.client.get(reverse('staff-list'), {'q': 'Mari'}), 'Costa')
 		r = self.client.get(reverse('staff-list'), {'div': self.div2.pk})
 		self.assertContains(r, 'Costa')
@@ -282,7 +279,7 @@ class DirectoryTests(HrBase):
 
 	def test_others_cannot_see_the_directory(self):
 		e = self.emp('Maria')
-		for g in ('staff', 'funsionario', 'employee'):
+		for g in ('staff', 'staff', 'staff'):
 			self.login(g)
 			self.assertEqual(self.client.get(reverse('staff-list')).status_code, 403, g)
 			self.assertEqual(self.client.get(reverse('staff-detail', args=[e.pk])).status_code, 403, g)
@@ -292,7 +289,7 @@ class DirectoryTests(HrBase):
 		from django.test.utils import CaptureQueriesContext
 		for i in range(30):
 			self.emp('P%d' % i)
-		self.login('hr')
+		self.login('administrasaun')
 		with CaptureQueriesContext(connection) as c:
 			self.client.get(reverse('staff-list'))
 		self.assertLess(len(c), 15)
@@ -317,7 +314,7 @@ class NotifTests(HrBase):
 		Leaves.objects.create(employee=e, leave_type=self.lt, start_date=timezone.localdate(), end_date=timezone.localdate(), is_active=True, is_confirm=False)
 		self.login('staff')
 		self.assertEqual(self.client.get(reverse('notif-badge')).json()['leaves'], 0)
-		self.login('president')
+		self.login('director')
 		self.assertEqual(self.client.get(reverse('notif-badge')).json()['leaves'], 1)
 		self.assertContains(self.client.get(reverse('home')), 'Aprova Lisensa')
 
@@ -339,7 +336,7 @@ class NotifTests(HrBase):
 
 	def test_birthday_page_lists_the_month_and_survives_bad_input(self):
 		self.emp('Ana', 'Lopes', dob=datetime.date(1990, 3, 10))
-		self.login('employee')
+		self.login('staff')
 		self.assertContains(self.client.get(reverse('notif-birthdays'), {'month': 3}), 'Ana Lopes')
 		self.assertEqual(self.client.get(reverse('notif-birthdays'), {'month': 'x'}).status_code, 200)
 		self.assertEqual(self.client.get(reverse('notif-birthdays'), {'month': 99}).status_code, 200)
@@ -361,10 +358,9 @@ class NavbarRoleTests(HrBase):
 	def test_menu_per_role(self):
 		matrix = {
 			'admin': dict(kiosk=True, cards=True, leave_all=True, place=True, directory=True),
-			'president': dict(kiosk=False, cards=False, leave_all=True, place=True, directory=True),
-			'hr': dict(kiosk=False, cards=False, leave_all=True, place=True, directory=True),
+			'director': dict(kiosk=False, cards=False, leave_all=True, place=True, directory=True),
+			'administrasaun': dict(kiosk=False, cards=False, leave_all=True, place=True, directory=True),
 			'staff': dict(kiosk=False, cards=False, leave_all=False, place=True, directory=False),
-			'funsionario': dict(kiosk=False, cards=False, leave_all=False, place=False, directory=False),
 		}
 		for g, want in matrix.items():
 			h = self.html(g)
@@ -388,7 +384,7 @@ class EmployeeCrudTests(HrBase):
 
 	def test_only_admin_can_add_or_edit(self):
 		e = self.emp('Maria')
-		for g in ('staff', 'president', 'hr', 'funsionario', 'employee'):
+		for g in ('staff', 'director', 'administrasaun', 'staff', 'staff'):
 			self.login(g)
 			self.assertEqual(self.client.get(reverse('employee-add')).status_code, 403, g)
 			self.assertEqual(self.client.post(reverse('employee-add'), self.data()).status_code, 403, g)
@@ -410,7 +406,7 @@ class EmployeeCrudTests(HrBase):
 		self.assertTrue(QRCard.objects.filter(employee=e).exists())
 		link = EmployeeUser.objects.get(employee=e)
 		self.assertEqual(link.user.username, 'NRF-001')
-		self.assertTrue(link.user.groups.filter(name='funsionario').exists())
+		self.assertTrue(link.user.groups.filter(name='staff').exists())
 		msgs = [m.message for m in r.context['messages']]
 		pwd = [m for m in msgs if 'Password:' in m][0].split('Password: ')[1].split(' ')[0]
 		self.assertNotEqual(pwd.lower(), 'password')
@@ -486,7 +482,7 @@ class EmployeeCrudTests(HrBase):
 	def test_add_button_only_for_admin_in_list(self):
 		self.login('admin')
 		self.assertContains(self.client.get(reverse('staff-list')), reverse('employee-add'))
-		self.login('hr')
+		self.login('administrasaun')
 		self.assertNotContains(self.client.get(reverse('staff-list')), reverse('employee-add'))
 
 
@@ -637,15 +633,15 @@ class ShellLayoutTests(HrBase):
 		def side(group):
 			h = self.html(group)
 			return h[h.index('id="sidebar"'):h.index('id="overlay"')]
-		adm, stf, fun = side('admin'), side('staff'), side('funsionario')
+		adm, stf, dire = side('admin'), side('staff'), side('director')
 		self.assertIn(reverse('qr-devices'), adm)
 		self.assertIn(reverse('qr-cards'), adm)
 		self.assertNotIn(reverse('qr-devices'), stf)
 		self.assertNotIn(reverse('qr-cards'), stf)
-		self.assertIn(reverse('qr-today'), stf)
-		self.assertNotIn(reverse('qr-today'), fun)
-		self.assertNotIn(reverse('staff-list'), fun)
-		for s in (adm, stf, fun):
+		self.assertIn(reverse('qr-today'), dire)                          # direktur melihat semua absensi
+		self.assertNotIn(reverse('qr-today'), stf)                        # staf hanya melihat absensinya sendiri
+		self.assertNotIn(reverse('staff-list'), stf)
+		for s in (adm, stf, dire):
 			self.assertIn('action="%s"' % reverse('logout'), s)              # keluar lewat POST
 
 	def test_colour_comes_from_one_variable_and_sample_values(self):
@@ -694,7 +690,7 @@ class AttendanceConfigTests(HrBase):
 	def test_only_admin_can_open_any_config_page(self):
 		urls = [reverse('attendance-custom-dash'), reverse('attendance-custom-holiday-list'), reverse('attendance-custom-holiday-add'),
 			reverse('attendance-custom-tolerance-list'), reverse('attendance-custom-tolerance-add'), reverse('attendance-custom-status-add')]
-		for g in ('staff', 'president', 'hr', 'funsionario', 'employee'):
+		for g in ('staff', 'director', 'administrasaun', 'staff', 'staff'):
 			self.login(g)
 			for u in urls:
 				self.assertEqual(self.client.get(u).status_code, 403, (g, u))
@@ -831,7 +827,7 @@ class AttendanceConfigTests(HrBase):
 	def test_menu_links_for_admin_only(self):
 		self.login('admin', self.emp('A'))
 		self.assertContains(self.client.get(reverse('home')), reverse('attendance-custom-dash'))
-		self.login('hr', self.emp('H'))
+		self.login('administrasaun', self.emp('H'))
 		self.assertNotContains(self.client.get(reverse('home')), reverse('attendance-custom-dash'))
 
 
@@ -848,7 +844,7 @@ class HolidayNoticeTests(HrBase):
 		from attendance.models import NacionalHoliday
 		NacionalHoliday.objects.create(name='Masacre Santa Cruz', date=datetime.date(1999, 11, 12), is_active=True)
 
-	def page(self, y, m, d, group='funsionario', lang=None, url='home'):
+	def page(self, y, m, d, group='staff', lang=None, url='home'):
 		from unittest import mock
 		self.login(group, self.emp('E%s' % group))
 		if lang:
@@ -869,7 +865,7 @@ class HolidayNoticeTests(HrBase):
 			'en': 'Tomorrow, Thursday, 12 November 2026, is a holiday: Masacre Santa Cruz',
 			'id': 'Besok, Kamis, 12 November 2026, libur: Masacre Santa Cruz',
 			'pt': 'Amanhã, Quinta-feira, 12 de Novembro 2026, é feriado: Masacre Santa Cruz'}
-		for g in ('funsionario', 'staff', 'president', 'hr', 'admin'):
+		for g in ('staff', 'staff', 'director', 'administrasaun', 'admin'):
 			for lang, text in want.items():
 				h = self.page(2026, 11, 11, g, lang)
 				self.assertIn('class="holiday-banner"', h, (g, lang))
@@ -1000,7 +996,7 @@ class ToleranceFromHolidayTests(HrBase):
 		self.assertEqual(Tolerance.objects.get().year.year, 2026)
 
 	def test_only_admin_sees_the_prefill_route(self):
-		self.login('hr')
+		self.login('administrasaun')
 		self.assertEqual(self.client.get(reverse('attendance-custom-tolerance-add'), {'from': self.h.pk}).status_code, 403)
 
 
@@ -1121,3 +1117,79 @@ class FormErrorTranslationTests(HrBase):
 		self.client.cookies['mdi_lang'] = 'pt'
 		h = self.client.post(reverse('attendance-custom-year-add'), {'year': 'abc'}, follow=True).content.decode()
 		self.assertIn('Introduza um número inteiro.', h)
+
+
+class FourGroupTests(HrBase):
+	"""Empat grup: admin, director, administrasaun, staff; pemindahan grup lama dan penetapan grup dari jabatan."""
+
+	def test_legacy_groups_are_merged_into_the_four(self):
+		from main import groups
+		legacy = {'president': 'director', 'hr': 'administrasaun', 'logistik': 'administrasaun', 'resepsionis': 'staff', 'funsionario': 'staff', 'employee': 'staff'}
+		users = {}
+		for old in legacy:
+			g = Group.objects.create(name=old)
+			users[old] = User.objects.create_user('old_' + old)
+			users[old].groups.add(g)
+		call_command('mdi_setup', verbosity=0)
+		self.assertEqual(sorted(Group.objects.values_list('name', flat=True)), sorted(groups.GROUPS))
+		for old, new in legacy.items():
+			self.assertEqual(list(users[old].groups.values_list('name', flat=True)), [new], old)
+
+	def test_position_rules(self):
+		from main.groups import group_for_position as gp
+		self.assertEqual(gp('Director Ezekutivu MDI'), 'director')
+		self.assertEqual(gp('Assistente Adm & Finansa'), 'administrasaun')
+		self.assertEqual(gp('Official Logistik'), 'administrasaun')
+		for p in ('Program Manager', 'Official Cleaner', 'MDI Volunteer IT Technik', 'Koord. Jeral Asuntu Transparansia no Akuntabilidade Sosial', '', None):
+			self.assertEqual(gp(p), 'staff', p)
+
+	def test_assign_command_dry_run_then_apply_never_touches_admin(self):
+		from io import StringIO
+		from employee.models import EmployeePosition
+		from custom.models import Position
+		boss, fin, plain, sysadm = self.emp('Bos'), self.emp('Fin'), self.emp('Biasa'), self.emp('Sis')
+		for e, pos in ((boss, 'Director Ezekutivu'), (fin, 'Assistente Adm & Finansa'), (plain, 'Official Cleaner'), (sysadm, 'Director IT')):
+			EmployeePosition.objects.update_or_create(employee=e, defaults={'position': Position.objects.create(name=pos)})
+		us = {e.first_name: self.user('staff', e) for e in (boss, fin, plain)}
+		us['Sis'] = self.user('admin', sysadm)
+		names = lambda u: sorted(u.groups.values_list('name', flat=True))
+		call_command('mdi_assign_groups', stdout=StringIO())
+		self.assertEqual(names(us['Bos']), ['staff'])                         # tanpa --apply tidak ada yang berubah
+		call_command('mdi_assign_groups', '--apply', stdout=StringIO())
+		self.assertEqual((names(us['Bos']), names(us['Fin']), names(us['Biasa']), names(us['Sis'])),
+						 (['director'], ['administrasaun'], ['staff'], ['admin']))
+
+	def test_new_employee_account_gets_group_from_position(self):
+		from custom.models import Position
+		self.login('admin')
+		pos = Position.objects.create(name='Official Logistik')
+		d = {'first_name': 'Lia', 'last_name': 'Costa', 'date_of_birth': '1990-05-17', 'sex': 'Feto', 'status': 1, 'nrf': 'NRF-9',
+			'position': pos.pk, 'dg': self.dg.pk, 'division': self.div.pk, 'phone': '', 'email': '', 'create_account': 'on'}
+		self.client.post(reverse('employee-add'), d)
+		u = EmployeeUser.objects.get(employee__first_name='Lia').user
+		self.assertEqual(list(u.groups.values_list('name', flat=True)), ['administrasaun'])
+
+	def test_staff_list_shows_group_and_filters_by_it(self):
+		a, b = self.emp('Aaa'), self.emp('Bbb')
+		self.user('director', a)
+		self.user('staff', b)
+		self.login('administrasaun')
+		html = self.client.get(reverse('staff-list')).content.decode()
+		self.assertIn('badge-danger rounded-pill px-2">director', html)
+		only = self.client.get(reverse('staff-list'), {'grp': 'director'}).content.decode()
+		self.assertIn('Aaa', only)
+		self.assertNotIn('Bbb', only)
+		none = self.client.get(reverse('staff-list'), {'grp': 'none'}).content.decode()
+		self.assertNotIn('Aaa', none)
+
+	def test_role_matrix(self):
+		from main import roles
+		for g, want in {'admin': dict(employee_edit=1, leave_approver=1, asset_manager=1, health_payer=1, kts_verify=1, kts_dispose=1, kts_register=0),
+						'director': dict(employee_edit=0, leave_approver=1, asset_manager=0, health_payer=0, kts_verify=0, kts_dispose=1, kts_register=0),
+						'administrasaun': dict(employee_edit=0, leave_approver=0, asset_manager=1, health_payer=1, kts_verify=1, kts_dispose=0, kts_register=0),
+						'staff': dict(employee_edit=0, leave_approver=0, asset_manager=0, health_payer=0, kts_verify=0, kts_dispose=0, kts_register=1)}.items():
+			u = self.user(g)
+			for key, ok in want.items():
+				self.assertEqual(roles.has_role(u, key.upper() + '_GROUPS'), bool(ok), (g, key))
+			self.assertTrue(roles.has_role(u, 'LEAVE_REQUEST_GROUPS'), g)        # semua grup boleh mengajukan lisensa
+			self.assertTrue(roles.has_role(u, 'KTS_OUT_GROUPS'), g)              # semua grup boleh membuat surat keluar

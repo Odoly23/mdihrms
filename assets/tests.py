@@ -33,17 +33,17 @@ class AssetBase(HrBase):
 class RolesTests(AssetBase):
 	def test_manager_and_viewer_roles(self):
 		a = self.make()
-		for g in ('admin', 'logistik'):
+		for g in ('admin', 'administrasaun'):
 			self.as_(g)
 			self.assertEqual(self.client.get(reverse('asset-list')).status_code, 200, g)
 			self.assertEqual(self.client.get(reverse('asset-add')).status_code, 200, g)
-		for g in ('hr', 'president'):
+		for g in ('director',):
 			self.as_(g)
 			self.assertEqual(self.client.get(reverse('asset-list')).status_code, 200, g)
 			self.assertEqual(self.client.get(reverse('asset-survey')).status_code, 200, g)
 			self.assertEqual(self.client.get(reverse('asset-add')).status_code, 403, g)                       # hanya baca
 			self.assertEqual(self.client.post(reverse('asset-assign', args=[a.pk]), {'employee': self.maria.pk}).status_code, 403, g)
-		for g in ('staff', 'funsionario', 'employee'):
+		for g in ('staff',):
 			self.as_(g)
 			for name in ('asset-list', 'asset-survey', 'asset-add'):
 				self.assertEqual(self.client.get(reverse(name)).status_code, 403, (g, name))
@@ -168,7 +168,7 @@ class ServiceRulesTests(AssetBase):
 
 class ViewFlowTests(AssetBase):
 	def test_manager_flow_through_the_pages(self):
-		self.as_('logistik')
+		self.as_('administrasaun')
 		r = self.client.post(reverse('asset-add'), {'code': 'pc-001', 'name': 'PC Kantor', 'category': self.laptop.pk, 'status': 'in_stock',
 			'shelf': 'Rak A-1', 'brand': 'Dell', 'model': 'X', 'serial_number': 'S1', 'notes': ''})
 		a = Asset.objects.get(code='pc-001')
@@ -258,7 +258,7 @@ class SurveyTests(AssetBase):
 
 	def test_survey_page_and_csv(self):
 		self.make('L1', name='=cmd|calc')
-		self.as_('hr')
+		self.as_('administrasaun')
 		page = self.client.get(reverse('asset-survey')).content.decode()
 		self.assertIn('ASET ESTRAGA', page)
 		r = self.client.get(reverse('asset-survey-csv'))
@@ -286,7 +286,7 @@ class SetupAndMiscTests(AssetBase):
 	def test_setup_seeds_categories_and_logistics_group_idempotently(self):
 		call_command('mdi_setup', verbosity=0)
 		self.assertEqual(AssetCategory.objects.count(), 7)
-		self.assertTrue(Group.objects.filter(name='logistik').exists())
+		self.assertTrue(Group.objects.filter(name='administrasaun').exists())
 
 	def test_event_history_cannot_be_edited_in_admin(self):
 		from django.contrib import admin
@@ -295,10 +295,10 @@ class SetupAndMiscTests(AssetBase):
 		self.assertFalse(ma.has_change_permission(None))
 		self.assertFalse(ma.has_delete_permission(None))
 
-	def test_hr_sees_assets_on_staff_detail_but_staff_does_not(self):
+	def test_administrasaun_sees_assets_on_staff_detail_but_staff_does_not(self):
 		a = self.make('LAP-77')
 		services.assign(a.pk, self.maria, None)
-		self.as_('hr')
+		self.as_('administrasaun')
 		self.assertIn('LAP-77', self.client.get(reverse('staff-detail', args=[self.maria.pk])).content.decode())
 
 	def test_translations_in_four_languages(self):

@@ -261,3 +261,34 @@ CARD = {
 	'card.own': ('Kartaun ne\'e propriedade Mata Dalan Institute.', 'This card is the property of Mata Dalan Institute.',
 				 'Kartu ini milik Mata Dalan Institute.', 'Este cartão é propriedade do Mata Dalan Institute.'),
 }
+
+
+KTS_OUT = {
+	'kts.sst.registered': ('Hein verifikasaun', 'Awaiting verification', 'Menunggu verifikasi', 'A aguardar verificação'),
+	'kts.sst.returned': ('Fila fali ba hadia', 'Returned for correction', 'Dikembalikan untuk diperbaiki', 'Devolvida para correção'),
+	'kts.sst.verified': ('Verifika (hein aprovasaun diretór)', 'Verified (awaiting director approval)', 'Terverifikasi (menunggu persetujuan direktur)', 'Verificada (a aguardar aprovação do diretor)'),
+	'kts.sst.approved': ('Aprova (prontu atu haruka)', 'Approved (ready to send)', 'Disetujui (siap dikirim)', 'Aprovada (pronta a enviar)'),
+	'kts.sev.register': ('Rejistu', 'Registered', 'Didaftarkan', 'Registada'),
+	'kts.sev.edit': ('Hadia dadus', 'Edited', 'Data diubah', 'Editada'),
+	'kts.sev.verify': ('Verifika', 'Verified', 'Diverifikasi', 'Verificada'),
+	'kts.sev.return': ('Fila fali', 'Returned', 'Dikembalikan', 'Devolvida'),
+	'kts.sev.approve': ('Aprova', 'Approved', 'Disetujui', 'Aprovada'),
+	'kts.approval': ('APROVASAUN', 'APPROVAL', 'PERSETUJUAN', 'APROVAÇÃO'),
+	'kts.btn.verify': ('Verifika', 'Verify', 'Verifikasi', 'Verificar'),
+	'kts.btn.sai_approve': ('Aprova karta sai', 'Approve outgoing letter', 'Setujui surat keluar', 'Aprovar carta de saída'),
+	'kts.btn.return_out': ('Fila fali ba autór', 'Return to author', 'Kembalikan ke pembuat', 'Devolver ao autor'),
+	'kts.c.out_verify': ('Karta sai hein verifikasaun', 'Outgoing letters to verify', 'Surat keluar untuk diverifikasi', 'Cartas de saída a verificar'),
+	'kts.c.out_approve': ('Karta sai hein aprovasaun', 'Outgoing letters to approve', 'Surat keluar untuk disetujui', 'Cartas de saída a aprovar'),
+	'kts.c.out_returned': ('Karta sai fila fali ba ita', 'Your returned outgoing letters', 'Surat keluar Anda yang dikembalikan', 'As suas cartas de saída devolvidas'),
+	'kts.msg.verified': ('Karta sai verifika ona.', 'Outgoing letter verified.', 'Surat keluar diverifikasi.', 'Carta de saída verificada.'),
+	'kts.msg.returned_out': ('Karta sai fila fali ba autór.', 'Outgoing letter returned to its author.', 'Surat keluar dikembalikan ke pembuat.', 'Carta de saída devolvida ao autor.'),
+	'kts.msg.sai_approved': ('Karta sai aprova ona.', 'Outgoing letter approved.', 'Surat keluar disetujui.', 'Carta de saída aprovada.'),
+	'kts.err.self_verify': ('Ita labele verifika karta ne\'ebé ita rasik halo.', 'You cannot verify a letter you created yourself.', 'Anda tidak bisa memverifikasi surat buatan sendiri.', 'Não pode verificar uma carta criada por si.'),
+}
+
+
+GROUPS_UI = {
+	'th.group': ('Grupu', 'Group', 'Grup', 'Grupo'),
+	'staff.all_grp': ('Grupu hotu', 'All groups', 'Semua grup', 'Todos os grupos'),
+	'staff.no_grp': ('Seidauk iha grupu', 'No group yet', 'Belum punya grup', 'Sem grupo'),
+}

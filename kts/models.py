@@ -87,10 +87,35 @@ class Sai(models.Model):
 	hashed = models.CharField(max_length=32, null=True)
 	anu_letivu = models.CharField(max_length=4, null=True, verbose_name="Anu Letivu")
 	datetime = models.DateTimeField(null=True)
-	user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+	user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)        # pembuat
+	# --- alur: registered -> verified (administrasi) -> approved (direktur); returned bila perlu diperbaiki
+	status = models.CharField(max_length=10, default='registered', db_index=True)
+	verified_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+	verified_at = models.DateTimeField(null=True, blank=True)
+	verify_note = models.CharField(max_length=300, blank=True)
+	approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+	approved_at = models.DateTimeField(null=True, blank=True)
+	approve_note = models.CharField(max_length=300, blank=True)
 
 	class Meta:
 		ordering = ['-data_kartasai', '-id']
 
 	def __str__(self):
 		return '%s %s' % (self.nu_ref, self.asuntu)
+
+
+SAI_STATUSES = ('registered', 'returned', 'verified', 'approved')
+
+
+class SaiEvent(models.Model):
+	"""Riwayat surat keluar (bukti audit; tidak diubah oleh aplikasi)."""
+	letter = models.ForeignKey(Sai, on_delete=models.CASCADE, related_name='events')
+	action = models.CharField(max_length=10)
+	from_status = models.CharField(max_length=10, blank=True)
+	to_status = models.CharField(max_length=10, blank=True)
+	user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+	note = models.CharField(max_length=500, blank=True)
+	at = models.DateTimeField()
+
+	class Meta:
+		ordering = ['-at', '-id']

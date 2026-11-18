@@ -465,12 +465,13 @@ def _division(request):
 
 def _org_report(year, month, div):
 	"""Rekap seluruh pegawai: dihitung sekali per menit dan dipakai bersama oleh semua pimpinan."""
-	return svc.cached(('rep', year, month, div.pk if div else None), lambda: svc.month_report(year, month, division=div))
+	return svc.cached(('rep', year, month, div.pk if div else None), lambda: svc.month_report(year, month, division=div),
+					  ttl=svc.report_ttl(year, month))
 
 
 def _org_overview(year, month, div):
 	return svc.cached(('ov', year, month, div.pk if div else None),
-					  lambda: svc.overview(svc.month_report(year, month, division=div)))
+					  lambda: svc.overview(_org_report(year, month, div)), ttl=svc.report_ttl(year, month))     # memakai rekap yang sudah di-cache
 
 
 @qr_access('VIEWER_GROUPS')

@@ -2507,3 +2507,38 @@ class IndexUsageTests(QRBase):
 		src = inspect.getsource(services.used_in_year)
 		self.assertNotIn('__year', src)
 		self.assertIn('claim_date__gte', src)
+
+
+class ScalingTests(QRBase):
+	"""Pelajaran 'jangan lompat ke OLAP': indeks, cache, lalu hindari N+1; jumlah query tidak boleh bertambah menurut jumlah pegawai."""
+
+	def test_board_query_count_does_not_grow_with_employees(self):
+		from django.db import connection
+		from django.test.utils import CaptureQueriesContext
+
+		def count():
+			with CaptureQueriesContext(connection) as c:
+				svc.board(MON)
+			return len(c)
+		count()                                                              # pemanasan: daftar libur masuk cache
+		small = count()
+		for i in range(25):
+			self.make_employee('Banyak%d' % i, 'X')
+		self.assertEqual(count(), small)
+
+	def test_month_report_query_count_is_constant(self):
+		from django.db import connection
+		from django.test.utils import CaptureQueriesContext
+		for i in range(25):
+			self.make_employee('Lagi%d' % i, 'X')
+		with CaptureQueriesContext(connection) as c:
+			svc.month_report(2026, 11)
+		self.assertLessEqual(len(c), 8)
+
+	def test_past_months_are_cached_longer_than_the_current_one(self):
+		from django.utils import timezone
+		now = svc.to_local(timezone.now()).date()
+		past = (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12)
+		self.assertEqual(svc.report_ttl(*past), svc.conf('REPORT_CACHE_PAST_SECONDS'))
+		self.assertEqual(svc.report_ttl(now.year, now.month), svc.conf('REPORT_CACHE_SECONDS'))
+		self.assertGreater(svc.conf('REPORT_CACHE_PAST_SECONDS'), svc.conf('REPORT_CACHE_SECONDS'))

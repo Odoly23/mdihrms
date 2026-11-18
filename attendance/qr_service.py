@@ -50,6 +50,7 @@ _DEFAULTS = {
 	'TRUST_PROXY_HEADER': False,   # True bila server di belakang proxy tepercaya (pakai X-Forwarded-For)
 	'THROTTLE_PER_MINUTE': 60,     # batas permintaan scan per alamat IP per menit
 	'REPORT_CACHE_SECONDS': 60,    # cache dashboard/rekap seluruh pegawai; 0 = mati
+	'REPORT_CACHE_PAST_SECONDS': 3600,   # cache rekap bulan yang sudah lewat (hampir tidak berubah); 0 = mati
 	'HOLIDAY_CACHE_SECONDS': 60,   # cache daftar libur untuk jalur scan; 0 = mati
 	'MAX_BODY_BYTES': 1024,        # batas ukuran permintaan scan
 	'BURST_COUNT': 3,              # >= sekian pegawai berbeda ...
@@ -341,9 +342,17 @@ def in_groups(user, names):
 	return bool(mine & set(names))
 
 
-def cached(parts, fn):
+def report_ttl(year, month):
+	"""Bulan yang sudah lewat hampir tidak berubah: cache lebih lama (bulan berjalan tetap singkat agar scan baru cepat terlihat)."""
+	today = to_local(timezone.now()).date()
+	if (year, month) < (today.year, today.month):
+		return conf('REPORT_CACHE_PAST_SECONDS')
+	return conf('REPORT_CACHE_SECONDS')
+
+
+def cached(parts, fn, ttl=None):
 	"""Cache singkat untuk laporan seluruh pegawai (dipakai bersama semua pimpinan)."""
-	ttl = conf('REPORT_CACHE_SECONDS')
+	ttl = conf('REPORT_CACHE_SECONDS') if ttl is None else ttl
 	if not ttl:
 		return fn()
 	key = 'attqr:rep:' + hashlib.sha256(repr(parts).encode()).hexdigest()[:40]
@@ -791,7 +800,8 @@ def board(d, division_id=None):
 	from leave.models import Leaves
 	off = day_off_reason(d)
 	groups = {'ontime': [], 'late': [], 'izin': [], 'cuti': [], 'waiting': []}
-	active = Employee.objects.filter(status_id=conf('ACTIVE_STATUS_ID')).order_by('first_name', 'last_name')
+	active = (Employee.objects.filter(status_id=conf('ACTIVE_STATUS_ID')).order_by('first_name', 'last_name')
+			  .select_related('employeeposition__position', 'employeedivision__division', 'idfnumber'))      # tanpa ini: 5 query per pegawai
 	people = {e.pk: e for e in active}
 	info = {}
 

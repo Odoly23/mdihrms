@@ -44,6 +44,11 @@ Indeks gabungan: `Attendance(employee, date)` dan `(date)`, `ScanLog(employee, s
 `HealthClaim(employee, claim_date)`. Total klaim tahunan memakai rentang tanggal, bukan `claim_date__year`. Tes `IndexUsageTests` memeriksa rencana kueri memakai indeks.
 Jalankan `python manage.py migrate` untuk membuatnya.
 
+**Jangan langsung ke OLAP.** Tangga yang dipakai: (1) indeks (di atas); (2) cache laporan — bulan berjalan 60 dtk (`ATTENDANCE_REPORT_CACHE_SECONDS`), bulan yang sudah lewat 1 jam
+(`ATTENDANCE_REPORT_CACHE_PAST_SECONDS`), dan dasbor memakai ulang rekap yang sama; (3) hilangkan N+1 (jumlah query tidak bertambah menurut jumlah pegawai, dijaga tes `ScalingTests`);
+baru bila masih lambat: (4) replika baca / tabel ringkasan, dan paling akhir gudang data (OLAP). Scan absen (transaksi kecil) tidak memakai laporan, jadi tidak terganggu saat HRD membuka rekap.
+Uji beban (500 pegawai × 1 tahun = 130 ribu baris absen, SQLite): rekap bulan 0,3-0,8 dtk dengan 5 query, papan hari ini 0,06 dtk dengan 3 query.
+
 ## Peran (empat grup)
 | Grup | Bisa |
 |---|---|

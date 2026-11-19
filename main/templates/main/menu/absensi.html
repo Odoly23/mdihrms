@@ -14,6 +14,9 @@
 </li>
 {% endif %}
 {% else %}
+{% if can.qr_view or can.qr_manage or can.qr_device or can.attendance_config %}
+<details class="sb-group"{% if 'qr-' in request.resolver_match.url_name and 'qr-dash' not in request.resolver_match.url_name and 'qr-me' not in request.resolver_match.url_name %} open{% endif %}><summary class="sb-grp"><i class="fa fa-qrcode" aria-hidden="true"></i><span>{% t 'ui.nav.abs' %}</span><i class="fa fa-angle-down sb-caret" aria-hidden="true"></i></summary>
+<ul>
 {% if can.qr_view %}
 <li><a href="{% url 'qr-today' %}"><i class="fa fa-list" aria-hidden="true"></i>{% t 'nav.today' %}</a></li>
 <li><a href="{% url 'qr-report' %}"><i class="fa fa-table" aria-hidden="true"></i>{% t 'sb.recap' %}</a></li>
@@ -21,4 +24,6 @@
 {% if can.qr_manage %}<li><a href="{% url 'qr-cards' %}"><i class="fa fa-id-card" aria-hidden="true"></i>{% t 'sb.cards' %}</a></li>{% endif %}
 {% if can.qr_device %}<li><a href="{% url 'qr-devices' %}"><i class="fa fa-desktop" aria-hidden="true"></i>{% t 'sb.kiosk' %}</a></li>{% endif %}
 {% if can.attendance_config %}<li><a href="{% url 'attendance-custom-dash' %}"><i class="fa fa-cogs" aria-hidden="true"></i>{% t 'cfg.nav' %}</a></li>{% endif %}
+</ul></details>
+{% endif %}
 {% endif %}

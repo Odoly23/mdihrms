@@ -11,11 +11,6 @@
 {% include 'main/menu/report.html' %}
 {% include 'main/menu/birthdays.html' %}
 {% else %}
-<ul>{% include 'main/menu/home.html' %}{% include 'main/menu/staff.html' %}</ul>
-<div class="sb-sec">{% t 'sb.sec.abs' %}</div>
-<ul>{% include 'main/menu/absensi.html' %}{% include 'main/menu/report.html' %}</ul>
-{% if can.leave_request or can.leave_view_all or can.placement_view or can.asset_self or can.health_request or can.kts_handler or can.kts_view_all %}
-<div class="sb-sec">{% t 'sb.sec.hr' %}</div>
-<ul>{% include 'main/menu/leave.html' %}{% include 'main/menu/placement.html' %}{% include 'main/menu/kts.html' %}{% include 'main/menu/assets.html' %}{% include 'main/menu/health.html' %}{% include 'main/menu/birthdays.html' %}</ul>
-{% endif %}
+<ul>{% include 'main/menu/home.html' %}{% include 'main/menu/staff.html' %}{% include 'main/menu/kts.html' %}{% include 'main/menu/placement.html' %}{% include 'main/menu/birthdays.html' %}</ul>
+{% include 'main/menu/absensi.html' %}{% include 'main/menu/report.html' %}{% include 'main/menu/leave.html' %}{% include 'main/menu/assets.html' %}{% include 'main/menu/health.html' %}
 {% endif %}

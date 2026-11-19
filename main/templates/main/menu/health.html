@@ -10,6 +10,11 @@
 </li>
 {% endif %}
 {% else %}
+{% if can.health_request or can.health_view_all %}
+<details class="sb-group"{% if 'health' in request.resolver_match.url_name %} open{% endif %}><summary class="sb-grp"><i class="fa fa-heartbeat" aria-hidden="true"></i><span>{% t 'ui.nav.health' %}</span><i class="fa fa-angle-down sb-caret" aria-hidden="true"></i></summary>
+<ul>
 {% if can.health_request %}<li><a href="{% url 'health-mine' %}"><i class="fa fa-heartbeat" aria-hidden="true"></i>{% t 'sb.health' %}</a></li>{% endif %}
 {% if can.health_view_all %}<li><a href="{% url 'health-all' %}"><i class="fa fa-medkit" aria-hidden="true"></i>{% t 'sb.allleave' %}</a></li>{% endif %}
+</ul></details>
+{% endif %}
 {% endif %}

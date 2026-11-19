@@ -141,3 +141,17 @@ footer.site-footer.page-footer { background: var(--navy-dk); border-top: 3px sol
 .holiday-banner { background: #fff3cd; color: #664d03; border-bottom: 1px solid #ffe69c; font-size: .88rem; padding: 7px 0; }
 .holiday-banner.is-today { background: #f8d7da; color: #58151c; border-bottom-color: #f1aeb5; }
 .holiday-banner .fa { margin-right: 6px; }
+
+/* sidebar: kelompok menu yang bisa dilipat (details/summary, tanpa JS); yang berisi halaman aktif terbuka otomatis */
+.sb-group { border-top: 1px solid rgba(255,255,255,.12); }
+.sb-group:last-of-type { border-bottom: 1px solid rgba(255,255,255,.12); }
+.sb-grp { list-style: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 3px 6px; min-height: 54px; color: rgba(255,255,255,.9); font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; text-align: center; line-height: 1.15; border-left: 3px solid transparent; -webkit-tap-highlight-color: transparent; }
+.sb-grp::-webkit-details-marker { display: none; }
+.sb-grp i:first-child { font-size: 1.15rem; color: rgba(255,255,255,.75); }
+.sb-grp .sb-caret { font-size: .8rem; transition: transform .2s; }
+.sb-group[open] > .sb-grp { background: rgba(255,255,255,.1); border-left-color: var(--white); }
+.sb-group[open] > .sb-grp .sb-caret { transform: rotate(180deg); }
+.sb-grp:hover { background: rgba(255,255,255,.12); }
+.sb-grp:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
+.sb-group > ul { background: rgba(0,0,0,.16); }
+@media (prefers-reduced-motion: reduce) { .sb-grp .sb-caret { transition: none; } }

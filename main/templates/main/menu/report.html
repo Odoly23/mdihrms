@@ -7,6 +7,9 @@
 	</div>
 </li>
 {% else %}
-<li><a href="{% qr_tab_url %}"><i class="fa fa-bar-chart" aria-hidden="true"></i>{% t 'nav.tab' %}</a></li>
+<details class="sb-group"{% if 'qr-dash' in request.resolver_match.url_name or 'qr-me' in request.resolver_match.url_name %} open{% endif %}><summary class="sb-grp"><i class="fa fa-bar-chart" aria-hidden="true"></i><span>{% t 'menu.report' %}</span><i class="fa fa-angle-down sb-caret" aria-hidden="true"></i></summary>
+<ul>
+<li><a href="{% qr_tab_url %}"><i class="fa fa-table" aria-hidden="true"></i>{% t 'nav.tab' %}</a></li>
 <li><a href="{% qr_chart_url %}"><i class="fa fa-area-chart" aria-hidden="true"></i>{% t 'nav.chart' %}</a></li>
+</ul></details>
 {% endif %}

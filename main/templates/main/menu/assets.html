@@ -1,0 +1,15 @@
+{% load qr_i18n %}{% if mode == 'nav' %}
+{% if can.asset_self or can.asset_view_all %}
+<li class="dropdown">
+	<a class="nl dropdown-toggle" href="#" id="ddAsset" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-laptop" aria-hidden="true"></i> {% t 'ui.nav.assets' %}</a>
+	<div class="dropdown-menu" aria-labelledby="ddAsset">
+		{% if can.asset_self %}<a class="dropdown-item" href="{% url 'asset-mine' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'as.mine' %}</a>{% endif %}
+		{% if can.asset_view_all %}<a class="dropdown-item" href="{% url 'asset-list' %}"><i class="fa fa-th-list" aria-hidden="true"></i> {% t 'as.title' %}</a>
+		<a class="dropdown-item" href="{% url 'asset-survey' %}"><i class="fa fa-table" aria-hidden="true"></i> {% t 'as.survey' %}</a>{% endif %}
+	</div>
+</li>
+{% endif %}
+{% else %}
+{% if can.asset_self %}<li><a href="{% url 'asset-mine' %}"><i class="fa fa-laptop" aria-hidden="true"></i>{% t 'sb.assets' %}</a></li>{% endif %}
+{% if can.asset_view_all %}<li><a href="{% url 'asset-survey' %}"><i class="fa fa-table" aria-hidden="true"></i>{% t 'as.survey' %}</a></li>{% endif %}
+{% endif %}

@@ -12,7 +12,7 @@ def home(request):
 	lang = ui.lang(request)
 	names = [n for _, n in services.birthdays_on(today)]
 	items = [holidays.describe(i, lang) for i in holidays.upcoming(today, days=90, limit=5)]
-	return render(request, 'main/home.html', {'title': ui.tr(lang, 'ui.nav.home').title(), 'birthdays': names,
+	return render(request, 'home/home.html', {'title': ui.tr(lang, 'ui.nav.home').title(), 'birthdays': names,
 		'holidays': items, 'holiday_days': 90})
 
 

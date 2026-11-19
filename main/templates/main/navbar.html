@@ -6,73 +6,7 @@
 		</a>
 		{% if user.is_authenticated %}
 		<ul class="nav-links">
-			<li class="{% if request.resolver_match.url_name == 'home' %}on{% endif %}"><a class="nl" href="{% url 'home' %}"><i class="fa fa-home" aria-hidden="true"></i> {% t 'ui.nav.home' %}</a></li>
-			{% if can.directory %}<li class="{% if 'staff' in request.resolver_match.url_name %}on{% endif %}"><a class="nl" href="{% url 'staff-list' %}"><i class="fa fa-users" aria-hidden="true"></i> {% t 'ui.nav.staff' %}</a></li>{% endif %}
-			{% if can.qr_view %}
-			<li class="dropdown">
-				<a class="nl dropdown-toggle" href="#" id="ddAbs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-qrcode" aria-hidden="true"></i> {% t 'ui.nav.abs' %}</a>
-				<div class="dropdown-menu" aria-labelledby="ddAbs">
-					{% if can.qr_board %}<a class="dropdown-item" href="{% url 'qr-board' %}"><i class="fa fa-pie-chart" aria-hidden="true"></i> {% t 'nav.board' %}</a>{% endif %}
-					<a class="dropdown-item" href="{% url 'qr-today' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'nav.today' %}</a>
-					<a class="dropdown-item" href="{% url 'qr-report' %}"><i class="fa fa-table" aria-hidden="true"></i> {% t 'nav.report' %}</a>
-					<a class="dropdown-item" href="{% url 'qr-late' %}"><i class="fa fa-clock-o" aria-hidden="true"></i> {% t 'nav.late' %}</a>
-					{% if can.qr_manage %}<a class="dropdown-item" href="{% url 'qr-cards' %}"><i class="fa fa-id-card" aria-hidden="true"></i> {% t 'nav.cards' %}</a>{% endif %}
-					{% if can.qr_device %}<a class="dropdown-item" href="{% url 'qr-devices' %}"><i class="fa fa-desktop" aria-hidden="true"></i> {% t 'nav.devices' %}</a>{% endif %}
-					{% if can.attendance_config %}<a class="dropdown-item" href="{% url 'attendance-custom-dash' %}"><i class="fa fa-cogs" aria-hidden="true"></i> {% t 'cfg.title' %}</a>{% endif %}
-				</div>
-			</li>
-			{% endif %}
-			{% if can.leave_request or can.leave_view_all %}
-			<li class="dropdown">
-				<a class="nl dropdown-toggle" href="#" id="ddLeave" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-calendar-check-o" aria-hidden="true"></i> {% t 'ui.nav.leave' %}</a>
-				<div class="dropdown-menu" aria-labelledby="ddLeave">
-					{% if can.leave_request %}<a class="dropdown-item" href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o" aria-hidden="true"></i> {% t 'ui.leave.new' %}</a>
-					<a class="dropdown-item" href="{% url 'leave-mine' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'ui.leave.mine' %}</a>{% endif %}
-					{% if can.leave_view_all %}<a class="dropdown-item" href="{% url 'leave-all' %}"><i class="fa fa-users" aria-hidden="true"></i> {% t 'ui.leave.all' %}</a>{% endif %}
-				</div>
-			</li>
-			{% endif %}
-			{% if can.kts_register or can.kts_verify or can.kts_dispose or can.kts_view_all or can.kts_out or can.kts_handler %}
-			<li class="dropdown">
-				<a class="nl dropdown-toggle" href="#" id="ddKts" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-envelope" aria-hidden="true"></i> {% t 'ui.nav.kts' %}</a>
-				<div class="dropdown-menu" aria-labelledby="ddKts">
-					<a class="dropdown-item" href="{% url 'kts-dash' %}"><i class="fa fa-dashboard" aria-hidden="true"></i> {% t 'kts.title' %}</a>
-					{% if can.kts_view_all or can.kts_register %}<a class="dropdown-item" href="{% url 'kts-tama' %}"><i class="fa fa-envelope" aria-hidden="true"></i> KARTA TAMA</a>{% endif %}
-					{% if can.kts_out %}<a class="dropdown-item" href="{% url 'kts-sai' %}"><i class="fa fa-envelope-open" aria-hidden="true"></i> KARTA SAI</a>{% endif %}
-					<a class="dropdown-item" href="{% url 'kts-tama-mine' %}"><i class="fa fa-tasks" aria-hidden="true"></i> {% t 'kts.mine' %}</a>
-				</div>
-			</li>
-			{% endif %}
-			{% if can.asset_self or can.asset_view_all %}
-			<li class="dropdown">
-				<a class="nl dropdown-toggle" href="#" id="ddAsset" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-laptop" aria-hidden="true"></i> {% t 'ui.nav.assets' %}</a>
-				<div class="dropdown-menu" aria-labelledby="ddAsset">
-					{% if can.asset_self %}<a class="dropdown-item" href="{% url 'asset-mine' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'as.mine' %}</a>{% endif %}
-					{% if can.asset_view_all %}<a class="dropdown-item" href="{% url 'asset-list' %}"><i class="fa fa-th-list" aria-hidden="true"></i> {% t 'as.title' %}</a>
-					<a class="dropdown-item" href="{% url 'asset-survey' %}"><i class="fa fa-table" aria-hidden="true"></i> {% t 'as.survey' %}</a>{% endif %}
-				</div>
-			</li>
-			{% endif %}
-			{% if can.health_request or can.health_view_all %}
-			<li class="dropdown">
-				<a class="nl dropdown-toggle" href="#" id="ddHealth" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-heartbeat" aria-hidden="true"></i> {% t 'ui.nav.health' %}</a>
-				<div class="dropdown-menu" aria-labelledby="ddHealth">
-					{% if can.health_request %}<a class="dropdown-item" href="{% url 'health-new' %}"><i class="fa fa-plus" aria-hidden="true"></i> {% t 'hl.new' %}</a>
-					<a class="dropdown-item" href="{% url 'health-mine' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'hl.title.mine' %}</a>{% endif %}
-					{% if can.health_view_all %}<a class="dropdown-item" href="{% url 'health-all' %}"><i class="fa fa-users" aria-hidden="true"></i> {% t 'hl.title.all' %}</a>{% endif %}
-				</div>
-			</li>
-			{% endif %}
-			{% if can.placement_view %}<li class="{% if 'placement' in request.resolver_match.url_name %}on{% endif %}"><a class="nl" href="{% url 'placement-list' %}"><i class="fa fa-exchange" aria-hidden="true"></i> {% t 'ui.nav.place' %}</a></li>{% endif %}
-			<li class="dropdown">
-				<a class="nl dropdown-toggle" href="#" id="ddRep" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-bar-chart" aria-hidden="true"></i> {% t 'menu.report' %}</a>
-				<div class="dropdown-menu" aria-labelledby="ddRep">
-					<a class="dropdown-item" href="{% qr_tab_url %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'nav.tab' %}</a>
-					<a class="dropdown-item" href="{% qr_chart_url %}"><i class="fa fa-bar-chart" aria-hidden="true"></i> {% t 'nav.chart' %}</a>
-				</div>
-			</li>
-			<li class="{% if 'notif-birthdays' == request.resolver_match.url_name %}on{% endif %}"><a class="nl" href="{% url 'notif-birthdays' %}" title="{% t 'ui.nav.bday' %}"><i class="fa fa-birthday-cake" aria-hidden="true"></i> <span class="sr-only">{% t 'ui.nav.bday' %}</span></a></li>
-			{% if can.admin_site %}<li><a class="nl" href="{% url 'admin:index' %}" title="Admin"><i class="fa fa-cogs" aria-hidden="true"></i> {% t 'ui.nav.admin' %}</a></li>{% endif %}
+			{% include nav_template with mode='nav' %}
 		</ul>
 		<div class="nb-right">
 			<div class="dropdown">
@@ -109,39 +43,7 @@
 {% if user.is_authenticated %}
 <aside id="sidebar" aria-label="MDI-HRMS" aria-hidden="true">
 	<div class="sb-body">
-		<ul>
-			<li class="{% if request.resolver_match.url_name == 'home' %}sb-on{% endif %}"><a href="{% url 'home' %}"><i class="fa fa-home" aria-hidden="true"></i>{% t 'sb.home' %}</a></li>
-			{% if can.directory %}<li><a href="{% url 'staff-list' %}"><i class="fa fa-users" aria-hidden="true"></i>{% t 'sb.staff' %}</a></li>{% endif %}
-		</ul>
-		<div class="sb-sec">{% t 'sb.sec.abs' %}</div>
-		<ul>
-			{% if can.qr_view %}
-			<li><a href="{% url 'qr-today' %}"><i class="fa fa-list" aria-hidden="true"></i>{% t 'nav.today' %}</a></li>
-			<li><a href="{% url 'qr-report' %}"><i class="fa fa-table" aria-hidden="true"></i>{% t 'sb.recap' %}</a></li>
-			{% endif %}
-			{% if can.qr_manage %}<li><a href="{% url 'qr-cards' %}"><i class="fa fa-id-card" aria-hidden="true"></i>{% t 'sb.cards' %}</a></li>{% endif %}
-			{% if can.qr_device %}<li><a href="{% url 'qr-devices' %}"><i class="fa fa-desktop" aria-hidden="true"></i>{% t 'sb.kiosk' %}</a></li>{% endif %}
-			{% if can.attendance_config %}<li><a href="{% url 'attendance-custom-dash' %}"><i class="fa fa-cogs" aria-hidden="true"></i>{% t 'cfg.nav' %}</a></li>{% endif %}
-			<li><a href="{% qr_tab_url %}"><i class="fa fa-bar-chart" aria-hidden="true"></i>{% t 'nav.tab' %}</a></li>
-			<li><a href="{% qr_chart_url %}"><i class="fa fa-area-chart" aria-hidden="true"></i>{% t 'nav.chart' %}</a></li>
-		</ul>
-		{% if can.leave_request or can.leave_view_all or can.placement_view or can.asset_self or can.health_request or can.kts_handler or can.kts_view_all %}
-		<div class="sb-sec">{% t 'sb.sec.hr' %}</div>
-		<ul>
-			{% if can.leave_request %}
-			<li><a href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o" aria-hidden="true"></i>{% t 'sb.leave' %}</a></li>
-			<li><a href="{% url 'leave-mine' %}"><i class="fa fa-list-alt" aria-hidden="true"></i>{% t 'sb.myleave' %}</a></li>
-			{% endif %}
-			{% if can.leave_view_all %}<li><a href="{% url 'leave-all' %}"><i class="fa fa-calendar-check-o" aria-hidden="true"></i>{% t 'sb.allleave' %}</a></li>{% endif %}
-			{% if can.placement_view %}<li><a href="{% url 'placement-list' %}"><i class="fa fa-exchange" aria-hidden="true"></i>{% t 'sb.place' %}</a></li>{% endif %}
-			{% if can.kts_register or can.kts_verify or can.kts_dispose or can.kts_view_all or can.kts_out or can.kts_handler %}<li><a href="{% url 'kts-dash' %}"><i class="fa fa-envelope" aria-hidden="true"></i>{% t 'sb.kts' %}</a></li>{% endif %}
-			{% if can.asset_self %}<li><a href="{% url 'asset-mine' %}"><i class="fa fa-laptop" aria-hidden="true"></i>{% t 'sb.assets' %}</a></li>{% endif %}
-			{% if can.asset_view_all %}<li><a href="{% url 'asset-survey' %}"><i class="fa fa-table" aria-hidden="true"></i>{% t 'as.survey' %}</a></li>{% endif %}
-			{% if can.health_request %}<li><a href="{% url 'health-mine' %}"><i class="fa fa-heartbeat" aria-hidden="true"></i>{% t 'sb.health' %}</a></li>{% endif %}
-			{% if can.health_view_all %}<li><a href="{% url 'health-all' %}"><i class="fa fa-medkit" aria-hidden="true"></i>{% t 'sb.allleave' %}</a></li>{% endif %}
-			<li><a href="{% url 'notif-birthdays' %}"><i class="fa fa-birthday-cake" aria-hidden="true"></i>{% t 'sb.bday' %}</a></li>
-		</ul>
-		{% endif %}
+		{% include nav_template with mode='side' %}
 		<hr/>
 		<ul>
 			{% if can.admin_site %}<li><a href="{% url 'admin:index' %}"><i class="fa fa-cogs" aria-hidden="true"></i>{% t 'sb.admin' %}</a></li>{% endif %}

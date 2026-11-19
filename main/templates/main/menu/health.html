@@ -1,0 +1,15 @@
+{% load qr_i18n %}{% if mode == 'nav' %}
+{% if can.health_request or can.health_view_all %}
+<li class="dropdown">
+	<a class="nl dropdown-toggle" href="#" id="ddHealth" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-heartbeat" aria-hidden="true"></i> {% t 'ui.nav.health' %}</a>
+	<div class="dropdown-menu" aria-labelledby="ddHealth">
+		{% if can.health_request %}<a class="dropdown-item" href="{% url 'health-new' %}"><i class="fa fa-plus" aria-hidden="true"></i> {% t 'hl.new' %}</a>
+		<a class="dropdown-item" href="{% url 'health-mine' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'hl.title.mine' %}</a>{% endif %}
+		{% if can.health_view_all %}<a class="dropdown-item" href="{% url 'health-all' %}"><i class="fa fa-users" aria-hidden="true"></i> {% t 'hl.title.all' %}</a>{% endif %}
+	</div>
+</li>
+{% endif %}
+{% else %}
+{% if can.health_request %}<li><a href="{% url 'health-mine' %}"><i class="fa fa-heartbeat" aria-hidden="true"></i>{% t 'sb.health' %}</a></li>{% endif %}
+{% if can.health_view_all %}<li><a href="{% url 'health-all' %}"><i class="fa fa-medkit" aria-hidden="true"></i>{% t 'sb.allleave' %}</a></li>{% endif %}
+{% endif %}

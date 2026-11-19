@@ -1,0 +1,12 @@
+{% load qr_i18n %}{% if mode == 'nav' %}
+<li class="dropdown">
+	<a class="nl dropdown-toggle" href="#" id="ddRep" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-bar-chart" aria-hidden="true"></i> {% t 'menu.report' %}</a>
+	<div class="dropdown-menu" aria-labelledby="ddRep">
+		<a class="dropdown-item" href="{% qr_tab_url %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'nav.tab' %}</a>
+		<a class="dropdown-item" href="{% qr_chart_url %}"><i class="fa fa-bar-chart" aria-hidden="true"></i> {% t 'nav.chart' %}</a>
+	</div>
+</li>
+{% else %}
+<li><a href="{% qr_tab_url %}"><i class="fa fa-bar-chart" aria-hidden="true"></i>{% t 'nav.tab' %}</a></li>
+<li><a href="{% qr_chart_url %}"><i class="fa fa-area-chart" aria-hidden="true"></i>{% t 'nav.chart' %}</a></li>
+{% endif %}

@@ -144,5 +144,6 @@ jangan di git (pola `employee/data/staff_*.csv` sudah diabaikan).
 | `leave` | Leaves, LeaveType, AnnualLeaves + pengajuan dan persetujuan lisensa |
 | `kts` | Surat masuk (Tama) dengan alur verifikasi–disposisi, surat keluar (Sai) |
 | `notif` | Lonceng notifikasi dan ulang tahun |
-| `main` | Layout, navbar per grup, login, halaman galat, `mdi_setup` |
+| `main` | `templates/main/`: `layout.html`, `topbar.html`, `navbar.html` (kerangka) + **satu menu per grup**: `adm.html`, `prezident.html` (director), `administrasaun.html`, `staff.html`, dengan potongan menu di `menu/`; `templates/home/`: `home`, `login`, `403/404/500`; `mdi_setup`, middleware wajib-ganti-sandi |
+| `users` | Akun saya dan ganti kata sandi (`templates/auth/`) |
 | `settings_app` | `upload_utils`, `utils`, `decorators` |

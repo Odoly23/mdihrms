@@ -1,0 +1,18 @@
+{% load qr_i18n %}{% if mode == 'nav' %}
+{% if can.leave_request or can.leave_view_all %}
+<li class="dropdown">
+	<a class="nl dropdown-toggle" href="#" id="ddLeave" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-calendar-check-o" aria-hidden="true"></i> {% t 'ui.nav.leave' %}</a>
+	<div class="dropdown-menu" aria-labelledby="ddLeave">
+		{% if can.leave_request %}<a class="dropdown-item" href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o" aria-hidden="true"></i> {% t 'ui.leave.new' %}</a>
+		<a class="dropdown-item" href="{% url 'leave-mine' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'ui.leave.mine' %}</a>{% endif %}
+		{% if can.leave_view_all %}<a class="dropdown-item" href="{% url 'leave-all' %}"><i class="fa fa-users" aria-hidden="true"></i> {% t 'ui.leave.all' %}</a>{% endif %}
+	</div>
+</li>
+{% endif %}
+{% else %}
+{% if can.leave_request %}
+<li><a href="{% url 'leave-new' %}"><i class="fa fa-calendar-plus-o" aria-hidden="true"></i>{% t 'sb.leave' %}</a></li>
+<li><a href="{% url 'leave-mine' %}"><i class="fa fa-list-alt" aria-hidden="true"></i>{% t 'sb.myleave' %}</a></li>
+{% endif %}
+{% if can.leave_view_all %}<li><a href="{% url 'leave-all' %}"><i class="fa fa-calendar-check-o" aria-hidden="true"></i>{% t 'sb.allleave' %}</a></li>{% endif %}
+{% endif %}

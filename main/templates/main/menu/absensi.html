@@ -1,0 +1,24 @@
+{% load qr_i18n %}{% if mode == 'nav' %}
+{% if can.qr_view %}
+<li class="dropdown">
+	<a class="nl dropdown-toggle" href="#" id="ddAbs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-qrcode" aria-hidden="true"></i> {% t 'ui.nav.abs' %}</a>
+	<div class="dropdown-menu" aria-labelledby="ddAbs">
+		{% if can.qr_board %}<a class="dropdown-item" href="{% url 'qr-board' %}"><i class="fa fa-pie-chart" aria-hidden="true"></i> {% t 'nav.board' %}</a>{% endif %}
+		<a class="dropdown-item" href="{% url 'qr-today' %}"><i class="fa fa-list" aria-hidden="true"></i> {% t 'nav.today' %}</a>
+		<a class="dropdown-item" href="{% url 'qr-report' %}"><i class="fa fa-table" aria-hidden="true"></i> {% t 'nav.report' %}</a>
+		<a class="dropdown-item" href="{% url 'qr-late' %}"><i class="fa fa-clock-o" aria-hidden="true"></i> {% t 'nav.late' %}</a>
+		{% if can.qr_manage %}<a class="dropdown-item" href="{% url 'qr-cards' %}"><i class="fa fa-id-card" aria-hidden="true"></i> {% t 'nav.cards' %}</a>{% endif %}
+		{% if can.qr_device %}<a class="dropdown-item" href="{% url 'qr-devices' %}"><i class="fa fa-desktop" aria-hidden="true"></i> {% t 'nav.devices' %}</a>{% endif %}
+		{% if can.attendance_config %}<a class="dropdown-item" href="{% url 'attendance-custom-dash' %}"><i class="fa fa-cogs" aria-hidden="true"></i> {% t 'cfg.title' %}</a>{% endif %}
+	</div>
+</li>
+{% endif %}
+{% else %}
+{% if can.qr_view %}
+<li><a href="{% url 'qr-today' %}"><i class="fa fa-list" aria-hidden="true"></i>{% t 'nav.today' %}</a></li>
+<li><a href="{% url 'qr-report' %}"><i class="fa fa-table" aria-hidden="true"></i>{% t 'sb.recap' %}</a></li>
+{% endif %}
+{% if can.qr_manage %}<li><a href="{% url 'qr-cards' %}"><i class="fa fa-id-card" aria-hidden="true"></i>{% t 'sb.cards' %}</a></li>{% endif %}
+{% if can.qr_device %}<li><a href="{% url 'qr-devices' %}"><i class="fa fa-desktop" aria-hidden="true"></i>{% t 'sb.kiosk' %}</a></li>{% endif %}
+{% if can.attendance_config %}<li><a href="{% url 'attendance-custom-dash' %}"><i class="fa fa-cogs" aria-hidden="true"></i>{% t 'cfg.nav' %}</a></li>{% endif %}
+{% endif %}

@@ -1,4 +1,4 @@
-"""Akun saya dan ganti kata sandi (semua pengguna yang masuk)."""
+"""Akun saya dan ganti kata sandi (semua pengguna yang masuk). Template: users/templates/auth/."""
 from django import forms
 from django.contrib import messages
 from django.contrib.auth import password_validation, update_session_auth_hash
@@ -8,8 +8,8 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
-from . import groups, middleware, roles, ui
-from .models import MustChangePassword
+from main import groups, middleware, roles, ui
+from main.models import MustChangePassword
 
 
 class PasswordForm(forms.Form):
@@ -53,7 +53,7 @@ def account(request):
 		info = svc.employee_info(emp, photo=False)
 	have = set(request.user.groups.values_list('name', flat=True))
 	mine = [g for g in groups.GROUPS if g in have]
-	return render(request, 'main/account.html', {'title': ui.tr(lang, 'acc.title'), 'emp': info, 'my_groups': mine,
+	return render(request, 'auth/account.html', {'title': ui.tr(lang, 'acc.title'), 'emp': info, 'my_groups': mine,
 		'u': request.user, 'is_super': request.user.is_superuser})
 
 
@@ -71,4 +71,4 @@ def password_change(request):
 		messages.success(request, ui.tr(lang, 'acc.pwd.done'))
 		return redirect('account')
 	forced = MustChangePassword.objects.filter(user=request.user).exists()
-	return render(request, 'main/password.html', {'title': ui.tr(lang, 'acc.pwd'), 'form': form, 'forced': forced})
+	return render(request, 'auth/change_password.html', {'title': ui.tr(lang, 'acc.pwd'), 'form': form, 'forced': forced})

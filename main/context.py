@@ -26,6 +26,10 @@ def _is_kts_handler(user):
 	return v
 
 
+# satu berkas menu per grup (seperti adm.html / prezident.html di proyek sjdf); grup lain/tanpa grup memakai menu staf
+NAV_TEMPLATES = {'admin': 'main/adm.html', 'director': 'main/prezident.html', 'administrasaun': 'main/administrasaun.html', 'staff': 'main/staff.html'}
+
+
 def nav(request):
 	"""Nama grup pertama (kebiasaan proyek lama) dan hak menu untuk navbar (`can.<nama>`)."""
 	user = getattr(request, 'user', None)
@@ -46,7 +50,7 @@ def nav(request):
 	notice = None
 	if user is not None and user.is_authenticated:
 		notice = hol.notice(svc.to_local(timezone.now()).date(), qr_i18n.get_lang(request))
-	return {'holiday_notice': notice, 'nav_group': group, 'can': perms, 'site': site_info(), 'now_year': datetime.date.today().year,
+	return {'holiday_notice': notice, 'nav_group': group, 'nav_template': NAV_TEMPLATES.get(group, 'main/staff.html'), 'can': perms, 'site': site_info(), 'now_year': datetime.date.today().year,
 		'lang_in_navbar': bool(getattr(settings, 'ATTENDANCE_LANG_IN_NAVBAR', False))}
 
 

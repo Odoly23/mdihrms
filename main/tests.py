@@ -645,13 +645,13 @@ class ShellLayoutTests(HrBase):
 		import os
 		from django.conf import settings
 		css = open(os.path.join(settings.BASE_DIR, 'main/static/main/css/main.css')).read()
-		for needle in ('--navy: #e3171e', '--topbar-h: 34px', '--navbar-h: 62px', '--header-h: 96px', '--sb-w: 72px',
+		for needle in ('--navy: #2e7d32', '--topbar-h: 34px', '--navbar-h: 62px', '--header-h: 96px', '--sb-w: 72px',
 				'.topbar', '.main-navbar', '.nav-links', '.btn-ham', '#sidebar', '#overlay', '.sb-body', '.sb-sec', 'body.sb-open footer'):
 			self.assertIn(needle, css, needle)
 
 	def test_full_meta_tags_container_and_favicon(self):
 		h = self.html('admin')
-		for needle in ('<meta charset="utf-8">', 'name="viewport"', 'name="description"', 'name="theme-color" content="#e3171e"',
+		for needle in ('<meta charset="utf-8">', 'name="viewport"', 'name="description"', 'name="theme-color" content="#2e7d32"',
 				'name="robots"', 'rel="apple-touch-icon"', 'favicon.ico', '<title>MDI-HRMS - ', '<html lang="tet">'):
 			self.assertIn(needle, h, needle)
 		self.assertIn('<main role="main" class="container page-wrapper">', h)
@@ -666,12 +666,12 @@ class ShellLayoutTests(HrBase):
 		for f in ('images/favicon.ico', 'images/favicon.jpg', 'images/apple-touch-icon.png'):
 			self.assertTrue(os.path.getsize(os.path.join(base, f)) > 500, f)
 		css = open(os.path.join(base, 'css/main.css')).read()
-		self.assertIn('--navy-dk: #a80f14', css)
+		self.assertIn('--navy-dk: #1b5e20', css)
 		self.assertNotIn('00B050', css)
 
-	def test_logo_red_only_in_theme_meta_not_inline_styles(self):
+	def test_theme_green_only_in_theme_meta_not_inline_styles(self):
 		h = self.html('admin')
-		self.assertEqual(h.count('#e3171e'), 1)                                  # hanya <meta name="theme-color">
+		self.assertEqual(h.count('#2e7d32'), 1)                                  # warna tema (hijau) hanya di <meta name="theme-color">
 
 
 class AttendanceConfigTests(HrBase):

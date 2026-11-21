@@ -326,7 +326,7 @@ input, select, textarea { font-size: max(16px, 1rem); }      /* iOS tidak memper
 @media (min-width: 992px) { .k-notice { font-size: 1.5rem; padding: 14px 28px; } }
 
 /* kartu depan bergaya KTP: kop di tengah, nomor besar, baris label : isi di kiri, foto di kanan + tempat/tanggal terbit */
-.mdi-card.ktp { background: linear-gradient(160deg, #fff 0%, #fdf3f3 60%, #f6e3e3 100%); }
+.mdi-card.ktp { background: linear-gradient(160deg, #fff 0%, #f2f8f1 60%, #e3efe1 100%); }
 .mdi-card.ktp .hdr { height: 10mm; } .mdi-card.ktp .hdr img { height: 8mm; } .mdi-card.ktp .hdr .sp { width: 8mm; }
 .mdi-card.ktp .hdr .ttl b { font-size: 3.4mm; } .mdi-card.ktp .hdr .ttl small { font-size: 2.6mm; }
 .mdi-card.ktp .rule { top: 10mm; }
@@ -341,3 +341,6 @@ input, select, textarea { font-size: max(16px, 1rem); }      /* iOS tidak memper
 .mdi-card.ktp .rows dd { margin: 0; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mdi-card.ktp .photo { left: auto; right: 4mm; top: 13mm; width: 19mm; height: 24mm; }
 .mdi-card.ktp .issued { position: absolute; right: 4mm; top: 38mm; width: 19mm; text-align: center; font-size: 1.9mm; font-weight: 700; line-height: 1.25; }
+
+/* warna kartu: hijau (bidang arkeologi), dengan garis tanah cokelat; hanya di kartu, tema aplikasi tetap */
+.mdi-card { --mdi-red: #2e7d32; --mdi-red-dk: #1b5e20; }

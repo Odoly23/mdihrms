@@ -1,8 +1,9 @@
-/* Absensi QR — warna MDI (merah + abu perak). MOBILE-FIRST: gaya dasar untuk HP, lalu diperluas
+/* Absensi QR — warna hijau (arkeologi) + abu perak; galat tetap merah. MOBILE-FIRST: gaya dasar untuk HP, lalu diperluas
    dengan min-width 576 / 768 / 900 / 992. Ganti warna cukup di :root. */
 :root {
-	--mdi-red: #e3171e;
-	--mdi-red-dk: #a80f14;
+	--mdi-red: #2e7d32;       /* nama variabel lama dipertahankan; warnanya kini hijau */
+	--mdi-red-dk: #1b5e20;
+	--danger: #a80f14;        /* galat dan peringatan tetap merah */
 	--mdi-silver: #b8b4aa;
 	--mdi-bg: #f4f2ee;
 	--mdi-brown: #8a6a4f;
@@ -120,7 +121,7 @@ table.qr-stack { display: block; width: 100%; border: 0; }
 .rp-L { background: #dce8fd; color: #1d4ed8; }
 .rp-F { background: #f6d6d6; color: var(--st-absent); }
 .rp-W, .rp-H { background: #ebe8e1; color: var(--st-off); }
-.rp-flag { font-size: .62rem; display: block; line-height: 1; margin-top: 2px; color: var(--mdi-red-dk); }
+.rp-flag { font-size: .62rem; display: block; line-height: 1; margin-top: 2px; color: var(--danger); }
 .rp-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: .82rem; color: var(--mdi-mute); margin: 8px 0 12px; }
 .rp-legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
 
@@ -166,7 +167,7 @@ body.kiosk { margin: 0; min-height: 100vh; min-height: 100dvh; background: var(-
 .k-result.warn { background: var(--st-warn); color: #fff; }
 .k-result.leave { background: var(--st-leave); color: #fff; }
 .k-result.info { background: var(--mdi-silver); color: #26231f; }
-.k-result.error { background: var(--mdi-red-dk); color: #fff; }
+.k-result.error { background: var(--danger); color: #fff; }
 .k-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .k-side .k-result { flex: 1; }
 .k-flag { margin-top: 12px; padding: 8px 12px; border-radius: 10px; background: rgba(0,0,0,.22); font-size: 1rem; font-weight: 600; }
@@ -179,7 +180,7 @@ body.kiosk { margin: 0; min-height: 100vh; min-height: 100dvh; background: var(-
 .k-recent li.flag { color: #8a5a00; font-weight: 700; }
 .k-chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600; background: #eee9e0; color: var(--mdi-mute); margin: 0 6px 4px 0; }
 .k-chip.ok { background: #dff3e7; color: #146c3b; }
-.k-chip.err { background: #f8dcdc; color: var(--mdi-red-dk); }
+.k-chip.err { background: #f8dcdc; color: var(--danger); }
 .k-foot { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; align-items: center; padding: 8px 12px 12px; font-size: .78rem; color: var(--mdi-mute); }
 .k-foot button { cursor: pointer; border: 1px solid var(--mdi-silver); background: #fff; border-radius: 8px; padding: 10px 14px; min-height: 44px; }
 .k-setup { position: fixed; inset: 0; background: rgba(38,35,31,.82); display: none; align-items: center; justify-content: center; z-index: 50; padding: 12px; }

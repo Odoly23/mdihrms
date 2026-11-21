@@ -1,9 +1,9 @@
 /* MDI-HRMS — kerangka halaman: TOPBAR + NAVBAR + SIDEBAR offcanvas (mobile).
-   Aturan mengikuti contoh dari pemilik proyek. Warna mengikuti logo MDI (merah + perak); cukup diganti di variabel --navy / --navy-dk. */
+   Aturan mengikuti contoh dari pemilik proyek. Warna hijau (bidang arkeologi) + perak; cukup diganti di variabel --navy / --navy-dk. */
 :root {
-	--navy: #e3171e;          /* merah logo MDI */
-	--navy-dk: #a80f14;       /* merah tua logo MDI (topbar, footer) */
-	--navy-hv: #b8100f;       /* hover/tekan */
+	--navy: #2e7d32;          /* hijau utama (arkeologi) */
+	--navy-dk: #1b5e20;       /* hijau tua (topbar, footer) */
+	--navy-hv: #256b29;       /* hover/tekan */
 	--silver: #b8b4aa;        /* perak kompas logo */
 	--white: #ffffff;
 	--topbar-h: 34px;
@@ -74,7 +74,7 @@ a.tb-item:hover { color: var(--white); text-decoration: underline; }
 .nb-right > .dropdown > a:hover { background: rgba(255,255,255,.15); }
 .dropdown-menu { border-radius: 8px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,.15); margin-top: 8px; overflow: hidden; }
 .dropdown-item { font-size: .875rem; padding: 10px 16px; display: flex; align-items: center; gap: 9px; color: #212529; }
-.dropdown-item:hover { background: #fdecec; color: #000; }
+.dropdown-item:hover { background: #e8f5e9; color: #000; }
 .dropdown-item .fa { width: 1.1em; text-align: center; color: var(--navy-hv); }
 .av { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.5);
 	color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .8rem; }

@@ -324,3 +324,20 @@ input, select, textarea { font-size: max(16px, 1rem); }      /* iOS tidak memper
 .k-notice { background: #fff3cd; color: #664d03; text-align: center; font-weight: 600; font-size: 1.05rem; padding: 10px 16px; border-bottom: 1px solid #ffe69c; }
 .k-notice.today { background: #f8d7da; color: #58151c; border-bottom-color: #f1aeb5; }
 @media (min-width: 992px) { .k-notice { font-size: 1.5rem; padding: 14px 28px; } }
+
+/* kartu depan bergaya KTP: kop di tengah, nomor besar, baris label : isi di kiri, foto di kanan + tempat/tanggal terbit */
+.mdi-card.ktp { background: linear-gradient(160deg, #fff 0%, #fdf3f3 60%, #f6e3e3 100%); }
+.mdi-card.ktp .hdr { height: 10mm; } .mdi-card.ktp .hdr img { height: 8mm; } .mdi-card.ktp .hdr .sp { width: 8mm; }
+.mdi-card.ktp .hdr .ttl b { font-size: 3.4mm; } .mdi-card.ktp .hdr .ttl small { font-size: 2.6mm; }
+.mdi-card.ktp .rule { top: 10mm; }
+.mdi-card.ktp .num { position: absolute; left: 4mm; right: 25mm; top: 13mm; display: flex; align-items: baseline; gap: 1.2mm; white-space: nowrap; }
+.mdi-card.ktp .num span { font-size: 2.6mm; font-weight: 700; }
+.mdi-card.ktp .num i { font-style: normal; font-size: 2.6mm; font-weight: 700; }
+.mdi-card.ktp .num b { font-size: 4.2mm; letter-spacing: .3mm; color: var(--mdi-red-dk); font-family: 'Courier New', monospace; }
+.mdi-card.ktp .rows { position: absolute; left: 4mm; right: 25mm; top: 19.5mm; margin: 0; font-size: 2.35mm; line-height: 1.25; }
+.mdi-card.ktp .rows > div { display: flex; align-items: baseline; margin-bottom: .9mm; }
+.mdi-card.ktp .rows dt { flex: 0 0 21.5mm; position: relative; padding-right: 2.2mm; white-space: nowrap; font-weight: 600; color: var(--mdi-mute); font-size: 2.2mm; }
+.mdi-card.ktp .rows dt::after { content: ':'; position: absolute; right: .8mm; top: 0; }
+.mdi-card.ktp .rows dd { margin: 0; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mdi-card.ktp .photo { left: auto; right: 4mm; top: 13mm; width: 19mm; height: 24mm; }
+.mdi-card.ktp .issued { position: absolute; right: 4mm; top: 38mm; width: 19mm; text-align: center; font-size: 1.9mm; font-weight: 700; line-height: 1.25; }

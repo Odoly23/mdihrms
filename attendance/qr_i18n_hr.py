@@ -262,6 +262,10 @@ CARD = {
 	'card.name': ('Naran', 'Name', 'Nama', 'Nome'),
 	'card.pos': ('Pozisaun', 'Position', 'Jabatan', 'Cargo'),
 	'card.div': ('Programa', 'Program', 'Program', 'Programa'),
+	'card.born': ('Fatin/Data moris', 'Place/Date of birth', 'Tempat/Tgl lahir', 'Local/Data de nasc.'),
+	'card.sex': ('Seksu', 'Sex', 'Jenis kelamin', 'Sexo'),
+	'card.valid_any': ('Durante sei servisu', 'While employed', 'Selama bekerja', 'Enquanto em funções'),
+	'card.own_short': ('Propriedade MDI', 'Property of MDI', 'Milik MDI', 'Propriedade do MDI'),
 	'card.own': ('Kartaun ne\'e propriedade Mata Dalan Institute.', 'This card is the property of Mata Dalan Institute.',
 				 'Kartu ini milik Mata Dalan Institute.', 'Este cartão é propriedade do Mata Dalan Institute.'),
 }

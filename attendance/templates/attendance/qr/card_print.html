@@ -19,22 +19,22 @@
 	</div>
 	<div class="cs-wrap">
 	{% for c in items %}
-		<div class="mdi-card front">
+		<div class="mdi-card front ktp">
 			<div class="wm"></div>
-			<div class="hdr"><img src="{% static 'attendance/qr/mdi-logo.jpg' %}" alt=""><div class="ttl"><b>MATA DALAN INSTITUTE</b><small>{% t4 'card.kind' %}</small><em>TIMOR-LESTE</em></div><span class="sp"></span></div>
+			<div class="hdr"><img src="{% static 'attendance/qr/mdi-logo.jpg' %}" alt=""><div class="ttl"><b>MATA DALAN INSTITUTE</b><small>{% t4 'card.kind' %}</small></div><span class="sp"></span></div>
 			<div class="rule"></div>
+			<div class="num"><span>{% t4 'card.no' %}</span><i>:</i><b>{{ c.number }}</b></div>
+			<dl class="rows">
+				<div><dt>{% t4 'card.name' %}</dt><dd>{{ c.name|upper }}</dd></div>
+				<div><dt>{% t4 'card.born' %}</dt><dd>{% if c.pob or c.dob %}{{ c.pob|upper }}{% if c.pob and c.dob %}, {% endif %}{{ c.dob|date:"d-m-Y" }}{% else %}-{% endif %}</dd></div>
+				<div><dt>{% t4 'card.sex' %}</dt><dd>{% if c.sex_key %}{% t4 c.sex_key %}{% else %}-{% endif %}</dd></div>
+				<div><dt>{% t4 'card.pos' %}</dt><dd>{{ c.position|default:"-" }}</dd></div>
+				<div><dt>{% t4 'card.div' %}</dt><dd>{{ c.division|default:"-" }}</dd></div>
+				<div><dt>{% t4 'card.valid' %}</dt><dd>{% if c.expiry %}{{ c.expiry|date:"d-m-Y" }}{% else %}{% t4 'card.valid_any' %}{% endif %}</dd></div>
+			</dl>
 			{% if c.photo %}<img class="photo" src="{{ c.photo }}" alt="">{% else %}<div class="photo"></div>{% endif %}
-			<div class="info">
-				<div class="f nm"><span>{% t4 'card.name' %}</span><b>{{ c.name }}</b></div>
-				<div class="f"><span>{% t4 'card.pos' %}</span><b>{{ c.position|default:"-" }}</b></div>
-				<div class="two">
-					<div class="f"><span>{% t4 'card.div' %}</span><b>{{ c.division|default:"-" }}</b></div>
-					<div class="f"><span>{% t4 'card.no' %}</span><b>{{ c.number }}</b></div>
-				</div>
-				{% if c.expiry %}<div class="f"><span>{% t4 'card.valid' %}</span><b>{{ c.expiry|date:"d/m/Y" }}</b></div>{% endif %}
-			</div>
-			<div class="own">{% t4 'card.own' %}</div>
-			<div class="stripe"><span>M D I</span><span>{{ c.name|truncatechars:26 }}</span></div>
+			<div class="issued">DILI<br>{{ c.issued|date:"d-m-Y" }}</div>
+			<div class="stripe"><span>M D I</span><span>{% t4 'card.own_short' %}</span></div>
 		</div>
 		<div class="mdi-card back">
 			<div class="wm"></div>

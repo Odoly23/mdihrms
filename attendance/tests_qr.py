@@ -533,7 +533,7 @@ class ViewTests(QRBase):
 		self.assertEqual(r.status_code, 200)
 		self.assertContains(r, '<svg')
 		self.assertContains(r, 'NRF-001')
-		self.assertContains(r, 'Maria Silva')
+		self.assertContains(r, 'MARIA SILVA')                                 # nama ditulis kapital seperti KTP
 		qc = QRCard.objects.get()
 		self.assertEqual(self.scan(MON, 8, payload=svc.make_payload(qc))['code'], 'in')
 

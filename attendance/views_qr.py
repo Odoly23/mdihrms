@@ -389,7 +389,8 @@ def _card_context(emp, qc):
 	info = svc.employee_info(emp)
 	member = getattr(emp, 'employeecard', None)
 	info.update(qr=_qr_svg(svc.make_payload(qc)), expiry=member.expiry_date if member else None,
-				number=info['nrf'] or 'MDI-%05d' % emp.pk)
+				number=info['nrf'] or 'MDI-%05d' % emp.pk, pob=emp.place_of_birth or '', dob=emp.date_of_birth,
+				sex_key=('ch.' + emp.sex) if emp.sex in ('Mane', 'Feto') else '', issued=_local_today())
 	return info
 
 

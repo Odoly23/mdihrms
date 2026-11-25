@@ -38,7 +38,7 @@
 		</div>
 		<div class="mdi-card back">
 			<div class="wm"></div>
-			<div class="hdr"><div class="ttl"><b class="att">{% t4 'card.att' %}</b></div></div>
+			<div class="hdr"><img src="{% static 'attendance/qr/mdi-logo.jpg' %}" alt=""><div class="ttl"><b>MATA DALAN INSTITUTE</b><small>{% t4 'card.att' %}</small></div><span class="sp"></span></div>
 			<div class="rule"></div>
 			<div class="txt">
 				{% for n in notes %}<span data-l="{{ n.code }}"{% if n.hidden %} hidden{% endif %}>{{ n.note }}{% if n.contact %}<span class="ct">{{ n.contact }}</span>{% endif %}</span>{% endfor %}

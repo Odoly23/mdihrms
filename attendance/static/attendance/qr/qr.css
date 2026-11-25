@@ -358,10 +358,9 @@ input, select, textarea { font-size: max(16px, 1rem); }      /* iOS tidak memper
 .mdi-card .wm { opacity: .07; }
 .mdi-card .hdr img, .mdi-card .wm { mix-blend-mode: multiply; }   /* latar putih logo JPG menyatu dengan hijau */
 .mdi-card.ktp .rows dt { color: #34502c; }
-.mdi-card.back .hdr .ttl b.att { font-size: 3.8mm; text-transform: uppercase; letter-spacing: .3mm; }   /* belakang: hanya logo + KARTAUN ABSENSIA + pita */
 
 /* kartu depan dan belakang sesuai contoh yang disetujui: pita tegak merah-kuning-hitam di kiri, garis kop hijau tua,
-   logo dengan latar putihnya, label abu-abu. Kop belakang hanya KARTAUN ABSENSIA. */
+   logo dengan latar putihnya, label abu-abu. Kop belakang: logo + MATA DALAN INSTITUTE + Kartaun absensia. */
 .mdi-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2.4mm; z-index: 1;
 	background: linear-gradient(90deg, #d0021b 0 34%, #ffd200 34% 67%, #111 67% 100%); }
 .mdi-card .rule { height: .6mm; background: #1d5c12; }

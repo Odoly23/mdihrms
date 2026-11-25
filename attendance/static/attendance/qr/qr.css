@@ -360,13 +360,13 @@ input, select, textarea { font-size: max(16px, 1rem); }      /* iOS tidak memper
 .mdi-card.ktp .rows dt { color: #34502c; }
 .mdi-card.back .hdr .ttl b.att { font-size: 3.8mm; text-transform: uppercase; letter-spacing: .3mm; }   /* belakang: hanya logo + KARTAUN ABSENSIA + pita */
 
-/* kartu DEPAN sesuai contoh yang disetujui: pita tegak merah-kuning-hitam di kiri, garis kop hijau tua,
-   logo dengan latar putihnya, label abu-abu. Kartu belakang tetap: KARTAUN ABSENSIA + garis tiga pita. */
-.mdi-card.front::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2.4mm; z-index: 1;
+/* kartu depan dan belakang sesuai contoh yang disetujui: pita tegak merah-kuning-hitam di kiri, garis kop hijau tua,
+   logo dengan latar putihnya, label abu-abu. Kop belakang hanya KARTAUN ABSENSIA. */
+.mdi-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2.4mm; z-index: 1;
 	background: linear-gradient(90deg, #d0021b 0 34%, #ffd200 34% 67%, #111 67% 100%); }
-.mdi-card.front .rule { height: .6mm; background: #1d5c12; }
-.mdi-card.front .hdr { padding-left: 4.4mm; }
-.mdi-card.front.ktp .num, .mdi-card.front.ktp .rows { left: 5mm; }
-.mdi-card.front .stripe { padding-left: 5mm; }
-.mdi-card.front .hdr img, .mdi-card.front .wm { mix-blend-mode: normal; }
-.mdi-card.front.ktp .rows dt { color: var(--mdi-mute); }
+.mdi-card .rule { height: .6mm; background: #1d5c12; }
+.mdi-card .hdr { padding-left: 4.4mm; }
+.mdi-card.ktp .num, .mdi-card.ktp .rows, .mdi-card.back .txt { left: 5mm; }
+.mdi-card .stripe { padding-left: 5mm; }
+.mdi-card .hdr img, .mdi-card .wm { mix-blend-mode: normal; }
+.mdi-card.ktp .rows dt { color: var(--mdi-mute); }

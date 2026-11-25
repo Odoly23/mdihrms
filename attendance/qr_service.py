@@ -61,7 +61,6 @@ _DEFAULTS = {
 	'DEVICE_GRACE_HOURS': 24,      # token lama masih diterima sekian jam setelah diputar (bila Set-Cookie tidak sampai)
 	'CLIENT_IP_HEADER': None,      # mis. 'HTTP_CF_CONNECTING_IP' (Cloudflare) atau 'HTTP_X_REAL_IP'; hanya bila front-end tepercaya
 	'MANAGER_GROUPS': ['admin'],
-	'CARD_VALID_YEARS': 1,         # kartu berlaku sekian tahun sejak dicetak; sesudahnya scan ditolak (cetak ulang)
 	'VIEWER_GROUPS': ['admin', 'director', 'administrasaun'],   # staf hanya melihat absensinya sendiri
 	'BOARD_GROUPS': ['admin', 'director', 'administrasaun'],           # dasbor hari ini: siapa hadir, terlambat, izin, cuti
 	'CUTI_CODES': ['AL', 'CT', 'ANUAL'],             # kode jenis lisensa yang dihitung 'cuti'; lainnya dihitung 'izin' (nama berisi cuti/anual/annual/férias juga cuti)
@@ -793,16 +792,6 @@ def is_cuti(leave_type):
 		return True
 	name = (leave_type.name or '').lower()
 	return any(w in name for w in _CUTI_WORDS)
-
-
-def card_expiry(issued):
-	"""Tanggal terakhir kartu berlaku: `CARD_VALID_YEARS` tahun sejak terbit, dikurangi satu hari (29 Feb -> 28 Feb)."""
-	years = conf('CARD_VALID_YEARS')
-	try:
-		end = issued.replace(year=issued.year + years)
-	except ValueError:
-		end = issued.replace(year=issued.year + years, day=28)
-	return end - datetime.timedelta(days=1)
 
 
 def board(d, division_id=None):

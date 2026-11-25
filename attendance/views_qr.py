@@ -391,7 +391,6 @@ def _card_context(emp, qc):
 	info.update(qr=_qr_svg(svc.make_payload(qc)), expiry=member.expiry_date if member else None,
 				number=info['nrf'] or 'MDI-%05d' % emp.pk, pob=emp.place_of_birth or '', dob=emp.date_of_birth,
 				sex_key=('ch.' + emp.sex) if emp.sex in ('Mane', 'Feto') else '', issued=_local_today())
-	info['expiry'] = svc.card_expiry(info['issued'])          # kartu baru berlaku satu tahun sejak dicetak
 	return info
 
 
@@ -431,10 +430,7 @@ def card_action(request):
 	if action == 'printed':
 		now = timezone.now()
 		qcs.update(printed_at=now)
-		issued = svc.to_local(now).date()
-		for eid in qcs.values_list('employee_id', flat=True):          # berlaku satu tahun; sesudahnya scan ditolak (cetak ulang)
-			EmployeeCard.objects.update_or_create(employee_id=eid, defaults={
-				'is_printed': True, 'is_active': True, 'issue_date': issued, 'expiry_date': svc.card_expiry(issued), 'datetime': now, 'user': request.user})
+		EmployeeCard.objects.filter(employee_id__in=ids).update(is_printed=True, issue_date=svc.to_local(now).date())
 		messages.success(request, _tr(request, 'msg.printed', n=len(ids)))
 	elif action == 'regen':
 		for qc in qcs:

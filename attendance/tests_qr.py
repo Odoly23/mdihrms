@@ -2542,35 +2542,3 @@ class ScalingTests(QRBase):
 		self.assertEqual(svc.report_ttl(*past), svc.conf('REPORT_CACHE_PAST_SECONDS'))
 		self.assertEqual(svc.report_ttl(now.year, now.month), svc.conf('REPORT_CACHE_SECONDS'))
 		self.assertGreater(svc.conf('REPORT_CACHE_PAST_SECONDS'), svc.conf('REPORT_CACHE_SECONDS'))
-
-
-class CardValidityTests(QRBase):
-	"""Kartu pegawai berlaku satu tahun sejak dicetak; sesudahnya scan ditolak sampai kartu dicetak ulang."""
-
-	def login(self):
-		u = User.objects.get_or_create(username='cardadmin')[0]
-		u.groups.add(Group.objects.get_or_create(name='admin')[0])
-		self.client.force_login(u)
-
-	def test_expiry_is_one_year_minus_a_day(self):
-		self.assertEqual(svc.card_expiry(datetime.date(2026, 11, 25)), datetime.date(2027, 11, 24))
-		self.assertEqual(svc.card_expiry(datetime.date(2028, 2, 29)), datetime.date(2029, 2, 27))
-
-	def test_marking_printed_sets_one_year_validity(self):
-		from django.utils import timezone
-		self.login()
-		self.client.post(reverse('qr-card-action'), {'action': 'printed', 'ids': [self.emp.pk]})
-		card = EmployeeCard.objects.get(employee=self.emp)
-		issued = svc.to_local(timezone.now()).date()
-		self.assertEqual((card.issue_date, card.expiry_date, card.is_printed), (issued, svc.card_expiry(issued), True))
-
-	def test_print_page_shows_the_expiry_date(self):
-		from django.utils import timezone
-		self.login()
-		html = self.client.post(reverse('qr-card-print'), {'ids': [self.emp.pk]}).content.decode()
-		self.assertIn(svc.card_expiry(svc.to_local(timezone.now()).date()).strftime('%d-%m-%Y'), html)
-
-	def test_scan_rejected_after_the_year(self):
-		EmployeeCard.objects.create(employee=self.emp, issue_date=MON - datetime.timedelta(days=400),
-									expiry_date=svc.card_expiry(MON - datetime.timedelta(days=400)))
-		self.assertEqual(self.scan(MON, 8)['code'], 'card_expired')

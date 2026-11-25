@@ -358,3 +358,4 @@ input, select, textarea { font-size: max(16px, 1rem); }      /* iOS tidak memper
 .mdi-card .wm { opacity: .07; }
 .mdi-card .hdr img, .mdi-card .wm { mix-blend-mode: multiply; }   /* latar putih logo JPG menyatu dengan hijau */
 .mdi-card.ktp .rows dt { color: #34502c; }
+.mdi-card.back .hdr .ttl b.att { font-size: 3.8mm; text-transform: uppercase; letter-spacing: .3mm; }   /* belakang: hanya logo + KARTAUN ABSENSIA + pita */

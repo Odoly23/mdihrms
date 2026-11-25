@@ -346,16 +346,15 @@ input, select, textarea { font-size: max(16px, 1rem); }      /* iOS tidak memper
 .mdi-card { --mdi-red: #2e7d32; --mdi-red-dk: #1b5e20; }
 
 /* warna kartu mengikuti kartu ID MDI lama: gradasi hijau (tua di tepi, terang di tengah), pita merah-kuning-hitam
-   (merah-kuning, tanpa hitam; hanya kartu depan) di sisi kiri, dan gelombang hijau tua di bawah */
+   sebagai garis kop, dan gelombang hijau tua di bawah */
 .mdi-card { --mdi-red: #2f7d1f; --mdi-red-dk: #1d5c12;
 	background: linear-gradient(180deg, #2f7d1f 0%, #8cc66e 16%, #d6ecc9 34%, #eef7e8 52%, #d6ecc9 72%, #8cc66e 88%, #2f7d1f 100%); }
-.mdi-card.front::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1.8mm; z-index: 1;
-	background: linear-gradient(90deg, #d0021b 0 50%, #ffd200 50% 100%); }   /* pita merah-kuning hanya di kartu depan (Kartaun Funsionáriu) */
-.mdi-card .hdr { padding-left: 4.4mm; }
+.mdi-card .hdr { padding-left: 3.5mm; }
 .mdi-card .hdr .ttl b { color: #123d0b; }
-.mdi-card .rule { background: #1d5c12; height: .6mm; } .mdi-card .rule::after { display: none; }
-.mdi-card .stripe { background: #1d5c12; height: 6.5mm; border-radius: 55% 45% 0 0 / 2.6mm 1.6mm 0 0; padding-left: 5mm; }
-.mdi-card.ktp .num, .mdi-card.ktp .rows, .mdi-card.back .txt { left: 5mm; }
+.mdi-card .rule { height: 1.5mm; background: linear-gradient(180deg, #d0021b 0 33.4%, #ffd200 33.4% 66.7%, #111 66.7% 100%); }   /* garis kop = tiga pita merah-kuning-hitam */
+.mdi-card .rule::after { display: none; }
+.mdi-card .stripe { background: #1d5c12; height: 6.5mm; border-radius: 55% 45% 0 0 / 2.6mm 1.6mm 0 0; padding-left: 4mm; }
+.mdi-card.ktp .num, .mdi-card.ktp .rows, .mdi-card.back .txt { left: 4mm; }
 .mdi-card .wm { opacity: .07; }
 .mdi-card .hdr img, .mdi-card .wm { mix-blend-mode: multiply; }   /* latar putih logo JPG menyatu dengan hijau */
 .mdi-card.ktp .rows dt { color: #34502c; }

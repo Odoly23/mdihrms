@@ -122,7 +122,7 @@ Daftar disusun dari kalender sekunder, bukan teks hukum: cocokkan dengan keputus
 python manage.py import_staff data/staff_mdi.csv --dry-run     # simulasi: tidak menyimpan apa pun
 python manage.py import_staff data/staff_mdi.csv               # impor; aman diulang (tidak menggandakan)
 ```
-CSV berkolom `nama,posisi,diresaun` (kolom `diresaun` = program/unit) (contoh: `employee/data/staff_example.csv`). Membuat funsionariu aktif, posisi, diresaun, dan
+CSV berkolom `nama,posisi,diresaun` (kolom `diresaun` = program/unit); tambahkan `--accounts` untuk sekaligus membuat akun login (nama.pengguna dari nama, kata sandi awal, wajib ganti, grup dari jabatan) (contoh: `employee/data/staff_example.csv`). Membuat funsionariu aktif, posisi, diresaun, dan
 kartu QR; tidak membuat akun login, NRF, tanggal lahir, atau kontak. Daftar asli berisi data pribadi: simpan di server,
 jangan di git (pola `employee/data/staff_*.csv` sudah diabaikan).
 

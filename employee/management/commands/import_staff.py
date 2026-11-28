@@ -4,8 +4,9 @@
     python manage.py import_staff data/staff_mdi.csv --dry-run     # lihat rencana dulu
     python manage.py import_staff data/staff_mdi.csv               # lalu jalankan
 
-Yang dibuat per orang: Employee (aktif), EmployeePosition, EmployeeDivision, dan kartu QR. Tidak membuat akun login,
-NRF, tanggal lahir, atau kontak (datanya tidak ada di daftar): lengkapi lewat menu Funsionariu > Hadia."""
+Yang dibuat per orang: Employee (aktif), EmployeePosition, EmployeeDivision, dan kartu QR. Dengan --accounts juga akun login
+(nama pengguna dari nama, kata sandi awal DEFAULT_PASSWORD, wajib diganti saat login pertama, grup dari jabatan; admin sistem tidak
+pernah diberikan otomatis). NRF, tanggal lahir, dan kontak tidak ada di daftar: lengkapi lewat menu Funsionariu > Hadia."""
 import csv
 import hashlib
 
@@ -34,6 +35,7 @@ class Command(BaseCommand):
 	def add_arguments(self, parser):
 		parser.add_argument('csv_file')
 		parser.add_argument('--dry-run', action='store_true', help='Hanya tampilkan rencana, tidak menyimpan apa pun')
+		parser.add_argument('--accounts', action='store_true', help='Buat akun login untuk pegawai yang belum punya (kata sandi awal, wajib ganti)')
 
 	def handle(self, *args, **o):
 		rows = self._read(o['csv_file'])
@@ -63,13 +65,36 @@ class Command(BaseCommand):
 				EmployeePosition.objects.update_or_create(employee=emp, defaults={'position': position})
 				EmployeeDivision.objects.update_or_create(employee=emp, defaults={'division': division})
 				QRCard.objects.get_or_create(employee=emp, defaults={'datetime': timezone.now()})
-				self.stdout.write('%2d. %s %s %s — %s (%s)' % (n, verb, first, last, pos_name, div_name))
+				account = self._account(emp, first, last, pos_name) if o['accounts'] else ''
+				self.stdout.write('%2d. %s %s %s — %s (%s)%s' % (n, verb, first, last, pos_name, div_name, account))
 			if dry:
 				transaction.set_rollback(True)
 		self.stdout.write(self.style.SUCCESS('%s: %d baru, %d diubah, %d sama (%d baris).' % (
 			'SIMULASI (tidak disimpan)' if dry else 'Selesai', stats['new'], stats['updated'], stats['same'], len(rows))))
 		if not dry:
 			self.stdout.write('Lengkapi NRF, tanggal lahir, dan kontak lewat Funsionariu > Hadia; cetak kartu di Absensi QR > Kartu QR.')
+
+	def _account(self, emp, first, last, pos_name):
+		"""Akun untuk pegawai yang belum punya: nama.pengguna dari nama (huruf kecil, tanpa aksen), kata sandi awal, wajib ganti."""
+		from django.conf import settings
+		from django.contrib.auth.models import Group, User
+		from django.utils.text import slugify
+		from employee.models import EmployeeUser
+		from employee.services import _unique_username
+		from main import middleware
+		from main.groups import group_for_position
+		from main.models import MustChangePassword
+		link = EmployeeUser.objects.filter(employee=emp).select_related('user').first()
+		if link:
+			return ' [akun: %s, sudah ada]' % link.user.username
+		base = '.'.join(p for p in (slugify(first), slugify(last.split(' ')[-1]) if last else '') if p) or 'emp%d' % emp.pk
+		u = User.objects.create_user(_unique_username(base.replace('-', '')), password=settings.MDI_DEFAULT_PASSWORD)
+		group = group_for_position(pos_name)
+		u.groups.add(Group.objects.get_or_create(name=group)[0])
+		EmployeeUser.objects.create(employee=emp, user=u)
+		MustChangePassword.objects.update_or_create(user=u)
+		middleware.set_flag(u.pk, True)
+		return ' [akun baru: %s, grup %s]' % (u.username, group)
 
 	def _read(self, path):
 		try:

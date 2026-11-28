@@ -1137,6 +1137,7 @@ class FourGroupTests(HrBase):
 		self.assertEqual(gp('Director Ezekutivu MDI'), 'director')
 		self.assertEqual(gp('Assistente Adm & Finansa'), 'administrasaun')
 		self.assertEqual(gp('Official Logistik'), 'administrasaun')
+		self.assertEqual(gp('Director SIS-ASEAN Think Tank'), 'staff')                # bukan direktur eksekutif lembaga
 		for p in ('Program Manager', 'Official Cleaner', 'MDI Volunteer IT Technik', 'Koord. Jeral Asuntu Transparansia no Akuntabilidade Sosial', '', None):
 			self.assertEqual(gp(p), 'staff', p)
 

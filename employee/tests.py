@@ -89,3 +89,47 @@ class ImportStaffTests(_TestCase):
 		_Employee.objects.all().delete()
 		example = _os.path.join(settings.BASE_DIR, 'employee/data/staff_example.csv')
 		self.assertIn('2 baru', self.run_cmd(example))
+
+
+class ImportAccountsTests(_TestCase):
+	"""--accounts: akun dengan kata sandi awal, wajib ganti, grup dari jabatan; tidak pernah admin; tidak ganda bila diulang."""
+
+	def setUp(self):
+		from django.core.management import call_command
+		call_command('mdi_setup', verbosity=0)
+
+	def run_cmd(self, path, *extra):
+		from io import StringIO
+		from django.core.management import call_command
+		out = StringIO()
+		call_command('import_staff', path, *extra, stdout=out)
+		return out.getvalue()
+
+	def csv(self, rows):
+		import tempfile
+		f = tempfile.NamedTemporaryFile('w', suffix='.csv', delete=False, encoding='utf-8')
+		f.write('nama,posisi,diresaun\n' + ''.join('%s,%s,%s\n' % r for r in rows))
+		f.close()
+		self.addCleanup(_os.remove, f.name)
+		return f.name
+
+	def test_accounts_created_once_with_groups_and_forced_change(self):
+		from django.conf import settings
+		from main.models import MustChangePassword
+		path = self.csv([('Estevanus Coli', 'Director Ezekutivu MDI', 'Program Nasional'),
+						 ('Anazita Maria', 'Assistente Adm & Finansa', 'Program Nasional'),
+						 ('Maria Madalena Vicente', 'Official Cleaner', 'Program Nasional')])
+		out = self.run_cmd(path, '--accounts')
+		self.assertIn('estevanus.coli', out)
+		users = {u.username: sorted(u.groups.values_list('name', flat=True)) for u in _User.objects.all()}
+		self.assertEqual(users, {'estevanus.coli': ['director'], 'anazita.maria': ['administrasaun'], 'maria.vicente': ['staff']})
+		u = _User.objects.get(username='maria.vicente')
+		self.assertTrue(u.check_password(settings.MDI_DEFAULT_PASSWORD))
+		self.assertEqual(MustChangePassword.objects.count(), 3)
+		self.assertNotIn(settings.MDI_DEFAULT_PASSWORD, out)                     # kata sandi tidak dicetak
+		self.run_cmd(path, '--accounts')
+		self.assertEqual(_User.objects.count(), 3)
+
+	def test_without_flag_no_accounts(self):
+		self.run_cmd(self.csv([('Ana Lopes', 'Staf', 'Program Nasional')]))
+		self.assertEqual(_User.objects.count(), 0)

@@ -17,7 +17,10 @@ LEGACY = {'president': 'director', 'hr': 'administrasaun', 'logistik': 'administ
 
 # aturan jabatan -> grup (huruf kecil; kata dicocokkan di awal kata). Yang pertama cocok menang; selebihnya 'staff'.
 # 'admin' (admin sistem) sengaja TIDAK ada di sini: hak penuh hanya diberikan manual.
-_POSITION_RULES = [('director', 'director'), ('direktur', 'director'), ('diretor', 'director'), ('direktor', 'director'),
+# Hanya direktur EKSEKUTIF lembaga yang otomatis menjadi 'director' (mis. 'Director SIS-ASEAN Think Tank' tetap staff;
+# ubah manual bila perlu).
+_POSITION_RULES = [('director ezekutivu', 'director'), ('director executivo', 'director'), ('diretor executivo', 'director'),
+				   ('executive director', 'director'), ('direktur eksekutif', 'director'), ('direktur utama', 'director'),
 				   ('adm', 'administrasaun'), ('finans', 'administrasaun'), ('keuangan', 'administrasaun'), ('logistik', 'administrasaun')]
 
 

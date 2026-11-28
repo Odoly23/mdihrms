@@ -463,6 +463,8 @@ from attendance.qr_i18n_hr import ACCOUNT as _ACCOUNT  # noqa: E402  (akun saya,
 MESSAGES.update(_ACCOUNT)
 from attendance.qr_i18n_hr import RESET as _RESET  # noqa: E402  (reset kata sandi oleh admin)
 MESSAGES.update(_RESET)
+from attendance.qr_i18n_hr import LOGIN as _LOGIN  # noqa: E402  (halaman login)
+MESSAGES.update(_LOGIN)
 
 
 def tr(lang, key, **params):

@@ -336,3 +336,18 @@ RESET = {
 	'rst.forced': ('Password ne\'e hetan reset husi admin. Troka password foun molok uza aplikasaun.', 'Your password was reset by an administrator. Choose a new password before using the application.',
 				   'Kata sandi Anda direset oleh admin. Ganti dengan kata sandi baru sebelum memakai aplikasi.', 'A sua palavra-passe foi reposta por um administrador. Escolha uma nova antes de usar a aplicação.'),
 }
+
+
+LOGIN = {
+	'login.sys': ('Sistema Jestaun Dadus Funsionáriu', 'Staff Data Management System', 'Sistem Manajemen Data Pegawai', 'Sistema de Gestão de Dados de Funcionários'),
+	'login.welcome': ('Bem-vindu fali', 'Welcome back', 'Selamat datang kembali', 'Bem-vindo de volta'),
+	'login.sub': ('Tama ho ita-nia konta MDI-HRMS.', 'Sign in with your MDI-HRMS account.', 'Masuk dengan akun MDI-HRMS Anda.', 'Entre com a sua conta MDI-HRMS.'),
+	'login.f1': ('Absensia ho kartaun QR', 'Attendance with QR cards', 'Absensi dengan kartu QR', 'Assiduidade com cartões QR'),
+	'login.f2': ('Lisensa no aprovasaun lalais', 'Leave requests and quick approvals', 'Cuti dan persetujuan cepat', 'Licenças e aprovações rápidas'),
+	'login.f3': ('Karta tama no karta sai', 'Incoming and outgoing letters', 'Surat masuk dan surat keluar', 'Correspondência de entrada e saída'),
+	'login.f4': ('Saúde no asset funsionáriu', 'Staff health care and assets', 'Health care dan aset pegawai', 'Saúde e bens dos funcionários'),
+	'login.show': ('Hatudu password', 'Show password', 'Tampilkan kata sandi', 'Mostrar palavra-passe'),
+	'login.caps': ('Caps Lock ativu', 'Caps Lock is on', 'Caps Lock aktif', 'Caps Lock ativo'),
+	'login.forgot': ('Haluha password? Kontaktu admin sistema.', 'Forgot your password? Contact the system admin.', 'Lupa kata sandi? Hubungi admin sistem.', 'Esqueceu a palavra-passe? Contacte o administrador.'),
+	'login.secure': ('Koneksaun seguru · ita-nia dadus protejidu', 'Secure connection · your data is protected', 'Koneksi aman · data Anda terlindungi', 'Ligação segura · os seus dados estão protegidos'),
+}

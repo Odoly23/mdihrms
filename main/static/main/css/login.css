@@ -1,0 +1,79 @@
+/* Halaman login MDI-HRMS: panel kiri bercerita (hijau tanah, garis kontur seperti peta situs arkeologi),
+   panel kanan formulir yang tenang. Tanpa font atau gambar dari luar. */
+:root { --g1: #0f3309; --g2: #1d5c12; --g3: #2f7d1f; --g4: #8cc66e; --ink: #17240f; --mute: #5f6b58; --line: #d9e4d2; --bg: #f3f7f0; }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body.lg { font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Tahoma, sans-serif; color: var(--ink); background: var(--bg); }
+.lg-wrap { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .lg-wrap { grid-template-columns: 1.1fr 1fr; } }
+
+/* ── panel kiri ── */
+.lg-hero { position: relative; overflow: hidden; color: #fff; padding: 28px 22px 26px 30px;
+	background:
+		radial-gradient(1200px 600px at 110% -10%, rgba(140,198,110,.35), transparent 60%),
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.07' stroke-width='1.2'%3E%3Cpath d='M-20 120c80-40 160 40 240 0s160-60 320 0'/%3E%3Cpath d='M-20 170c90-50 170 30 250-5s170-55 310 10'/%3E%3Cpath d='M-20 220c100-45 180 25 260-10s160-50 300 15'/%3E%3Cpath d='M-20 290c80-30 170 45 250 10s180-70 330-5'/%3E%3Cpath d='M-20 350c90-40 180 35 250 0s170-45 310 20'/%3E%3Cpath d='M-20 410c100-35 170 40 260 5s160-60 300 5'/%3E%3Cellipse cx='380' cy='90' rx='60' ry='34'/%3E%3Cellipse cx='380' cy='90' rx='36' ry='19'/%3E%3Cellipse cx='120' cy='470' rx='80' ry='40'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 520px 520px repeat,
+		linear-gradient(155deg, var(--g1) 0%, var(--g2) 48%, var(--g3) 100%); }
+.lg-hero::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 8px;
+	background: linear-gradient(90deg, #d0021b 0 34%, #ffd200 34% 67%, #111 67% 100%); }
+.lg-hero-in { position: relative; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; height: 100%; }
+.lg-badge { width: 74px; height: 74px; border-radius: 22px; background: #fff; display: grid; place-items: center;
+	box-shadow: 0 12px 30px rgba(0,0,0,.25), 0 0 0 6px rgba(255,255,255,.08); }
+.lg-badge img { width: 62px; height: auto; }
+.lg-eyebrow { margin: 22px 0 6px; font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #cfe8c3; }
+.lg-title { margin: 0; font-size: clamp(1.9rem, 6vw, 3.1rem); line-height: 1.05; font-weight: 800; letter-spacing: -.01em; }
+.lg-sub { margin: 10px 0 0; color: rgba(255,255,255,.78); font-size: .95rem; max-width: 30em; }
+.lg-feat { display: none; list-style: none; margin: 34px 0 0; padding: 0; gap: 12px; }
+.lg-feat li { display: flex; align-items: center; gap: 14px; font-size: .98rem; color: rgba(255,255,255,.92); }
+.lg-feat i { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 1.1rem;
+	background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); flex: none; }
+.lg-foot { display: none; margin: auto 0 0; padding-top: 30px; font-size: .78rem; color: rgba(255,255,255,.6); letter-spacing: .03em; }
+@media (min-width: 900px) {
+	.lg-hero { padding: 56px 48px 40px 64px; }
+	.lg-hero-in { justify-content: center; }
+	.lg-badge { width: 92px; height: 92px; border-radius: 26px; } .lg-badge img { width: 78px; }
+	.lg-feat { display: grid; } .lg-foot { display: block; }
+}
+
+/* ── panel kanan ── */
+.lg-panel { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 16px 40px; }
+.lg-flags { align-self: flex-end; margin-bottom: 18px; }
+.lg-flags .qr-flag { color: var(--mute); }
+@media (min-width: 900px) { .lg-flags { position: absolute; top: 18px; right: 22px; margin: 0; } }
+.lg-card { width: 100%; max-width: 410px; background: #fff; border-radius: 22px; padding: 30px 26px 24px;
+	box-shadow: 0 1px 2px rgba(16,40,10,.06), 0 20px 50px -18px rgba(16,40,10,.28); border: 1px solid var(--line); }
+.lg-brand { margin: 0 0 18px; font-weight: 800; letter-spacing: .08em; font-size: .85rem; color: var(--mute); }
+.lg-brand span { color: var(--g3); }
+.lg-card h2 { margin: 0; font-size: 1.65rem; font-weight: 800; letter-spacing: -.01em; }
+.lg-hint { margin: 6px 0 22px; color: var(--mute); }
+.lg-alert { display: flex; gap: 8px; align-items: center; padding: 11px 13px; margin-bottom: 16px; border-radius: 12px;
+	background: #fdecec; color: #8a1116; border: 1px solid #f3c2c4; font-size: .93rem; animation: lg-shake .38s; }
+.lg-label { display: block; font-weight: 600; font-size: .88rem; margin: 0 0 6px; }
+.lg-field { position: relative; margin-bottom: 16px; }
+.lg-field > i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #93a28b; pointer-events: none; }
+.lg-field input { width: 100%; height: 50px; padding: 0 46px 0 42px; font-size: 1rem; color: var(--ink); background: #f8faf6;
+	border: 1.5px solid var(--line); border-radius: 14px; outline: none; transition: border-color .15s, box-shadow .15s, background .15s; }
+.lg-field input:focus { background: #fff; border-color: var(--g3); box-shadow: 0 0 0 4px rgba(47,125,31,.15); }
+.lg-field input:focus + .lg-eye, .lg-field:focus-within > i { color: var(--g3); }
+.lg-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border: 0; border-radius: 10px;
+	background: transparent; color: #93a28b; cursor: pointer; }
+.lg-eye:hover { background: #eef4ea; color: var(--g2); }
+.lg-eye:focus-visible { outline: 3px solid rgba(47,125,31,.35); }
+.lg-caps { margin: -8px 0 14px; font-size: .82rem; color: #8a5a00; }
+.lg-btn { width: 100%; height: 52px; margin-top: 4px; border: 0; border-radius: 14px; cursor: pointer; color: #fff; font-size: 1.04rem; font-weight: 700;
+	letter-spacing: .02em; background: linear-gradient(135deg, var(--g3), var(--g2)); box-shadow: 0 10px 22px -10px rgba(29,92,18,.8);
+	display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform .12s, box-shadow .15s, filter .15s; }
+.lg-btn:hover { filter: brightness(1.06); box-shadow: 0 14px 26px -12px rgba(29,92,18,.9); }
+.lg-btn:active { transform: translateY(1px); }
+.lg-btn:focus-visible { outline: 3px solid rgba(47,125,31,.4); outline-offset: 3px; }
+.lg-btn i { transition: transform .18s; } .lg-btn:hover i { transform: translateX(3px); }
+.lg-btn[disabled] { opacity: .8; cursor: progress; }
+.lg-help { margin: 18px 0 0; text-align: center; font-size: .86rem; color: var(--mute); }
+.lg-secure { margin: 10px 0 0; text-align: center; font-size: .78rem; color: #7f8c78; }
+
+/* ── gerak halus (dimatikan bila pengguna memilih kurangi gerak) ── */
+@keyframes lg-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes lg-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.lg-hero-in > *, .lg-card { animation: lg-up .55s cubic-bezier(.2,.7,.2,1) both; }
+.lg-hero-in > :nth-child(2) { animation-delay: .06s; } .lg-hero-in > :nth-child(3) { animation-delay: .1s; }
+.lg-hero-in > :nth-child(4) { animation-delay: .14s; } .lg-hero-in > :nth-child(5) { animation-delay: .2s; } .lg-card { animation-delay: .12s; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
